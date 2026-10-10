@@ -6,7 +6,7 @@
 
 ### [▶ Jetzt spielen](https://schneipp.github.io/stern-von-afrika/)
 
-2–5 Spieler · am selben Gerät oder gegen den Computer · keine Installation
+2–5 Spieler · am selben Gerät oder gegen den Computer · als App auf iPad, iPhone und Android installierbar
 
 <img src="docs/spielbrett.jpg" alt="Spielbrett: Reliefkarte von Nordafrika mit Städten, Wegen, Spielfiguren und Expeditionspult" width="100%">
 
@@ -39,8 +39,20 @@ Wer den Stern findet, muss ihn heim nach Kairo oder Tanger bringen. Sobald er ab
 - 🔊 **Sound und Musik**, komplett im Browser erzeugt: Würfelklappern, Schritte, Schiffshorn, Fanfaren und Kalimba-Musik im Hintergrund
 - 🤖 **Computergegner** für beliebig viele Plätze
 - 💾 **Spielstand bleibt erhalten**, auch nach einem Neuladen
+- 📱 **Als App installierbar (PWA)**, läuft danach auch offline, im Vollbild und ohne Browserleiste
+- 👆 **Für Touch gebaut:** große Tippflächen, Pinch-Zoom auf der Karte, eigenes Layout für iPad hoch und quer, Rücksicht auf Notch und Home-Balken, Bildschirm bleibt während des Spiels an
 
 <img src="docs/seeweg.jpg" alt="Seewege von Tanger zu den Kanarischen Inseln, Fluglinie in Rot" width="100%">
+
+## Als App installieren
+
+| Gerät | So geht's |
+|---|---|
+| **iPad / iPhone** | [Spiel](https://schneipp.github.io/stern-von-afrika/) in Safari öffnen → Teilen-Symbol → **„Zum Home-Bildschirm“** |
+| **Android** | In Chrome öffnen → Menü → **„App installieren“** (oder der Download-Knopf oben im Spiel) |
+| **Desktop (Chrome, Edge)** | Installieren-Symbol in der Adressleiste oder der Download-Knopf oben im Spiel |
+
+Nach dem ersten Start ist alles im Gerät gespeichert, das Spiel läuft dann auch ohne Internet. Hinweis für iOS: Ist der Stummschalter am Gerät aktiv, bleibt auch das Spiel stumm.
 
 ## Regeln in Kürze
 
@@ -65,15 +77,18 @@ Kein Build, keine Abhängigkeiten, alles steckt in einer HTML-Datei.
 ```bash
 git clone https://github.com/schneipp/stern-von-afrika.git
 cd stern-von-afrika
-xdg-open stern-von-afrika-v2.html   # macOS: open, Windows: start
+python3 -m http.server 8000        # dann http://localhost:8000 öffnen
 ```
+
+Die Seite lässt sich auch direkt per Doppelklick auf `index.html` öffnen. Nur die Installation als App und der Offline-Modus brauchen einen Webserver.
 
 | Datei | Inhalt |
 |---|---|
-| `stern-von-afrika-v2.html` | Das Spiel (aktuelle Version) |
+| `index.html` | Das Spiel (aktuelle Version), alles in einer Datei |
 | `stern-von-afrika-relief.jpg` | Die Reliefkarte, muss neben der HTML-Datei liegen |
+| `manifest.webmanifest`, `sw.js`, `icons/` | App-Installation und Offline-Cache |
 | `stern-von-afrika.html` | Version 1 mit gezeichneter Karte, schlicht und schnell |
-| `index.html` | Startseite für GitHub Pages, leitet auf v2 weiter |
+| `stern-von-afrika-v2.html` | Weiterleitung für alte Links |
 
 ## Hinweise
 

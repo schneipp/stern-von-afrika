@@ -1,0 +1,25 @@
+{
+  "name": "Der Stern von Afrika",
+  "short_name": "Stern Afrika",
+  "description": "Der Brettspielklassiker als Browserspiel: Edelsteine suchen, Räubern ausweichen und den Stern nach Kairo oder Tanger bringen.",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["fullscreen", "standalone"],
+  "orientation": "any",
+  "background_color": "#07131d",
+  "theme_color": "#07131d",
+  "lang": "de",
+  "categories": ["games", "entertainment"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ],
+  "screenshots": [
+    { "src": "docs/spielbrett.jpg", "sizes": "1200x717", "type": "image/jpeg", "form_factor": "wide", "label": "Spielbrett mit Reliefkarte" },
+    { "src": "docs/stern.jpg", "sizes": "1200x717", "type": "image/jpeg", "form_factor": "wide", "label": "Der Stern von Afrika wird gefunden" }
+  ]
+}
