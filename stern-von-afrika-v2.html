@@ -1,0 +1,1489 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Stern von Afrika</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Archivo:wght@400;600;800&family=Archivo+Narrow:wght@500;700&display=swap">
+<style>
+/* Layout: Vollbild-Reliefkarte mit Kamerafahrt links, rechts ein Expeditionspult (Reisende, Würfel, Tagebuch).
+   Funde erscheinen als große Plättchen-Drehung mitten im Bild. Bewusst dunkel (Spielschachtel bei Nacht), keine Theme-Umschaltung. */
+:root{
+  --night:#07131d; --panel:#0c1d2a; --panel-2:#112838; --panel-3:#18374b;
+  --paper:#f6ead0; --muted:#97adbb; --line:rgba(246,234,208,.13);
+  --gold:#f5bb34; --gold-hi:#ffe08a; --gold-lo:#9a5d0c; --red:#cf3b2c; --sea:#0a3354;
+  --display:"Alfa Slab One", Rockwell, "Roboto Slab", Georgia, serif;
+  --body:"Archivo", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --label:"Archivo Narrow", "Arial Narrow", "Roboto Condensed", sans-serif;
+  color-scheme:dark;
+}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{background:var(--night);color:var(--paper);font-family:var(--body);font-size:14px;line-height:1.45;overflow:hidden}
+button{font:inherit;cursor:pointer;color:inherit}
+button:focus-visible,input:focus-visible,select:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+
+#app{display:grid;grid-template-columns:minmax(0,1fr) 360px;height:100%}
+
+/* ---------- Brett ---------- */
+.board{position:relative;min-width:0;min-height:0;overflow:hidden;background:#06243c}
+#map{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}
+#map.dragging{cursor:grabbing}
+.vignette{position:absolute;inset:0;pointer-events:none;background:radial-gradient(130% 100% at 50% 50%,transparent 55%,rgba(3,10,18,.55) 100%)}
+.board.shake{animation:shake .55s cubic-bezier(.36,.07,.19,.97)}
+@keyframes shake{10%,90%{transform:translate(-2px,1px)}20%,80%{transform:translate(4px,-2px)}30%,50%,70%{transform:translate(-7px,3px)}40%,60%{transform:translate(7px,-3px)}}
+.flash{position:absolute;inset:0;pointer-events:none;opacity:0;background:radial-gradient(circle,rgba(207,59,44,.0) 30%,rgba(207,59,44,.55) 100%)}
+.flash.go{animation:flash .9s ease-out}
+@keyframes flash{0%{opacity:0}15%{opacity:1}100%{opacity:0}}
+
+.cam-ctl{position:absolute;right:14px;top:14px;display:flex;flex-direction:column;gap:6px;z-index:3}
+.cam-ctl button{width:38px;height:38px;border-radius:50%;border:1px solid rgba(255,255,255,.18);background:rgba(7,19,29,.72);backdrop-filter:blur(6px);display:grid;place-items:center;color:var(--paper)}
+.cam-ctl button:hover{border-color:var(--gold);color:var(--gold)}
+.cam-ctl button[aria-pressed="true"]{background:var(--gold);color:#2a1700;border-color:var(--gold)}
+.minimap{position:absolute;left:14px;bottom:14px;width:150px;aspect-ratio:860/790;border-radius:6px;overflow:hidden;border:1px solid rgba(255,255,255,.25);box-shadow:0 8px 24px rgba(0,0,0,.5);background:#06243c center/100% 100% no-repeat;z-index:3;cursor:pointer}
+.minimap .mm-view{position:absolute;border:1.5px solid var(--gold);box-shadow:0 0 0 999px rgba(0,0,0,.28);border-radius:2px}
+.minimap .mm-dot{position:absolute;width:7px;height:7px;margin:-3.5px 0 0 -3.5px;border-radius:50%;border:1px solid #111;background:var(--c)}
+
+.banner{position:absolute;left:50%;top:22px;transform:translate(-50%,-140%);z-index:4;pointer-events:none;display:flex;align-items:center;gap:12px;padding:10px 22px 10px 14px;border-radius:999px;background:linear-gradient(180deg,rgba(18,40,56,.95),rgba(8,20,30,.95));border:1px solid rgba(255,255,255,.14);box-shadow:0 10px 40px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.1);transition:transform .45s cubic-bezier(.2,1.4,.4,1)}
+.banner.show{transform:translate(-50%,0)}
+.banner .bchip{width:30px;height:30px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff8 0,transparent 35%),var(--c);box-shadow:0 0 0 3px rgba(0,0,0,.35),0 0 18px var(--c)}
+.banner b{font-family:var(--display);font-weight:400;font-size:20px;letter-spacing:.01em}
+.banner span{font-family:var(--label);text-transform:uppercase;letter-spacing:.14em;font-size:12px;color:var(--muted)}
+
+#toast{position:absolute;left:50%;bottom:22px;transform:translate(-50%,10px);z-index:4;background:rgba(7,19,29,.88);border:1px solid rgba(255,255,255,.15);backdrop-filter:blur(6px);padding:9px 16px;border-radius:999px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;max-width:calc(100% - 200px);text-align:center}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+
+/* 3D-Würfel */
+.dice-stage{position:absolute;left:50%;top:50%;width:120px;height:120px;margin:-60px 0 0 -60px;perspective:700px;z-index:5;pointer-events:none;opacity:0;transition:opacity .25s}
+.dice-stage.show{opacity:1}
+.dice-drop{width:100%;height:100%;transform-style:preserve-3d}
+.dice-stage.show .dice-drop{animation:drop .95s cubic-bezier(.3,.0,.3,1)}
+@keyframes drop{0%{transform:translateY(-260px) scale(1.4)}55%{transform:translateY(0) scale(1)}70%{transform:translateY(-34px)}85%{transform:translateY(0)}92%{transform:translateY(-8px)}100%{transform:translateY(0)}}
+.cube{width:100%;height:100%;position:relative;transform-style:preserve-3d;transition:transform .95s cubic-bezier(.2,.75,.3,1)}
+.face{position:absolute;inset:0;border-radius:18px;background:radial-gradient(circle at 30% 25%,#fffdf6,#efe2c2 70%,#d6c294);box-shadow:inset 0 0 0 2px rgba(120,90,40,.25),inset 0 -8px 16px rgba(120,90,40,.25);display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);padding:16px}
+.face i{width:20px;height:20px;border-radius:50%;margin:auto;background:transparent}
+.face i.on{background:radial-gradient(circle at 40% 35%,#5a3d22,#1d1209);box-shadow:inset 0 2px 2px rgba(0,0,0,.5)}
+.face.f1 i.on{background:radial-gradient(circle at 40% 35%,#ff6a55,#8e1408)}
+.dice-shadow{position:absolute;left:50%;bottom:-26px;width:110px;height:24px;margin-left:-55px;border-radius:50%;background:radial-gradient(rgba(0,0,0,.55),transparent 70%)}
+
+/* ---------- Pult ---------- */
+.panel{background:linear-gradient(180deg,var(--panel-2),var(--panel) 40%);border-left:1px solid var(--line);display:flex;flex-direction:column;min-height:0;overflow:auto;box-shadow:-10px 0 40px rgba(0,0,0,.35);z-index:2}
+.brand{padding:16px 16px 12px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--line)}
+.brand-star{flex:none;filter:drop-shadow(0 0 10px rgba(245,187,52,.6));animation:twinkle 3.2s ease-in-out infinite}
+@keyframes twinkle{0%,100%{transform:rotate(0) scale(1)}50%{transform:rotate(12deg) scale(1.08)}}
+.brand h1{flex:1;margin:0;font-family:var(--display);font-weight:400;font-size:23px;line-height:.98;letter-spacing:.01em;background:linear-gradient(180deg,var(--gold-hi),var(--gold) 55%,#c97d10);-webkit-background-clip:text;background-clip:text;color:transparent;text-wrap:balance;filter:drop-shadow(0 2px 0 #4a2a05)}
+.iconbtn{width:34px;height:34px;border-radius:8px;border:1px solid var(--line);background:transparent;display:grid;place-items:center;color:var(--paper);flex:none}
+.iconbtn:hover{border-color:var(--gold);color:var(--gold)}
+.iconbtn[aria-pressed="false"]{opacity:.45}
+.toolbar{display:flex;gap:6px;padding:10px 16px;border-bottom:1px solid var(--line)}
+.ghost{background:transparent;border:1px solid var(--line);padding:6px 11px;border-radius:7px;font-size:12.5px;font-weight:600}
+.ghost:hover{border-color:var(--gold);color:var(--gold)}
+.section{padding:14px 16px;border-bottom:1px solid var(--line)}
+.eyebrow{font-family:var(--label);text-transform:uppercase;letter-spacing:.14em;font-size:11.5px;color:var(--muted);margin:0 0 9px;font-weight:700}
+
+#players{display:grid;gap:7px}
+.pcard{position:relative;display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:11px;padding:9px 11px;border-radius:10px;background:rgba(0,0,0,.22);border:1px solid transparent;transition:background .3s,border-color .3s,transform .3s}
+.pcard.active{border-color:color-mix(in srgb,var(--c) 70%,transparent);background:linear-gradient(90deg,color-mix(in srgb,var(--c) 22%,transparent),rgba(0,0,0,.15));transform:translateX(-3px)}
+.chip{width:22px;height:22px;border-radius:50%;background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.65) 0,transparent 40%),var(--c);box-shadow:0 0 0 2px rgba(0,0,0,.4)}
+.pcard.active .chip{box-shadow:0 0 0 2px rgba(0,0,0,.4),0 0 14px var(--c)}
+.pname{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pname small{font-family:var(--label);font-size:10px;letter-spacing:.1em;color:var(--muted);border:1px solid var(--line);border-radius:3px;padding:0 4px;margin-left:5px;vertical-align:1px}
+.ploc{font-size:12px;color:var(--muted);display:flex;gap:5px;align-items:center;flex-wrap:wrap;min-height:18px}
+.pmoney{font-family:var(--label);font-weight:700;font-size:18px;font-variant-numeric:tabular-nums;color:var(--gold-hi)}
+.delta{position:absolute;right:12px;top:-4px;font-family:var(--label);font-weight:700;font-size:15px;pointer-events:none;animation:rise 1.4s ease-out forwards;text-shadow:0 2px 6px rgba(0,0,0,.7)}
+.delta.plus{color:#7dff9e}.delta.minus{color:#ff7a6a}
+@keyframes rise{0%{opacity:0;transform:translateY(8px)}15%{opacity:1}100%{opacity:0;transform:translateY(-26px)}}
+
+.turnbox{display:grid;gap:12px}
+.turnrow{display:flex;align-items:center;gap:14px}
+.die{width:52px;height:52px;flex:none;border-radius:12px;background:radial-gradient(circle at 30% 25%,#fffdf6,#e9dbb8);display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);padding:7px;box-shadow:inset 0 -4px 0 #c6b07c,0 6px 14px rgba(0,0,0,.4)}
+.die i{display:block;width:9px;height:9px;border-radius:50%;margin:auto}
+.die i.on{background:#24170b}
+#msg{min-width:0;font-size:13.5px}
+#msg b{color:var(--gold)}
+#actions{display:flex;flex-wrap:wrap;gap:8px}
+.btn{border:0;border-radius:9px;padding:10px 15px;font-weight:700;background:var(--panel-3);box-shadow:inset 0 0 0 1px var(--line),0 3px 0 rgba(0,0,0,.35);transition:transform .08s,filter .15s}
+.btn:hover:not(:disabled){box-shadow:inset 0 0 0 1px var(--gold),0 3px 0 rgba(0,0,0,.35)}
+.btn:active:not(:disabled){transform:translateY(2px);box-shadow:inset 0 0 0 1px var(--gold),0 1px 0 rgba(0,0,0,.35)}
+.btn.primary{background:linear-gradient(180deg,var(--gold-hi),var(--gold) 50%,#d98d14);color:#2a1700;box-shadow:inset 0 1px 0 rgba(255,255,255,.6),0 3px 0 #7a4a06,0 6px 18px rgba(245,187,52,.25)}
+.btn.primary:hover:not(:disabled){filter:brightness(1.06)}
+.btn:disabled{opacity:.38;cursor:not-allowed}
+.btn small{font-weight:500;opacity:.75;margin-left:3px}
+
+.legend{display:grid;grid-template-columns:auto 1fr auto;gap:6px 10px;align-items:center;font-size:12.5px}
+.legend .cost{font-family:var(--label);font-weight:700;color:var(--gold);font-variant-numeric:tabular-nums;text-align:right}
+#logList{list-style:none;margin:0;padding:0;display:grid;gap:5px;font-size:12.5px;color:#d3c7ab}
+#logList li{display:flex;gap:8px;align-items:baseline}
+#logList li::before{content:"";flex:none;width:7px;height:7px;border-radius:50%;background:var(--c,var(--muted));transform:translateY(-1px)}
+.logsec{flex:1;min-height:120px}
+
+/* ---------- Overlays ---------- */
+.overlay{position:fixed;inset:0;background:radial-gradient(circle at 50% 40%,rgba(10,30,45,.55),rgba(3,9,14,.88));display:flex;align-items:center;justify-content:center;padding:16px;z-index:30;backdrop-filter:blur(2px)}
+.sheet{background:linear-gradient(180deg,#132d40,#0b1c29);border:1px solid rgba(255,255,255,.12);border-radius:16px;width:min(600px,100%);max-height:calc(100% - 16px);overflow:auto;box-shadow:0 30px 90px rgba(0,0,0,.7),inset 0 1px 0 rgba(255,255,255,.08)}
+.sheet-head{padding:26px 26px 6px;text-align:center}
+.logo{font-family:var(--display);font-weight:400;font-size:clamp(34px,7vw,52px);line-height:.95;margin:6px 0 0;background:linear-gradient(180deg,#fff3c4,var(--gold) 50%,#b86c08);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 3px 0 #3d2204) drop-shadow(0 10px 24px rgba(245,187,52,.25));text-wrap:balance}
+.logo small{display:block;font-size:.42em;letter-spacing:.3em;margin-bottom:4px}
+.sheet-head p{margin:10px auto 0;color:var(--muted);font-size:14px;max-width:44ch}
+.sheet-body{padding:18px 26px 26px;display:grid;gap:14px}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg button{border:1px solid var(--line);background:rgba(0,0,0,.2);border-radius:8px;padding:6px 14px;font-weight:700}
+.seg button[aria-pressed="true"]{background:var(--gold);color:#2a1700;border-color:var(--gold)}
+.prow{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;gap:8px;align-items:center}
+.prow input,.prow select{font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:rgba(0,0,0,.25);color:var(--paper);min-width:0}
+.sheet-foot{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:center}
+.sheet .btn.primary{padding:13px 26px;font-size:16px}
+.rules{font-size:14px;line-height:1.55}
+.rules h3{font-family:var(--label);text-transform:uppercase;letter-spacing:.12em;font-size:12.5px;margin:8px 0 2px;color:var(--gold)}
+.rules p,.rules ul{margin:0 0 6px;max-width:65ch;color:#dcd2bb}
+.rules ul{padding-left:18px}
+.tokgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px 12px;font-size:13px}
+.tokgrid div{display:flex;gap:9px;align-items:center}
+.tokgrid small{color:var(--muted)}
+
+/* Fund-Enthüllung */
+.reveal{position:fixed;inset:0;z-index:40;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:16px;text-align:center;background:radial-gradient(circle at 50% 45%,color-mix(in srgb,var(--rc) 30%,rgba(3,9,14,.6)),rgba(3,9,14,.9) 70%);opacity:0;transition:opacity .3s;cursor:pointer;overflow:hidden}
+.reveal.go{opacity:1}
+.reveal.out{opacity:0}
+.rays{position:absolute;left:50%;top:44%;width:1500px;height:1500px;margin:-750px 0 0 -750px;border-radius:50%;background:repeating-conic-gradient(from 0deg,color-mix(in srgb,var(--rc) 40%,transparent) 0deg 7deg,transparent 7deg 18deg);-webkit-mask:radial-gradient(circle,#000 0,transparent 60%);mask:radial-gradient(circle,#000 0,transparent 60%);opacity:0;transform:scale(.4);transition:opacity .5s,transform 1s cubic-bezier(.2,1,.3,1);animation:spin 18s linear infinite}
+.reveal.flipped .rays{opacity:1;transform:scale(1)}
+.glow{position:absolute;left:50%;top:44%;width:520px;height:520px;margin:-260px 0 0 -260px;border-radius:50%;background:radial-gradient(circle,color-mix(in srgb,var(--rc) 70%,transparent),transparent 65%);opacity:0;transition:opacity .4s}
+.reveal.flipped .glow{opacity:.9;animation:breathe 2.4s ease-in-out infinite}
+@keyframes breathe{50%{transform:scale(1.12)}}
+@keyframes spin{to{rotate:360deg}}
+.rv-card{position:relative;width:min(250px,56vw);aspect-ratio:1;perspective:1000px;margin-bottom:10px}
+.reveal.go .rv-card{animation:cardIn .6s cubic-bezier(.2,1.3,.4,1) both}
+@keyframes cardIn{from{transform:translateY(60px) scale(.3) rotate(-25deg);opacity:0}}
+.rv-inner{position:absolute;inset:0;transform-style:preserve-3d;transition:transform .75s cubic-bezier(.3,1.5,.5,1)}
+.reveal.flipped .rv-inner{transform:rotateY(180deg)}
+.rv-face{position:absolute;inset:0;border-radius:50%;backface-visibility:hidden;-webkit-backface-visibility:hidden;display:grid;place-items:center}
+.rv-back{background:radial-gradient(circle at 35% 30%,#e8543f,#a3200f 60%,#6d1205);box-shadow:inset 0 0 0 10px #f2b632,inset 0 0 0 14px #8a5a00,0 20px 50px rgba(0,0,0,.6)}
+.rv-front{transform:rotateY(180deg);background:radial-gradient(circle at 40% 30%,#fffaf0,#f1e2bf 60%,#d8bf8a);box-shadow:inset 0 0 0 10px #f2b632,inset 0 0 0 14px #8a5a00,0 0 60px color-mix(in srgb,var(--rc) 80%,transparent),0 20px 50px rgba(0,0,0,.6)}
+.rv-front svg{width:78%;height:78%;filter:drop-shadow(0 6px 10px rgba(0,0,0,.35))}
+.reveal.flipped .rv-front svg{animation:pop .7s .35s cubic-bezier(.2,1.6,.4,1) both}
+@keyframes pop{from{transform:scale(.4) rotate(-20deg)}}
+.rv-title{position:relative;font-family:var(--display);font-weight:400;font-size:clamp(38px,8vw,78px);line-height:1;margin:0;color:#fff;letter-spacing:.02em;text-shadow:0 4px 0 color-mix(in srgb,var(--rc) 55%,#000),0 0 40px color-mix(in srgb,var(--rc) 90%,transparent);opacity:0;text-wrap:balance}
+.reveal.flipped .rv-title{animation:slam .55s .3s cubic-bezier(.2,1.5,.4,1) both}
+@keyframes slam{from{opacity:0;transform:scale(2.6)}to{opacity:1;transform:scale(1)}}
+.rv-sub{position:relative;font-size:17px;max-width:40ch;color:#efe4ca;opacity:0;transition:opacity .4s .7s}
+.rv-value{position:relative;font-family:var(--label);font-weight:700;font-size:clamp(30px,5vw,46px);color:var(--gold-hi);font-variant-numeric:tabular-nums;text-shadow:0 0 24px rgba(245,187,52,.6);opacity:0;transition:opacity .3s .55s;min-height:1.2em}
+.rv-value.neg{color:#ff8a7a;text-shadow:0 0 24px rgba(255,80,60,.6)}
+.reveal.flipped .rv-sub,.reveal.flipped .rv-value{opacity:1}
+.rv-hint{position:absolute;bottom:22px;left:0;right:0;font-family:var(--label);letter-spacing:.14em;text-transform:uppercase;font-size:11.5px;color:rgba(255,255,255,.45)}
+
+.win-crown{display:flex;justify-content:center}
+.win-crown svg{width:150px;height:150px;filter:drop-shadow(0 0 30px rgba(245,187,52,.7));animation:twinkle 3s ease-in-out infinite}
+.ranking{display:grid;gap:6px}
+.rank{display:grid;grid-template-columns:24px auto 1fr auto;gap:10px;align-items:center;padding:8px 12px;border-radius:9px;background:rgba(0,0,0,.25)}
+.rank b{font-family:var(--label);color:var(--muted)}
+.rank .pm{font-family:var(--label);font-weight:700;color:var(--gold-hi);font-variant-numeric:tabular-nums}
+
+#fx{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:45}
+
+/* ---------- Kartenelemente ---------- */
+#map .lbl{font-family:var(--label);font-weight:700;fill:#fff8e8;stroke:rgba(8,18,28,.88);paint-order:stroke;stroke-linejoin:round;text-transform:uppercase;letter-spacing:.05em;pointer-events:none}
+#map .lbl.big{fill:var(--gold-hi)}
+#map .hit{cursor:pointer}
+#map .ring{animation:ring 1.3s ease-out infinite;transform-box:fill-box;transform-origin:center}
+@keyframes ring{0%{transform:scale(.7);opacity:1}100%{transform:scale(1.6);opacity:0}}
+#map .tgt{animation:bob 1.2s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+@keyframes bob{50%{transform:scale(1.15)}}
+#map .aura{animation:spin 6s linear infinite;transform-box:fill-box;transform-origin:center}
+#map .startglow{animation:breathe 3s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+#map .boom{animation:boom 1.1s ease-out forwards;transform-box:fill-box;transform-origin:center}
+@keyframes boom{from{transform:scale(.3);opacity:1}to{transform:scale(4);opacity:0}}
+#map .trail{animation:fade 2.2s ease-in forwards}
+@keyframes fade{to{opacity:0}}
+#map .float{animation:floatUp 1.6s ease-out forwards}
+@keyframes floatUp{0%{opacity:0;transform:translateY(4px)}15%{opacity:1}100%{opacity:0;transform:translateY(-30px)}}
+#map .tokidle{animation:tokidle 4s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+@keyframes tokidle{0%,88%,100%{transform:scale(1)}94%{transform:scale(1.18)}}
+
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+}
+@media (max-width: 900px){
+  body{overflow:auto}
+  #app{grid-template-columns:1fr;grid-template-rows:auto auto;height:auto}
+  .board{height:68vh;height:68svh}
+  .panel{border-left:0;border-top:1px solid var(--line);overflow:visible}
+  .minimap{width:96px}
+  .banner b{font-size:16px}
+  #toast{max-width:calc(100% - 32px);bottom:70px}
+}
+</style>
+
+<div id="app">
+  <main class="board" id="board">
+    <svg id="map" viewBox="0 0 860 790" role="img" aria-label="Spielbrett: Reliefkarte von Afrika mit Städten und Reiserouten"></svg>
+    <div class="vignette"></div>
+    <div class="flash" id="flash"></div>
+    <div class="cam-ctl">
+      <button type="button" id="camFollow" aria-pressed="true" title="Kamera folgt dem Zug" aria-label="Kamera folgt"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="3.5"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg></button>
+      <button type="button" id="camIn" title="Hineinzoomen" aria-label="Hineinzoomen"><svg width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+      <button type="button" id="camOut" title="Herauszoomen" aria-label="Herauszoomen"><svg width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M5 12h14"/></svg></button>
+      <button type="button" id="camAll" title="Ganz Afrika zeigen" aria-label="Übersicht"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+    </div>
+    <div class="minimap" id="minimap" title="Übersichtskarte"><div class="mm-view" id="mmView"></div></div>
+    <div class="banner" id="banner"><span class="bchip" id="bchip"></span><div><span>Am Zug</span><br><b id="bname"></b></div></div>
+    <div class="dice-stage" id="diceStage"><div class="dice-shadow"></div><div class="dice-drop"><div class="cube" id="cube"></div></div></div>
+    <div id="toast" role="status" aria-live="polite"></div>
+  </main>
+  <aside class="panel">
+    <header class="brand">
+      <svg class="brand-star" width="34" height="34" viewBox="-12 -12 24 24" aria-hidden="true"><polygon id="brandStar" fill="url(#bsg)" stroke="#7a4a06" stroke-width=".8"/><defs><linearGradient id="bsg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff3c4"/><stop offset=".6" stop-color="#f5bb34"/><stop offset="1" stop-color="#b86c08"/></linearGradient></defs></svg>
+      <h1>Stern von Afrika</h1>
+      <button class="iconbtn" id="sfxBtn" type="button" aria-pressed="true" title="Soundeffekte" aria-label="Soundeffekte"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg></button>
+      <button class="iconbtn" id="musBtn" type="button" aria-pressed="true" title="Musik" aria-label="Musik"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3" fill="currentColor"/><circle cx="17" cy="16" r="3" fill="currentColor"/></svg></button>
+    </header>
+    <div class="toolbar">
+      <button class="ghost" id="newBtn" type="button">Neues Spiel</button>
+      <button class="ghost" id="rulesBtn" type="button">Regeln</button>
+    </div>
+    <section class="section">
+      <p class="eyebrow">Reisende</p>
+      <div id="players"></div>
+    </section>
+    <section class="section turnbox">
+      <p class="eyebrow" id="turnHead">Am Zug</p>
+      <div class="turnrow">
+        <div class="die" id="die" aria-label="Würfel"></div>
+        <div id="msg"></div>
+      </div>
+      <div id="actions"></div>
+    </section>
+    <section class="section">
+      <p class="eyebrow">Reisekosten</p>
+      <div class="legend">
+        <svg width="34" height="10" aria-hidden="true"><line x1="2" y1="5" x2="32" y2="5" stroke="#6b4c22" stroke-width="1.5"/><circle cx="6" cy="5" r="2.6" fill="#3a2410" stroke="#f6ead0" stroke-width=".8"/><circle cx="17" cy="5" r="2.6" fill="#3a2410" stroke="#f6ead0" stroke-width=".8"/><circle cx="28" cy="5" r="2.6" fill="#3a2410" stroke="#f6ead0" stroke-width=".8"/></svg>
+        <span>Landweg</span><span class="cost">frei</span>
+        <svg width="34" height="10" aria-hidden="true"><circle cx="6" cy="5" r="2.6" fill="#f6ead0" stroke="#0a3354"/><circle cx="17" cy="5" r="2.6" fill="#f6ead0" stroke="#0a3354"/><circle cx="28" cy="5" r="2.6" fill="#f6ead0" stroke="#0a3354"/></svg>
+        <span>Seeweg, pro Zug</span><span class="cost">£ 100</span>
+        <svg width="34" height="10" aria-hidden="true"><path d="M2 8 Q17 -2 32 8" fill="none" stroke="#ff5a46" stroke-width="1.8" stroke-dasharray="4 3"/></svg>
+        <span>Fluglinie</span><span class="cost">£ 300</span>
+        <svg width="34" height="18" aria-hidden="true"><g transform="translate(17 9)"><circle r="7.5" fill="#b5301f" stroke="#f2b632" stroke-width="1.6"/><circle r="2.4" fill="#f2b632"/></g></svg>
+        <span>Plättchen aufdecken</span><span class="cost">£ 100 / 4–6</span>
+      </div>
+    </section>
+    <section class="section logsec">
+      <p class="eyebrow">Reisetagebuch</p>
+      <ol id="logList"></ol>
+    </section>
+  </aside>
+</div>
+
+<div class="overlay" id="setup" hidden>
+  <div class="sheet" role="dialog" aria-labelledby="setupTitle">
+    <div class="sheet-head">
+      <h2 class="logo" id="setupTitle"><small>DER</small>Stern von Afrika</h2>
+      <p>Irgendwo zwischen Tanger und Kapstadt liegt der größte Diamant der Welt. Wer bringt ihn zuerst heim?</p>
+    </div>
+    <div class="sheet-body">
+      <div>
+        <p class="eyebrow">Anzahl Reisende</p>
+        <div class="seg" id="countSeg"></div>
+      </div>
+      <div id="setupRows" style="display:grid;gap:8px"></div>
+      <div class="sheet-foot">
+        <button class="btn primary" id="startBtn" type="button">Expedition starten</button>
+        <button class="btn" id="cancelSetup" type="button" hidden>Zurück zum Spiel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="rules" hidden>
+  <div class="sheet" role="dialog" aria-labelledby="rulesTitle">
+    <div class="sheet-head"><h2 class="logo" id="rulesTitle" style="font-size:38px">Spielregeln</h2><p>2 bis 5 Reisende · ab 6 Jahren · etwa 45 Minuten</p></div>
+    <div class="sheet-body rules">
+      <div>
+        <h3>Ziel</h3>
+        <p>Alle starten mit £ 300 in Kairo oder Tanger. Unter einem der Plättchen liegt der Stern von Afrika. Wer ihn findet, muss ihn nach Kairo oder Tanger bringen. Sobald der Stern gefunden ist, gewinnt aber auch, wer mit einem Hufeisen zuerst eine der beiden Städte erreicht.</p>
+        <h3>Reisen</h3>
+        <ul>
+          <li>Würfeln und genau so viele Felder weit ziehen. Umkehren im selben Zug ist nicht erlaubt.</li>
+          <li>Eine Stadt mit verdecktem Plättchen beendet den Zug sofort.</li>
+          <li>Landwege sind frei. Ein Zug über Seefelder kostet £ 100.</li>
+          <li>Von Flughäfen (roter Ring) kann man statt zu würfeln für £ 300 entlang einer roten Linie fliegen.</li>
+          <li>Wer pleite auf einer Insel oder auf See festsitzt, darf kostenlos mit dem Schiff weiter (Regel seit 2005).</li>
+        </ul>
+        <h3>Plättchen aufdecken</h3>
+        <p>Beim Ankommen sofort für £ 100 aufdecken, oder im nächsten Zug würfeln: Bei 4, 5 oder 6 wird kostenlos aufgedeckt. Man kann die Stadt auch einfach verlassen.</p>
+        <div class="tokgrid" id="tokLegend"></div>
+        <h3>Steuerung</h3>
+        <p>Die Kamera folgt automatisch dem Zug. Mit Ziehen, Mausrad oder zwei Fingern kannst du selbst über die Karte fliegen; der Fadenkreuz-Knopf schaltet das Mitfahren wieder ein. Leertaste oder Enter löst die Hauptaktion aus.</p>
+      </div>
+      <div class="sheet-foot"><button class="btn primary" id="closeRules" type="button">Verstanden</button></div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="win" hidden>
+  <div class="sheet" role="dialog" aria-labelledby="winTitle">
+    <div class="sheet-head">
+      <div class="win-crown" id="winIcon"></div>
+      <h2 class="logo" id="winTitle" style="font-size:44px"></h2>
+      <p id="winText"></p>
+    </div>
+    <div class="sheet-body">
+      <div class="ranking" id="ranking"></div>
+      <div class="sheet-foot"><button class="btn primary" id="againBtn" type="button">Neue Expedition</button><button class="btn" id="viewBoard" type="button">Alle Plättchen zeigen</button></div>
+    </div>
+  </div>
+</div>
+
+<div class="reveal" id="reveal" hidden>
+  <div class="glow"></div>
+  <div class="rays"></div>
+  <div class="rv-card"><div class="rv-inner"><div class="rv-face rv-back" id="rvBack"></div><div class="rv-face rv-front" id="rvFront"></div></div></div>
+  <h2 class="rv-title" id="rvTitle"></h2>
+  <div class="rv-value" id="rvValue"></div>
+  <div class="rv-sub" id="rvSub"></div>
+  <div class="rv-hint">Tippen zum Weiterspielen</div>
+</div>
+<canvas id="fx"></canvas>
+
+<script>
+(() => {
+'use strict';
+const COAST = 'M498.5,54.7L500.1,54.7L501.7,54L501.2,55.2L502.6,55.3L503.1,56.4L504.5,56.3L506.3,55.9L510,55.9L513,56.6L514.8,56.9L517.3,56.5L517.3,58.2L518.9,58.2L520.3,57.8L521.7,57.8L522.9,56.9L522.8,58.4L522.5,59.5L520.5,59.9L518.3,59.8L516.1,59.9L512.1,60.4L508,60.7L507.3,59.4L505.8,58.9L504.6,58.4L500,57.8L497,57.7L495.6,57L495.5,55.8L495.7,54.7L497.2,54.5L498.5,54.7ZM494.2,20.4L494.7,21.5L496.4,22.3L498.8,23.1L501,23.3L502,24.6L502.2,26.6L502.8,27.8L504.6,28.5L505.9,28.8L505.4,30.2L504.2,29.8L502.1,28.8L501.4,27.6L500.6,26.6L498.8,26L497.6,26L496.2,24.5L495.1,23.9L493.6,22.7L492.5,22L490.3,21.3L488.8,21.5L489.9,20.8L491.5,20L493.1,19.7L494.2,20.4ZM604.6,54.1L599.4,57.1L599.3,58.6L600.2,59.5L598.2,60.3L597,60.3L595.1,61.9L592.9,62.8L591.8,63L590.2,63.6L588.7,63.4L586.9,63.5L585.1,62.9L583.2,60.5L583,59.2L584.7,59.1L586.5,58.2L587.7,58.4L589.3,57.2L591.2,56.4L593.1,56.6L594.6,56.6L596.1,56.5L600.6,55.3L601.9,54.5L604.1,53.7L605.5,53.4ZM291.4,12.1L293.4,12.1L294.6,13L293.5,14.4L292.5,16.1L290.7,17L289,16.3L287.7,15.9L287,14.6L285.8,14.7L284,14.6L287.8,11.5L289,10.9L291.6,10.3L291.6,11.6ZM755.4,534.3L756.4,536.4L758,538.8L759.4,540.7L759.7,542.7L760.7,545.8L761.8,550.4L762,555.1L762.4,557.3L763.1,559.4L764.4,561.5L764.8,563.9L764.1,566.3L762.9,568.6L762.1,569.6L760.9,569L760.2,568L759.3,565.7L758.9,564.6L757.4,564.5L756.5,565.7L756.7,567L757.1,569.3L757.1,570.8L758.3,572.6L758.4,574.9L757.3,577L757.4,578.5L756,579.3L754.5,582.4L755,586.7L754.8,589L753.6,593.4L753,595.4L752,597.9L750.6,601.2L749.2,605.3L748,609.5L747.1,612.1L746.1,614.6L744.7,619L743.5,623.5L741.8,628.4L739.3,633.9L738.6,637.5L738,639.9L737.4,642.3L736.1,646.3L735.9,647.6L735.6,648.7L734.3,651.2L733.4,653.2L733.1,654.4L732.7,655.6L731.8,657.9L730.4,659.8L727.3,661.5L723.9,661.7L721.6,662.3L719.2,663.4L716.9,664.7L715.1,665.6L712.1,665.7L708.1,663.3L707,663L704.7,662.7L703.5,662.3L702.6,661.2L700.8,660.2L699.9,658.6L699.1,656.4L696.9,653.6L696.6,651.1L696.6,649.8L696.5,647.4L697.2,645.3L696.4,643.1L696.2,641.9L694,638.9L693.3,636.9L692.6,633.8L692.7,630.5L692.9,629.3L693.4,627.9L694.4,626.5L695,623.6L697,622.5L698,621.8L699.1,618.7L700.6,616.6L701.2,615.5L702.4,613.8L703.5,611.5L704,609.2L704.3,606.7L704.5,605.5L704.5,604.3L703.9,603L702.4,600.7L702.5,598.6L702.3,597.4L701.8,596.2L701.1,595L700.4,592.9L700.1,589.3L700.1,588L699.4,585.8L699.8,583.9L704.2,577L704.2,574.1L704.3,572.9L705.5,572L709.1,571.7L710.5,571L711.7,569.8L713,570.1L714.8,569.9L716.3,569.5L717,568.1L718.8,568L720,567.8L721.6,567.4L723.1,569L724.4,569L723.4,568.1L723.8,566L724.7,565.1L726.8,563.8L728.8,562.3L730.3,564.2L731.3,563L730.9,561.5L732,560.4L732.8,559.4L733.2,558.2L734.4,557L735,558.2L734.4,559.3L735.9,558.6L736.7,557.4L737.7,556.4L739.7,556.7L738.1,555.5L737.7,553.7L739.5,550.7L739,548.6L739,547.3L739.8,546.1L741.9,547.1L743.4,546.4L745.1,544.7L746.2,544.3L748,542.7L749.1,539.4L748.9,537.2L747.9,534.7L749.3,534.4L750.3,533.2L752.1,530.8L753.3,531.9L754.8,533.5ZM356.3,1.2L357.9,4.4L357.5,6L356.4,7.3L357,9.1L356.9,10.8L356.2,16.5L355.6,18.3L353.9,18.3L352.6,17.8L351,17.9L350.2,19.6L348.8,20.9L347.2,20.7L346,20.4L344.9,18.9L344.1,17.1L344,15.2L344.6,13.5L345.4,12.3L344.9,11L344,10.2L344.7,8.7L344.7,7.1L343.9,5.6L343,4.4L341.9,3.5L341.8,2.3L342.2,0.9L343.6,1.5L345.7,1.5L347,1L348.2,0.5L350,-1.1L351.6,-1.9L353.5,-2L355,-1.1L356.1,-0.2L356.3,1.2ZM354.8,-18.1L354.6,-16.6L355.3,-15.5L355.6,-11.6L354.3,-9.7L353.9,-7.3L353.3,-6.3L352.5,-4.6L350,-4.8L348.4,-5.6L348.9,-7L347.7,-7.4L347.6,-8.7L346.2,-9.3L347,-10.4L345.9,-11.6L346.7,-12.8L345.7,-13.6L347.1,-15.5L349.9,-16.5L351.4,-17.3L352.9,-16.9L353.2,-18.1L353.3,-19.4L354.6,-19.8L354.8,-18.6ZM415.8,27.8L415.1,28.9L412.3,32.2L411.9,33.5L411.3,34.7L411,36.2L411.9,37.2L412.4,38.6L412.9,39.9L411.9,40.7L411,42.2L410,43.1L407.8,42.9L406.1,42.3L403.7,40.3L402.6,39.5L401.4,39L399.1,39L395.9,37.5L393.6,36.5L392.2,35.5L390.4,34.9L389.2,34.3L387.6,34.3L385.3,33.3L384.5,32.3L384.9,30.6L385.5,29.5L386.6,28.9L388.5,29.4L390.5,29.2L391.6,28.1L392.9,28.1L394.3,28.9L396.8,30L399.4,29.8L402.9,29.8L404.2,29.6L406.4,29.1L407.4,28.5L409.8,28.3L411.2,28.5L412.8,27.7L415,27.1L416.3,27.3ZM-40,-40L900,-40L900,-38.2L900,-36.7L900,-34.9L900,-29.7L900,-28.3L900,-26.9L900,-25.3L900,-22.9L900,-20.4L900,-18.3L900,-17L900,-18.8L900,-22.4L900,-21L900,-22.8L900,-20L900,-18.2L900,-17L900,-15.2L900,-13.3L900,-11.8L900,-10.4L900,-9L900,-7.1L900,-4.9L900,-3L900,-1.2L900,0.7L900,2.7L900,5.1L900,6.4L900,8L900,9.6L900,11L900,13L900,14.4L900,16.2L900,17.9L900,19.2L900,21L900,22.6L900,23.8L900,28.2L900,31.1L900,33.2L900,37.3L900,39.4L900,40.7L900,42.6L900,45.3L900,46.8L900,48L900,49.5L900,53.1L900,55L900,56.7L900,58.2L900,59.8L900,61.3L900,59.8L900,61.1L900,62.8L900,61.6L900,63.1L900,64.5L900,62.8L900,65.6L900,66.8L900,65.1L900,63.3L900,61.8L900,59.5L900,57.8L900,55.4L900,54.1L900,52.9L900,51.3L900,49.9L900,48.3L900,46.6L900,45.2L900,43.1L900,41.3L900,39.9L900,41.5L900,40.2L900,39L900,37L900,35.5L900,33.8L900,32.6L900,31.2L900,32.6L900,31.3L900,32.7L900,31.2L900,29.6L900,27.7L900,25.2L900,23.4L900,21.9L900,17.1L900,15.7L900,14.2L900,12.4L900,13.7L900,12.1L900,10L900,11.6L900,13.1L900,16.3L900,18.5L900,20L900,21.4L900,22.6L900,20.8L900,18.9L900,17.3L900,16L900,14.5L900,13.1L900,11.5L900,9.5L900,6.4L900,5L900,3.1L900,1.6L900,0.3L900,1.5L900,3.2L900,7.7L900,10.1L900,12.5L900,14.4L900,15.9L900,17.8L900,19.3L900,18.1L900,21.5L900,23.1L900,25.8L900,28.2L900,29.6L900,31L900,32.2L900,33.6L900,35.1L900,36.7L900,38L900,36.5L900,35.1L900,33.8L900,31.7L900,34L900,35.4L900,36.8L900,38.2L900,39.8L900,41.7L900,40.4L900,41.6L900,43.4L900,44.6L900,45.9L900,48.3L900,49.8L900,51.4L900,52.6L900,53.8L900,55.3L900,57L900,58.9L900,61.5L900,62.9L900,64.2L900,65.5L900,66.8L900,68.3L900,71.3L900,72.8L900,75.1L900,77.6L900,79.8L900,81.6L900,83.4L900,85.4L900,87.9L900,89.5L900,91L900,93L900,91.4L900,89.7L900,90.9L900,92.5L900,93.7L900,95.2L900,96.8L900,98.4L900,100.8L900,102.1L900,104.4L900,106.1L900,107.6L900,110.2L900,112.2L900,114.2L900,118.7L900,117.4L900,118.7L900,120.5L900,122.3L900,123.6L900,126.3L900,127.7L900,129.6L900,131.1L900,132.5L900,134.2L900,135.9L900,137.4L900,139L900,141.1L900,143.3L900,142L900,143.2L900,144.5L900,145.9L900,147.6L900,149.5L900,150.8L900,153L900,155.6L900,156.9L900,158.7L900,160L900,161.5L900,163.8L900,165.2L900,166.7L900,168.9L900,170.6L900,172.1L900,173.8L900,175.5L900,176.7L900,178.2L900,179.9L900,181.2L900,182.8L900,184.7L900,186L900,184.7L900,182.7L900,181.4L900,179.8L900,181.1L900,182.7L900,184.1L900,186L900,187.8L900,189.1L900,190.6L900,192.2L900,190.7L900,192L900,193.4L900,195.1L900,197.2L900,198.7L900,200.6L900,202.1L900,204.8L900,206.4L900,204.9L900,202.9L900,201.6L900,199.5L900,197.7L900,196.2L900,194.4L900,193.1L900,194.6L900,192.8L900,191.3L900,192.6L900,193.9L900,195.9L900,197.2L900,198.7L900,200.5L900,201.9L900,204.7L900,206.1L900,207.9L900,210.1L900,214.1L900,215.3L900,217.1L900,218.7L900,220.3L900,222.2L900,223.5L900,225L900,226.8L900,229.5L900,231.3L900,232.8L900,236.3L900,237.8L900,239.4L900,241L900,243.6L900,245.1L900,246.8L900,248.4L900,249.7L900,251.3L900,254.2L900,255.7L900,258.2L900,260L900,262L900,264.5L900,266.2L900,268.5L900,271.4L900,274.1L900,275.5L900,277.2L900,279.7L900,282.8L900,286.1L900,289.3L900,290.9L900,292.3L900,294L900,295.3L900,296.6L900,298L900,299.6L900,301L900,302.8L900,304.4L900,306L900,304.4L900,306L900,304.6L900,306.2L900,307.7L900,309.4L900,311L900,307.8L900,311.8L900,313.6L900,310.4L900,313.3L900,315L900,319.1L900,320.4L900,322L900,323.7L900,322L900,318.1L900,313.9L900,311.8L900,310.6L900,309.3L900,308L900,306.6L900,304.6L900,303.3L900,301.1L900,299.4L900,300.8L900,299.3L900,297.9L900,296.3L900,294.1L900,292.9L900,291.1L900,289.9L900,288.5L900,286.1L900,284.7L900,283.1L900,281.8L900,279.7L900,278.1L900,276.4L900,274.8L900,276.5L900,278.3L900,279.6L900,282.3L900,286.5L900,288.3L900,289.5L900,292.5L900,295.4L900,297.8L900,301.1L900,304.3L900,306.1L900,307.3L900,310.7L900,312.7L900,315.9L900,317.3L900,318.9L900,323.3L900,324.9L900,327.3L900,335.6L900,337.7L900,335.4L900,333.6L900,332.3L900,334L900,337.2L900,339.2L900,341.4L900,345.3L900,347.6L900,351.4L900,353.6L900,355.9L900,357.4L900,361.5L900,363.3L900,366.1L900,370.2L900,372.3L900,374.8L900,376.2L900,380.7L900,382.3L900,384.2L900,387.4L900,392.8L900,395.2L900,393.8L900,395.4L900,396.7L900,395L900,392.1L900,389.6L900,387.5L900,385.5L900,384.3L900,381.9L900,379.9L900,378.6L900,375.3L900,373.7L900,372.2L900,370.3L900,369L900,367.7L900,366.3L900,363.5L900,359.6L900,354.1L900,352.2L900,350.2L900,348.2L900,346.8L900,342.5L900,341.2L900,338.9L900,336.4L900,334.4L900,332.8L900,331.1L900,329.8L900,327.4L900,325.8L900,322.3L900,320.3L900,317.1L900,315.1L900,311.6L900,308.1L900,309.7L900,308.2L900,306.5L900,303.2L900,301.4L900,300.1L900,298.7L900,296.7L900,294.8L900,293.4L900,292L900,290.4L900,288.7L900,287L900,285.6L900,283.4L900,281.5L900,280.1L900,278.4L900,277.1L900,275.2L900,272.7L900,270.7L900,273.5L900,271L900,268.4L900,266.7L900,265.4L900,263.5L900,261.4L900,258.1L900,256.9L900,255.7L900,251.2L900,249.8L900,248.6L900,245.4L900,243.3L900,241.1L900,239.4L900,237.9L900,236L900,238L900,239.7L900,242.2L900,244.4L900,242.3L900,243.7L900,245.6L900,247.2L900,249.3L900,251.6L900,250.1L900,251.7L900,250.2L900,248.6L900,250.3L900,248.7L900,246L900,248.1L900,249.9L900,244.8L900,243.6L900,241.3L900,238.7L900,236.9L900,234.3L900,233L900,231.8L900,228L900,224.9L900,222.7L900,221.1L900,218.5L900,217.1L900,218.5L900,220.1L900,218.1L900,216.3L900,217.6L900,215.6L900,213.9L900,212.7L900,211.5L900,209.9L900,211.5L900,209.3L900,206.2L900,208.5L900,207.2L900,205.9L900,204.4L900,207L900,205.3L900,202.8L900,201.2L900,198.3L900,194.8L900,193.1L900,191.2L900,188.4L900,186.8L900,185L900,182.9L900,181.2L900,182.6L900,183.9L900,179.7L900,177.3L900,175.6L900,174.1L900,175.8L900,177.3L900,178.7L900,180.1L900,181.7L900,183.2L900,184.6L900,186.4L900,187.8L900,189.5L900,191L900,188.4L900,189.8L900,188L900,185.3L900,187.1L900,189.1L900,190.8L900,192.3L900,190.2L900,187.2L900,189.7L900,191.8L900,189.9L900,191.7L900,193.5L900,189.9L900,191.7L900,193.4L900,192.1L900,189.7L900,187.8L900,186.3L900,187.9L900,189.5L900,191.7L900,193.5L900,195L900,196.3L900,197.6L900,198.9L900,200.3L900,202.5L900,203.8L900,205.8L900,208.3L900,209.9L900,212.1L900,213.8L900,218.7L900,220.4L900,223.1L900,226L900,229.3L900,232.1L900,233.9L900,235.4L900,237.3L900,239L900,240.6L900,242.2L900,244.4L900,246.7L900,250.4L900,251.9L900,256.8L900,259.3L900,262L900,264.2L900,266.5L900,267.9L900,269.4L900,271.4L900,273.1L900,275.1L900,272.9L900,274.7L900,276.4L900,283.1L900,285.5L900,287L900,290.1L900,293.1L900,295.5L900,296.9L900,302.3L900,306.8L900,308.2L900,309.7L900,313.2L900,315.5L900,316.9L900,319L900,321.1L900,323.4L900,324.9L900,326.2L900,328.1L900,326.8L900,321.5L900,319.1L900,317.6L900,315.5L900,313.2L900,310.7L900,312.9L900,314.6L900,310.8L900,309.1L900,306.7L900,302.2L900,299.4L900,296.4L900,293L900,290.4L900,284.4L900,281.5L900,280.2L900,274.9L900,273.3L900,271.5L900,269.5L900,268.3L900,265.9L900,264.2L900,262.9L900,261L900,259.3L900,256.9L900,255.2L900,253.4L900,251.3L900,249.5L900,245.4L900,238L900,234.7L900,230.9L900,229L900,227.4L900,224.2L900,222.2L900,220.7L900,218.5L900,219.8L900,217.8L900,216.4L900,214.8L900,212.4L900,209.2L900,204.4L900,201.7L900,200.5L900,199.2L900,196.3L900,194.5L900,193L900,191.2L900,188.4L900,189.7L900,191.4L900,192.7L900,194.7L900,197.8L900,200.3L900,202.6L900,199.1L900,194.9L900,193.2L900,191.6L900,190.1L900,188L900,186.2L900,184.5L900,181.8L900,180.3L900,182.2L900,179.5L900,178.1L900,176.4L900,174.3L900,172.5L900,173.8L900,171.4L900,169.8L900,168.3L900,166.3L900,162.4L900,160.7L900,158.9L900,156.2L900,154.2L900,155.5L900,156.9L900,158.2L900,156.7L897.2,156.1L895.6,156.5L894.9,157.9L892.9,157.7L890.2,157.8L886.6,157.4L884.4,158L883.1,158.7L882,157.8L880.9,158.4L879.1,158.7L877.4,158.6L875.3,158L874.1,159L872.4,158.6L871.1,158.2L866.6,157.2L865.9,155.9L864,156.9L860.3,156.2L859,156.4L856.1,156L854.6,155.2L852.3,155.7L850.5,155.8L848,154.5L845.3,154.1L843.2,154.2L840.2,153.6L838,153.5L833.4,152.1L832.6,150.8L832.1,149.6L832,148.4L831.1,146.3L830.7,143.2L830.4,142L829.1,140.1L828.1,139.1L823.6,138L821.2,138.6L819.4,139.6L816.5,140.2L815.2,141.7L812.9,142.1L811.5,142.8L809,144.4L807.6,144.9L805.2,144.1L802.5,143L800.7,142.7L798.2,142.9L795.1,141.5L793.4,140L789.8,138.6L786.9,136.8L786,135.1L784.8,133.8L781.9,132.8L780.3,131.8L778.4,131.5L776.7,131.6L775.2,130.9L772.8,128.7L771.3,125.7L770.6,122.7L768.7,121.3L768.8,120L767.9,118.8L766.8,118.5L766.7,116.6L765.4,114.5L763.9,113.2L762.3,111.3L761.3,109.5L760.7,108L755.6,109.7L754.3,108.7L750.6,106.9L751.9,106.2L751.3,104.9L750,104.9L749.2,106L749.1,107.6L749.2,108.8L748.3,109.6L746.7,109.7L745.4,110.4L743.5,110.4L741.4,109.6L739.8,109.9L740,111.6L740.8,112.8L741.5,114.3L739.7,113.8L738.2,115.1L737.2,116.1L738.5,116.3L740,116.1L740.9,117.3L741.8,120.2L743.4,122.4L743.9,123.7L745,125.5L746.3,128.7L747.8,130.4L748.3,132L749,133.7L750.9,134.5L752.4,135.1L752.8,136.9L754.1,138.2L755.4,138.5L757.2,140.4L759.8,141.7L761.5,143.4L760.3,143L760.3,144.7L761.9,145.9L761.5,149L760.3,148.9L760.8,150.4L761.3,151.5L762.4,153.8L764.6,155.8L765.1,156.9L765.6,159.1L766.7,160.4L768.1,162.1L767.8,158.2L767.6,156L768.7,153.9L770,150.2L771.1,149.2L772.6,148.5L773.9,149.9L775.4,151L775.7,152.2L774.9,154.7L775.2,156.1L776,158.5L775.9,160.4L774.3,163.3L772.7,163.9L774.1,164.3L773.1,166.6L774.8,166.9L776,166.6L777.3,167.4L777.9,169.2L779.1,170.1L781.2,170.3L782.5,170L785.1,168.9L786.5,168.4L790.3,168.5L793.3,169L798,169.3L801.5,168.3L803,167.5L804.6,166.4L805.4,164.7L806.3,163.8L807.5,161.9L811,159.6L813,157.6L814.4,156.1L815.2,155L819.4,152.1L820.3,150.8L820.8,149.5L821.7,147.9L823.1,147.6L823.8,146.4L824.2,147.9L823.7,152L823,153.5L823.7,159.8L824.9,162.8L826.4,165.3L827.7,166.7L829.1,168.5L831.2,170.2L836.1,172L838.3,172.4L841.2,172.8L843.3,173.8L845,173.6L847.7,174.8L848.3,176L849.8,177.6L851.9,180.3L853.1,182.1L854.3,183.4L855.4,184.2L856.9,184.5L858.2,184.9L858.2,187L856.8,189.5L855.2,192.2L853.7,195L850.7,197.1L848.9,198.9L846.9,201.9L845.3,205L843.5,206.1L842.1,205.8L842.5,204L841,204.3L839.5,206.6L838.6,207.6L838.4,208.8L838,210.5L837.4,212L837.1,213.2L837.6,215.7L837.6,217.5L838.1,219.8L836.7,220.4L834.3,220.6L831.8,221L829.6,221.7L828.2,222.5L826.6,224.1L825.5,228.3L823.8,230.1L820,230.6L816.2,231.1L814.8,231.6L812.6,234.1L812.8,235.5L812.8,236.8L811.7,238.4L810.6,239.6L807.7,240.4L805.7,239.7L803.8,239.7L800.7,240L799.6,240.8L797.8,241.4L796.1,242.4L793,242.8L790.8,243.5L785.8,245.3L784.5,246.1L783.3,247.1L782.4,248.3L781.7,250.4L782.2,252.4L780.9,254.1L779.6,254.6L778.3,255.4L776.8,256.2L773.2,257.7L770.1,258.6L765.3,259.6L763.4,260.7L761.7,261.5L759.1,261.7L755.5,262.8L753.5,263.6L751,265L750.1,266.4L747.8,268.8L746.7,269.5L744.5,269.9L742.8,270L739.9,269.5L738.5,270.4L736.3,271.4L734.1,273.4L732.4,273.9L729.8,274.5L727.9,275.3L726.6,275.7L725,275.9L722,275.8L719.2,276.1L716.6,276.6L715.4,277.7L713.9,279.3L711.6,280L710.4,281.8L708.9,282.2L707.5,282.4L706.2,281.8L703.6,283.3L701.1,283.6L699.3,283.8L696.3,282.6L694.9,283L694.8,281.6L692.3,277.3L692.8,273.6L692.3,271.4L690.9,269.9L690.9,268L690.4,266.6L690.1,265.2L689.5,262.3L689.4,261L688.6,258.7L686.6,257.7L687.9,257.3L687.2,253.5L688.4,249.7L688,246.3L687.3,244.3L687,242.6L685.5,241.3L684.8,239.5L683.3,237.4L683,235.6L680.5,233.3L677.5,231.2L676.6,229.9L675.1,227.4L674.3,225.5L672.3,223.2L671.9,221.3L671.4,220.1L669.1,215.1L667.9,213.5L666.2,211.8L664.8,210.1L660.8,207.3L658.8,207.1L657.3,206.1L656.1,204.8L654.9,202.6L652.7,200.3L650.9,196.9L651.5,195.7L650.9,193.4L650.3,192.2L650.2,189.7L650.3,188L650.9,186.1L650.6,184.1L650,183L649.4,182L648.4,180.1L647.6,178.1L647.1,177L645.4,174.4L644.6,172.9L642.9,170.9L641,169.4L639.8,168.8L638.2,168.1L637.1,167.2L635.4,167.1L634.3,165.4L633.4,163.8L631.8,161.8L632.7,160.4L632.2,158.5L631.5,157.1L629.2,153.6L627.6,152.5L627,151L626.8,149.6L625.2,149L622.5,144.1L620.9,142.3L620.3,141.2L618.5,139.3L617.6,137.4L615.8,135.7L614.2,132.7L611.8,129.6L608.3,128.9L606.2,129.4L606.8,127.4L607.8,124.9L608,122.8L609.5,116.5L609.8,115.2L608.5,115.7L607.3,117.3L606.2,122.4L604.5,126.4L604.3,128.9L603.2,131.1L602.2,132.4L600.4,131.7L597.6,129.5L595.9,127.4L594.2,126.1L592.5,124.3L592,123L591.3,120.2L588.7,117.1L588.1,116L587.2,114.8L586.5,112L585.6,110.3L584.9,111.5L584.1,112.5L583.6,113.7L585.6,116.1L586.4,118.2L586.3,120.1L587.8,122.1L588.6,123.7L590.2,125.6L592,127.9L593.7,129.5L595,130.3L595.6,133L596.6,135.7L598,137.3L598.9,139.5L599.6,143.5L600.5,144.5L603.3,149.7L605.7,153.1L606.8,155.6L608.5,158.6L612,165.3L614,167.3L614.8,168.4L616.2,169.3L617.8,170.6L616.3,170.5L615.2,171.6L615.2,175.6L615.6,177.3L617,180.5L618,181.5L619.1,182.6L622.3,183.7L624.2,186.1L628.3,189L628.8,192.3L629.3,194.1L630.8,196.7L632.1,198.1L632.6,199.3L631.4,200.2L631.7,202.7L632.3,204.4L631.9,206L631.9,208.8L632.6,212.1L632.5,214.2L633.6,219.1L634.7,221.8L636,222.8L637.3,223.1L639.2,224.4L640.8,225.9L642,227.5L643.3,227.8L645.7,229.3L649.1,235.7L650.3,239.1L651.4,242.7L652.2,248.1L653,250.8L654.2,252.1L655,254.7L656.3,255.5L657.2,257.9L657.9,256.8L658.6,255.3L659.8,256.1L660.6,257.8L662,259.9L664.4,260.4L666.4,261.2L668,262.6L671.8,263.8L674.8,267.6L676.6,270.2L682.4,274.1L683.5,276L684,277.9L685.2,277.8L687.3,279.8L688,281.4L689.7,281.9L691.2,282.9L693,285.4L694.1,288.1L693.4,289.7L690.5,291.7L688,292.6L686.4,294.4L687.9,294.4L689.1,294.1L690.4,294.1L691.6,294.3L694.4,296.5L696.3,299.7L698.5,302.2L701.6,304.5L702.8,305.3L709.4,305.6L713.4,303.5L717,302L718.2,301.6L720.2,302.1L722.6,302.2L724.6,302.7L729.8,300.7L732.3,299L734,298.3L737.1,298.9L740.2,298.6L744.4,297.1L745.7,296.8L749,297.4L750.6,297.3L753.9,296.6L756.4,295.5L761.1,294.7L764.7,292.7L766.4,290.6L767.9,290.2L771.9,291.6L772.2,293.4L771.4,294.9L770.8,296.7L771.2,299.2L771.4,303.4L771,304.6L773,305L773.9,305.8L772.7,306L770.4,306.1L769,307.5L768.7,310.8L768.3,312.9L768.2,315.7L766.9,317.6L766.4,318.9L764.3,321.5L763.2,323.8L761,328L758.5,330.4L757.6,333.4L756.7,335.3L755.7,337L753.5,340.1L752.4,342.2L750.9,345.9L750.5,348.3L746.5,355L742.4,360.5L739.8,365L735.1,370.3L728.8,377.1L720.5,385.3L718.3,386.9L709.2,391.9L703.3,396.1L700.3,398.9L697.2,401.4L694.7,403.8L687.1,411.8L685.6,413.2L684.6,414.6L682.2,417.4L681.1,418.6L679.8,419.7L678.9,421.5L677.3,424.3L676.3,425.8L675.3,427L673.9,428.7L672.7,429.5L671.1,429.8L669.7,429.9L669.1,431.4L669,432.7L668.1,433.9L666.4,435.4L664.1,435.6L662.8,436.3L661.8,438.2L662,440.2L661.3,441.7L659.9,443.5L659,445.4L658.2,447.9L657.6,449.1L656.9,450.7L654.9,454.8L653.8,456.3L652.3,456.7L651.2,459.8L650.9,461.7L649.8,465.2L649.1,466.3L648.2,468.8L648,470.7L648.6,472.1L648.7,473.3L649.8,474.6L651.3,475.6L652.3,476.8L652.9,478.1L654.7,478.8L655.4,480.2L654.3,482.1L653.5,483.4L652.9,485.2L652.9,487.9L654.3,488.1L654.4,490.1L653.4,492.4L653,494.4L653.8,497.2L654.9,498.6L656.4,501.9L656.2,504.1L657,505.8L657.3,507.2L657.7,508.4L657.2,510L658.6,510.2L659.8,511.6L661.4,512L663.9,513.5L664.6,514.6L666.1,516.6L664.9,517.6L666,518.3L665.2,519.3L665.5,520.7L664.9,521.8L664,523.3L664.7,524.5L664.3,526.6L665,528.4L665.3,530L665.1,533.1L664.9,534.9L665.8,536.4L665.7,537.6L664.5,539L665.7,539.8L665.6,541.1L665.5,542.9L665.5,544.6L665.6,546.2L665.9,548.5L666,551.2L667.1,552.1L666.4,553.9L666.5,555.4L667.3,554.2L668.1,555.3L668.4,557.2L667.8,558.4L666.9,560.1L666.2,561.1L666.5,562.6L665.6,564.7L663.2,567.6L662.1,568.7L661.1,569.8L659.8,572.3L658.6,572.5L658.4,574.4L656.2,575.8L652.4,577.9L650.8,579.7L649.6,580.1L647.6,580.6L646.3,580.8L643.8,581.7L641.4,582.4L640.5,583.2L638.4,583.9L635.1,585.7L632.4,587.4L630.5,589.1L629.4,589.9L629,591.3L627.5,593.1L625.4,595.2L624.1,596.9L623.3,597.9L621.8,598.7L619.8,599.1L618.5,599.9L616.5,601.6L613.6,604.9L609.5,608.1L607.2,607.1L607.5,609.3L607.5,610.9L607,614L607.6,615.6L608.8,616.7L609.8,618.1L611.2,622L611.3,624L612.7,626.5L613.3,630.4L613.3,632.6L613.1,634L614.2,631.8L615.3,632.5L615.4,633.8L614.9,636.6L615.7,639.6L614.9,641.9L613.8,647.1L614,648.4L615.2,647.8L614.9,650.7L612.5,654.3L611.6,655.4L609.9,656.5L606.1,658.2L598.3,660.7L595.3,661.9L593.5,662.6L589.6,664.9L587.9,666.4L587.2,668.2L585.9,670L587,671.6L588.1,672.4L589,671.3L589.3,672.5L588.9,678.3L588.5,680.8L587,684.4L586.6,686.1L585.4,692L583.8,695L582.9,696.2L580.3,698.4L578.9,699.1L573.4,703.8L571.7,705.9L570.2,709L568.8,710.7L566.6,714.3L564.7,717.1L562.9,719.7L559.7,723.2L558.3,724.2L554.8,726.7L551.3,730L548.6,732.9L544.5,736.2L542.2,737.7L538.6,740.5L533.6,743.6L530.8,745.2L526.1,747.1L524.3,747.6L519.9,747.1L518.1,747.4L516.5,748.5L516.4,750.1L514.8,750.3L511.7,749.6L510,749.7L509.1,750.6L508.3,751.7L506,751.7L501.8,750.6L497,749.9L493.5,750.7L489.3,750.6L487.4,750.1L485.5,750.1L484.2,750.5L482.5,750.7L477.9,753.7L475.5,753.7L473.5,754.1L470.6,753.7L468.8,753.9L467.7,754.4L465.3,754.6L460.2,757.9L458.5,757.6L456.4,757.5L453.9,756L453.3,754.9L451.5,754.2L449.5,753.4L448.3,753.6L448.3,751.9L447.5,750.8L446.1,750.8L444.6,751.7L444.6,753.5L443.5,751.9L443.5,749.4L444.7,748.9L444.3,747.2L443.1,745.1L441.6,743.6L440.7,742.1L439.6,740.5L438.5,738.3L439.7,737.1L441.2,737.5L442.5,736.5L443.3,735L443.3,732.7L443.1,731.2L442.1,727.4L439.4,723.8L436.8,720.2L433.5,714.5L431.9,711L429.5,704L427.4,700.1L424.8,696.4L423.4,695.4L420.1,692.3L418.9,691.5L417.2,689.7L413.4,683.9L412.9,682.8L412.2,680L411.3,677.9L411.2,676.7L411.4,675.1L409.7,673.2L409.3,669.6L408.4,667.3L408.6,665.3L408.2,663.6L408.4,660.3L407.7,657.9L406.3,655.5L405,652L404.8,650.5L405,646.4L404.7,644.8L404.7,642.8L404.2,640.8L404.4,638.8L405.2,637L404.6,634.5L403.2,631.9L399.7,627.7L398.9,626.1L398.4,624.7L394.5,619.2L392.9,615.2L391.7,611.8L390.4,610.3L384.6,599.3L383.3,597.5L380.9,595.4L379.5,592.7L377.8,590L377.3,587.5L377.2,584.7L377.4,582.5L377.8,578.7L378.2,577L378.2,575L378,569.9L377.5,568.3L379,567.2L380.2,565.1L380.7,562.5L382.8,556.4L383.8,550.4L385,547.6L385.5,544.4L389,540.3L389.8,537.8L391.6,536.5L394.2,535.2L396,532.9L396.9,531.2L397.9,528.1L397.8,524.9L398.5,520.5L398.3,519.3L397.4,517.6L397.2,516.3L396.4,515.1L395.4,514.2L394.9,512.6L393.3,510L392.9,508.3L392.1,507L392,505.5L391.6,503.9L390.8,502.3L390,500.5L390.5,499.2L393.6,496.9L393.7,495.5L393.8,493.7L390.9,487.8L388.6,482.3L388.3,479.6L385.2,475.9L384,473.5L383.4,471.9L385.6,470.5L387.9,470L390.1,469.1L388.6,468.5L386.8,469.6L385.2,470L383.1,468.9L382.1,467.6L381.6,466.3L382.1,464.7L381.8,463.3L381.1,462L380.4,460.4L378.9,458.7L378.2,457.6L377.8,455.7L376.7,454.3L373.9,452L371.3,449.2L370.3,448.3L369.5,446.6L368.5,445.6L366.4,444L365.9,442.8L363.5,440.1L360.1,437.5L357.6,435.2L360,435.9L358.6,434.4L356.8,434.2L355.9,432.9L355.3,431.6L354,430.3L353,429L354.8,429.6L353.4,428.3L352.6,427.3L351.6,425.3L350.5,423.8L353.2,426.3L355.2,426L354,425.3L352.8,424.8L353.5,423.3L352,423.8L350.6,423L349.4,420.7L348.8,419.5L347,415.9L348.2,417.1L349.5,416.9L350.8,416.2L353,413.5L353.4,410.6L353.3,408.8L353,407.1L354.1,408L355.7,408.5L357.4,409.1L360,408L357.8,408.1L355.5,407L354,405.1L353.3,403.9L355,403.3L356,404.3L356.2,402.2L355.7,400.1L355.1,398.8L353.9,398.6L354.3,397L355,395.7L355.9,394.6L357.2,392.1L358.1,390.7L357.8,389.3L358,387L358.2,384.6L358.7,382.7L358.8,380.8L359.5,379.2L359.2,377.6L356.7,374.6L357.7,373.8L356.4,373.9L355.6,372L357.4,371.5L356.4,370.3L355.1,369.4L354.6,370.6L353.1,370.6L351.1,369.6L350,369.1L349.8,367.7L349.1,366.4L349.2,364.5L347.6,364.2L346.6,363.3L346.9,364.5L345.4,364.3L345.7,362.5L344.3,362.5L342.5,360.8L343.3,363.4L340.3,364.4L338,364.8L336.4,364.8L335.3,363.5L334.6,364.4L332.8,364.5L331.4,363.2L331.6,364.9L330.1,366L328.7,365.6L328.2,363.6L327.9,365.3L327.6,366.6L326.3,366.6L325.8,365.2L325.5,366.6L323,367L322.7,365.7L322,367.1L320.8,367.1L319.1,366.1L318,365.4L315.9,363.5L314.9,361.6L313.8,358.7L313.7,357.4L314.4,356.4L315.5,355.3L313.9,356L312.3,355.2L313.9,354.3L313.3,352.9L311.7,354L311.1,352.7L308.6,349.7L306.4,347.8L304.3,346.5L301.3,345.9L294.9,345.9L297.5,344.2L295,344.7L293.4,346L287.7,346.2L282.9,346.7L278.2,347.4L276.2,347.8L273.1,348.5L271.9,349.1L270.5,350.1L269.5,351.9L267.5,352.4L262.6,352.4L258.7,354.3L256.5,355L255.2,356.1L253.3,356.8L252,357.7L249.4,358.2L245,359.6L243.6,360.2L242.2,361.2L240,362.4L237.3,361.3L236,360.7L232.8,359.9L230.4,359.5L229.2,359.2L227.5,358.9L229.1,358.7L228.5,356.5L226.9,358.4L221.3,357.8L220.2,357.1L218.8,356.9L216.4,357L214.5,357.2L218.8,357.4L213.4,358.3L211,358.6L209.8,358L207.2,357.9L208.9,358.4L204.4,359.1L200.9,359.9L199.4,360.5L194.5,362.4L191.5,363.3L189.4,364.5L187.7,365.1L185.7,366.2L184.6,366.5L180,364.9L177.4,364.1L168.7,359.5L166.2,357.6L163.5,354.8L157.2,349.2L155.8,348.3L154,347.9L152.9,347.4L151.5,345.3L150,344.4L147.1,343.1L144.9,340.9L142.7,339.1L140.7,338.2L136.5,336.6L135.1,336.1L135.7,334.5L134.9,333.3L133,332.8L131.5,331.8L130.7,329.4L129.8,328L128.5,327.8L128,326.6L127.4,325.1L129.2,325.7L130.1,324.7L131.1,323.7L129.1,323.7L127.7,323L127.9,321.6L129.3,321.4L127.3,320.1L127.3,318.3L126,316.9L124.3,314.6L123.1,314.6L123.4,312.2L123.1,310.7L121.8,311.1L120.4,310.3L119.7,308.9L118.3,308.7L115.7,307.5L113.9,304.5L114.1,302.7L112.4,301.4L111.6,300.4L110.3,302L109.6,300.6L109.5,298.6L108.2,299.7L107.8,298.4L106.1,297.8L106.5,296.2L105.2,295.9L107.5,294.3L109.3,294L107.7,293.1L106.4,293.8L105,292.8L105.3,291.6L107.9,291.3L109.3,290.5L105.6,290.6L103.5,291.8L101.8,292.4L100.6,292.1L101,290.8L98.6,290.8L97.3,290.2L96.8,288.6L95.6,288L92.9,286.5L92.1,285.3L93.2,284.4L94.5,283.9L93,284L92.3,281.2L92.4,279.4L91.8,276.6L93.3,275.2L94,276.4L95.9,277.3L97.3,277.1L98.4,276.2L100.1,275.9L101.9,275.7L103.8,275.4L105.3,275.4L101.5,275.4L98.6,275.5L96.5,276.6L94.7,275.4L94.4,274.1L93.5,272.3L92.3,271L93.6,269.9L92.1,270L91.2,267.9L90.3,266L89.2,265.2L88.3,263.6L86.5,262.7L85.6,263.5L84.7,262.5L85.9,262.1L88.5,260.8L91.6,257.1L94.3,252.7L94.6,247.1L95.2,245.5L95.4,244L96.5,240.7L97.9,238.1L99.2,234.5L99.7,231.1L99.5,227.8L99.1,224.8L98.5,222.8L97.9,220L96.9,218.5L95.2,217.1L96.3,215.9L96.9,214.9L95.6,215.3L97.2,212.1L97.7,210L97.6,208.6L96.6,205.8L95.7,203.5L94.4,204L92.7,201.9L91.2,199.1L90,199.6L89.5,201.9L89.9,196.2L90.7,191L92.1,188.4L93.2,187.3L94.8,186.7L96.4,184.1L97,181.7L98,180.5L97.9,179L98.9,177.7L100,175.7L100.6,174.5L101.9,172.5L100.2,173.3L101,171.6L102.2,170.5L104.1,169.3L108.1,165.2L109.6,164.5L110.9,162.8L111.4,161.3L111.6,157.8L112.1,156L112.9,154.5L114,151.9L114.8,150.7L115.3,148.4L116.9,147L118.3,145.8L120.5,145.1L123,143.6L124.2,142.6L125.1,141.3L125.9,138.5L127.4,135.7L128.3,133.4L129.6,132.3L130.5,130.9L132.1,130.2L135.3,129.9L140.1,128.7L144.5,126.9L145.7,126.2L147,124.7L149.2,122.9L153.3,120.6L155.1,119.4L158,116.2L159.9,113.6L161.5,111.9L162.6,110.4L163.3,108.9L163.8,106.5L162.3,104L161.2,102.8L161.7,101.5L161.7,99.3L161.9,95.8L163.2,92.9L166.5,89.1L167.1,87.6L167.5,85.1L171.6,80.8L174,78.1L177,76.3L184.4,73.6L188.6,71.7L191,70.3L192.4,68.7L196.5,62.2L200.4,53.2L202.5,51.8L203.8,51.7L206,50.7L207.2,51L206.6,52.6L207.5,53.9L208.9,55.3L211.6,57.2L213.7,57.9L216.7,58.4L220.2,57.6L222.1,57.6L224.1,57.7L226.1,57.9L227.9,57.6L229.4,56.8L230.3,55.9L230.7,57.1L231.3,58.3L232.7,58.6L235.8,58.8L237.8,59L239.8,59.1L243.3,58.2L245.1,57L246.6,56.4L248,55.1L249.1,54.2L250.8,53.3L255.7,51.4L258.1,51.8L259.5,51.7L261.5,49.4L263.1,48.4L265.2,47.4L267.9,46.4L269.7,45.6L272.6,44.8L279.7,44.3L283.4,43.9L285.9,44L288.5,42.6L289.7,42.2L295.2,42L297.8,41L307.6,41L308.8,41.4L310,41.9L312,43.2L314.2,43.2L317.3,42L320.6,41.4L322.5,40.6L323.3,39.5L324.9,39.1L325.8,40L329.3,40.8L331.4,40.6L332.1,39.1L334.3,39.4L336.1,40L337.9,41.2L339.1,41.4L341.3,40.9L345.8,40.6L348.2,40L350.6,38.4L356.9,36.6L358.4,36.9L358.3,38.6L358.8,37.5L360.9,37.5L361.9,39.7L363.3,41.4L364.1,42.7L365.2,42.1L367.7,40.7L369.5,39.4L370.8,40.3L370.6,41.6L369.7,42.6L368,45.1L366.4,45.8L365.2,46.8L364.8,48.2L365.1,49.7L365.9,51.1L366.9,52L370,53.7L370.3,55.5L371.2,57.6L369.6,59.7L368.7,61.2L366.9,63.2L365.4,64.5L362,66.5L360.6,67.9L360.5,69.4L361.6,71.5L363.1,72.7L364.5,73.4L367.1,73.1L367.2,74.9L369,74.7L370.9,74.4L371.5,76.3L372.6,76.9L373.4,77.9L375,78.2L376.6,78.8L378.1,79.1L382.8,81.4L384.3,81.7L387.5,82L391.4,81L392.8,80.8L395.4,81.8L398.4,82.1L401.6,82.9L404.2,84.5L411.8,86.1L412.7,86.9L413.6,88.4L413.6,90.3L414.1,91.7L415,93.4L416,94.7L417.1,95.7L418.3,96.4L421.2,97.4L424.5,97.7L427.8,97.9L433.5,99.2L438.3,100.7L439.5,101.5L441.9,102.2L446.7,105.8L449.4,107.1L451.3,107.3L452.9,107.1L455.9,105.9L457.1,105.1L460.1,102L461.1,100.4L461.5,99.2L461,97L460.2,95.9L459.6,94.4L459.3,91.8L459.7,90L460.3,88.9L461.2,87.8L463.7,85.7L466.2,84.2L470.6,82.2L473.2,82.2L476.3,80.6L478.4,80.9L481.9,80.8L483.4,81.2L485.2,82.1L487.5,82.6L489.2,83.1L490.9,83.8L491.3,85.5L492.9,87.9L498,88.4L500.4,89.6L504.8,90L506.8,89.8L508.8,90.2L510.3,91.2L511.2,92.9L512.3,94.7L513.8,94.9L518.9,93.8L524.6,94.9L527.7,95.3L532.5,96.2L535.4,97.9L538.3,98.1L539.7,99L545.1,99.5L548.1,100.6L549.7,101.4L551.6,101.7L552.8,101.3L554.3,100.7L555.9,99.9L559.3,97.7L560.5,97.3L562.2,97.4L563.1,96.4L564,95.4L565.7,95.3L569.2,94.3L565.6,95.8L567,96L568.4,95.6L570,95.4L570.5,94.1L571.9,94.1L575.2,95.4L578.4,94.7L579.6,95L581.4,96.6L578.9,95.2L577.7,97.1L579,97.6L580.7,98.5L582.1,98.8L582.4,97.5L585.3,99L586.8,99.3L588.6,98.8L591.3,98.3L593.8,98.7L596.7,98.7L599,98.2L601.8,97L603.9,95.2L604.8,94.1L606.8,91L608,88L609.2,83.9L610,81.7L610.8,80.3L611.1,79.2L612,77.4L612.5,76.1L613.4,75L615.1,71.2L616.1,69.7L616.5,67.5L618,65.6L619.2,65.1L619.8,63.7L619,61.5L618.9,59.4L619.4,57.8L619.2,56.5L617.6,54.3L618.4,51.5L619.6,50L618.9,48.4L618.1,46.9L618.8,45.9L620.3,44.8L621.9,43.4L621.8,41.9L620.5,40.9L619,41.5L618,42.2L616.6,42.8L615.4,44L613.9,44.3L611.8,43.6L609.4,42.7L608.1,42L606,42.2L603,44L600.2,46.6L596.9,48.2L595.2,48.6L591,49L589.3,49L587.9,49.6L585.4,49L583.8,48.2L582.8,47.3L581.3,45.5L580.2,44.7L577.8,43.9L573.5,42L569.5,41.5L566.5,41.3L565.6,44.7L564.8,46.9L563,47.1L560.8,47.5L557.9,48.3L553.5,47.4L552.2,46.8L551.2,44.8L550.6,43.6L549,43.3L547.2,43L544.9,42L543.1,41.9L542,43.1L540.2,43.7L540.9,42.5L538,42.6L536.6,43.2L534.6,42.9L536.3,42.1L539.3,41.9L540.8,40.8L542.3,40L536.7,39.9L533.5,39.8L535.3,38.4L534,36.9L532.2,36.1L531.5,34L532.3,32.7L532.5,31.2L531.6,30.1L529.4,29.4L528.1,28.6L526.8,28L525.2,28.4L523.3,27.6L523.4,26.3L523.7,24.4L525.1,23.7L526.1,25.1L526.4,26.5L527.7,26.1L531,25.9L529.7,25.5L528.4,24.4L527.6,22.9L529.1,22.2L530.1,21.1L528.7,20.8L528.5,19.4L527.2,17.4L528.1,15.8L529.1,14.8L524.8,14.8L523.5,15.2L521.1,15.3L521.6,13.4L521.5,11.3L521.8,10.1L523.1,9.8L524.8,8L527.4,6L530.1,6L531.2,5.5L532.8,5.4L534.8,6.8L537.3,6.7L538.5,6.2L537.3,5.2L538.7,4.9L540,5.3L542.9,6L546.3,6.2L550.1,6.1L549,5.2L549.6,3.7L555.1,2.9L558.5,2.6L553.6,1.9L551.2,0.6L550.7,-1L551.5,-2.2L553.2,-2.3L559.2,-1.5L563.5,-2L568.1,-0.8L572.5,-1.1L574.6,-3.2L580.9,-5.9L583,-7.3L585.4,-8.1L589.5,-8.9L592.8,-10L601.9,-9.6L607.5,-9.6L610,-10.6L611.6,-10.3L611.2,-8.9L612.1,-7.9L615.6,-6.3L619.2,-7.1L620.5,-6.8L621.8,-4.3L622.8,-3.4L624.1,-2.7L625.9,-3.3L627.8,-3.6L629.9,-2.8L634.3,-1.1L637.7,-0.8L639.1,-0L643.8,0.7L645.6,0.6L648.5,-0.2L654.3,-1.1L658.1,0.2L660,0.2L661.3,0.6L662.6,0.4L666.9,-1.1L668.2,-1.9L669.6,-2.1L670.8,-2.6L674.1,-4.2L675.1,-5.2L677,-7L677.6,-8.2L677.6,-9.7L676.7,-11.5L675.8,-14L674.9,-16.6L671.3,-18.3L670.6,-19.3L668.4,-20.6L665.2,-21.2L661.9,-23.1L659.8,-24.2L655.2,-27.3L653.3,-29L647.2,-32.9L643.1,-33.7L641.8,-34.2L638.5,-37L637,-36.6L635.7,-36.7L634.1,-37.4L632.8,-39.1L629.5,-40L626.5,-40L628.7,-40L627.2,-40L628.7,-40L631,-40L632.7,-40L636.5,-40L638.4,-40L640.1,-40L641.8,-40L643.1,-40L644.9,-40L643.2,-40L640.8,-40L639.1,-40L637.7,-40L639.7,-40L641.6,-40L643.4,-40L645,-40L646.3,-40L648,-40L651.3,-40L652.7,-40L650.2,-40L646.7,-40L644.9,-40L642.1,-40L638.3,-40L635.4,-40L633.4,-40L632.2,-40L630.5,-40L627.9,-40L625.6,-40L624.3,-40L622.8,-40L620.2,-40L618.3,-40L614,-40L612.6,-40L611.3,-40L612.8,-40L610.6,-40L608.5,-40L610.2,-40L612.6,-40L614.6,-40L617.5,-40L620.1,-40L621.7,-40L624.3,-40L625.7,-40L624.5,-40L622.3,-40L620.6,-40L618.7,-40L616.8,-40L614.7,-40L611.6,-39L608.9,-38.2L607.2,-38.1L604.7,-37.2L602.8,-35.4L600.8,-34.2L599.1,-33.9L597.6,-34L594.5,-35.5L595.3,-36.8L596.1,-39.1L593.9,-40L592.6,-40L589.2,-40L587.7,-40L586.1,-40L588.3,-40L591.4,-40L592.8,-40L594.7,-40L596.7,-40L595,-40L592.6,-40L589.4,-40L588,-40L584.8,-40L583.3,-40L580.3,-40L578.3,-40L579.9,-40L578.5,-40L577.1,-40L575.6,-40L577.1,-40L578.8,-40L581.3,-40L583.6,-40L585.5,-40L583.6,-40L581.3,-40L579.7,-40L578.4,-40L576.6,-40L575.3,-40L574,-40L571.4,-40L568,-40L566.7,-40L565.1,-40L562.2,-40L560.1,-40L558.2,-40L556.8,-40L555.6,-38.4L550.5,-37.6L550.5,-39.2L549.3,-39.7L549.2,-38.1L548.5,-37.2L548.1,-36L547,-33.7L546.6,-29.8L545.9,-28L545.6,-25L544.6,-23.9L543.2,-24.3L541.3,-24L540.4,-22.7L539.3,-21.9L538.9,-20.2L538.9,-17.5L537.5,-17.1L534.8,-14.7L536.4,-14L538.2,-12.1L539.8,-10.5L539.9,-8.6L540.5,-7.3L542,-5.6L543.4,-4.7L549.5,-2.5L550.3,-1.4L549.6,-0.1L547.8,0.3L542.9,-0.7L541.7,-0.8L539.2,0.1L537.5,-0.1L535,0.3L534.3,1.6L532.6,3.1L529.7,4.4L527.7,5L524.7,7.4L523.3,8.8L522,9.3L522.6,8L523.5,6.1L527.2,4.6L525.8,3.8L523.6,3.9L522.2,3.8L520.7,3.2L518.6,1.6L515,1.1L513.2,0.6L511,0.1L507.9,1.4L505.6,0.6L503.8,0.9L502.3,2.1L500.8,2.8L499.5,2.5L497.6,2.5L497.8,3.7L498.8,4.6L498.7,5.8L500.3,5.9L502.1,6.7L503.4,8.5L502.3,7.8L500.6,7L499.1,6.4L497.3,6.7L498.2,8L499.7,8.9L499.8,10.1L498.3,9.8L496.6,7.8L494.3,7.4L494.3,8.8L496.8,10.4L493.9,10.1L493.3,9.1L493.1,7.8L491,7L489,6L488.9,4.8L487.4,4.6L486.3,5L486.4,6.3L485.7,8.8L488.4,12L489.2,13.7L491,15.1L492.3,16.4L493.3,18.2L492.2,19L491.6,17.4L489.9,16.7L488.4,17.4L489.4,18.9L490.7,19.6L489.3,20.5L488,21L486.8,21L487.8,22L490.2,22.6L491.4,23.3L493.7,24.7L495.7,25.1L496.8,26.5L498.4,26.8L499.7,27.3L500.2,28.6L500.3,30.5L500.6,31.8L500.2,33.2L498.8,32.2L497.3,31.2L495.8,29.9L494.2,30.1L491.9,30.4L490.5,31L491.5,32L492,33.8L493.5,34L494.6,35L492.5,36.2L491,36.4L490.2,35.2L488.5,34.7L487.3,34.6L487.6,36.1L488.5,37.1L490,39.8L490.6,41.5L490.4,43.6L491.6,45.5L489.8,44.7L488.3,43.1L487.2,42.1L484.9,44.3L484.9,45.5L483.8,44.9L483.8,43.5L482.3,41.2L481.3,40.4L480.1,39.8L479.4,41.1L478.9,42.6L477.4,41.4L475.8,39.2L476.9,36.9L475.7,34.6L474.1,33.6L472.9,32.3L471.4,31.5L473.1,29.7L474,28L475.5,28.4L477.5,27.3L479.5,26.8L482.4,28.1L485.6,28.9L487.1,29.5L488.5,30.3L489.6,29.3L491.2,29.3L490.9,28L489.3,28L487.8,27.4L485.8,26.5L484.2,25.6L483.2,26.4L479.7,25.9L478,26.3L476.5,26.5L474.7,26.8L473.6,25.2L471.8,26.5L470.6,25L469.9,23.5L468.7,22.2L467.7,21.3L468.9,20.6L470.7,21.1L471.2,19.7L469.2,19.6L467.8,19.9L465.7,18.5L464.7,17.4L463,16.7L461.9,14.5L461,13.6L460,12.9L459.6,11.3L458.5,9.6L454.9,7.9L453.6,6.5L454.4,5.3L453.4,3.8L453.8,2.1L454.6,0.7L454.6,-1.1L454.8,-2.4L454.4,-4.3L455,-5.6L455.8,-7.9L454.7,-8.6L453.4,-8.7L451.9,-9.5L451.2,-10.6L448.9,-12.5L446.3,-13.8L445.2,-14.3L443.3,-15.3L441.6,-16.3L438.3,-18L435.8,-18.4L432.6,-19.7L430.4,-20.2L432.2,-20.3L437.2,-18.5L435.8,-19.4L433.3,-21.1L431.3,-22.1L429,-23.9L426,-24.6L423.9,-25.4L422.7,-25.3L421.3,-25.1L419.9,-25.2L419.4,-26.6L418.2,-27.4L416.5,-28.1L415,-29.1L411.9,-31.7L412.8,-32.9L414.7,-32.7L412.7,-33.8L409.8,-36L409,-37.1L409.1,-39.7L406.3,-40L403.9,-40L402.4,-40L400.9,-40L399.7,-38.4L397.4,-39.9L396.1,-40L397.8,-40L396.3,-40L394.7,-40L392.1,-40L390.3,-40L389,-40L387.6,-40L386.1,-40L384.3,-40L382.7,-40L385.2,-39.7L384.7,-38.5L383.2,-38.3L382.5,-37.2L383.1,-34.3L384,-32.2L384.9,-31.4L386.9,-29.9L389.1,-29.2L393,-26.9L395.1,-26.1L396.9,-23.9L398,-21.8L399.2,-18.5L400.1,-16.9L401.8,-15.1L405.4,-12.4L408.7,-10.5L411.7,-9.3L414.1,-9.1L419.6,-9.4L421.7,-9L421.5,-7.6L420.3,-7L419.1,-6.2L420.1,-4.4L425.5,-2.3L431,-0.6L432.7,0.2L434.7,1.6L439.6,3.5L440.3,4.4L443.3,6.3L444.6,7.8L444.2,10.1L443.4,11.8L442.2,11.5L440.8,10.6L438.7,7.2L434.8,6.9L432.6,6L431.8,5L430.3,4.9L428.1,6.7L426.7,8.6L425.3,11.4L426,13.6L428.2,14.2L430,15.2L431.1,16.2L431.2,18.6L431.7,20L429.5,20.6L427.6,21.1L426.2,22L425.7,25.1L422.8,27.5L421.4,29.1L420.6,30.6L417.2,30.6L416.5,29.7L416.4,28.2L418.2,27L419,25.2L418.8,23.9L419.7,22.9L422,22.4L422.1,20.6L421.1,19.8L420.7,18.6L420.2,16.5L418.5,13.7L417.6,11.3L416.9,10.1L415.9,9.5L413.9,9.5L409.5,7.6L409.9,6.2L409.1,4.4L407.7,3.3L406.1,3.6L404.6,3.7L403.4,4L404.6,2.7L403.1,1.9L401.5,1.8L398.6,-1.3L397.3,-2.4L395.6,-2.3L393.6,-2.8L391.9,-2.8L390.4,-2.7L388.5,-4.1L386.3,-4.7L382.1,-8.1L380.8,-9.4L378.1,-10.8L376.4,-12.9L375,-13.6L373,-14.2L371.4,-13.9L371.7,-15.3L369.4,-17.4L368,-18L367.1,-19.4L365.9,-19.5L365.2,-20.7L365.2,-22L364.5,-23.7L363.2,-25.1L362.5,-28.5L360.5,-30.2L357.3,-31L352.9,-33.2L349.3,-34.1L347.6,-34.2L345.5,-33.5L342.9,-31.4L340.8,-29.2L337.3,-28L334.9,-27.7L332.6,-27L328.6,-24.4L327.2,-23.7L326.6,-22.6L324.9,-21.7L323.1,-21.4L321.1,-20.7L318.1,-21L316.7,-21.8L314.1,-22.3L313.2,-23.5L311.2,-23.5L309.8,-24.3L308.4,-23.9L307.1,-23.7L304.1,-24.5L302.2,-24.8L301.1,-25.6L299.1,-25.6L297.9,-24.6L292.6,-21.9L291.6,-20.8L290.5,-19.1L290.9,-15.9L292,-14.6L292.9,-13.4L291.7,-12.6L291.7,-11.4L292.5,-9.4L291.5,-8.6L290,-7.7L283.1,-4.7L281.4,-3.2L275.7,-2L272,-1L270.3,-0.6L268.2,1.1L267.1,1.8L268.9,2.8L267.2,3.7L266,3.9L263.7,6.8L261.6,8.9L260.4,9.9L259.3,11.2L256.7,14.8L258,19.4L259.7,21.1L261.6,21.8L261.4,23L259.5,24.1L256.2,25.6L254.8,26.8L253.5,28.5L253.2,30.1L252.6,31.1L251.8,32.3L252.8,33.7L250.6,34.3L246.7,34.4L243.6,36.1L242,37.7L240.6,40.5L238.9,42.2L236.9,41.8L235.5,41.7L234,41.9L232.1,42.8L228.5,42.4L225.7,42.9L224.2,42.6L221.7,42.4L216.3,42.8L215,43.7L213.3,44.9L210.7,45L208.3,45.8L206.7,47.6L205.5,48.5L204.5,49.6L201.9,49.1L200.4,48.2L198.3,46.7L197.3,44.7L196.2,43.6L196.7,41.5L197.8,40.9L196,41.7L195.1,40.5L191.1,38.1L188.2,37.9L185.9,38.2L181.6,39.9L178.6,39.2L175.2,39L172.6,39.3L170.6,39.8L170.7,38.3L171.9,35.7L171.8,34.1L172.1,32.7L171.8,31.3L172,28.2L171.2,25.5L173.3,25.8L172,24.8L169,25.5L168,24.6L167.5,23.4L169.1,23L170.2,22L170.6,20L172.1,19.2L170.4,19.8L169.1,21.6L167.5,22.9L165.9,22.9L165.3,21.5L165.8,18.9L166.5,17.5L166.8,16.1L168.5,14.6L169.9,11.8L171.6,8.8L171.3,7.4L172.3,3.9L173.1,2.5L173.3,0.8L173.4,-0.9L172.6,-2.8L172,-5.6L172.4,-7L171.1,-7.7L172.2,-9.4L171.1,-11.1L172.3,-12.1L171.9,-13.3L171.9,-14.7L172,-16L170.1,-15.8L170.6,-17.7L168.7,-18.7L167.6,-19.8L168.2,-21.7L169.8,-22.4L171.3,-23.3L173.3,-23.2L174.6,-23.4L175.8,-23.9L177.5,-24.4L177.4,-25.8L178.6,-26.3L180,-26.9L181.5,-27.1L183,-27.7L185,-27.4L187.4,-26L189.4,-25.5L191,-25.9L193.8,-25.9L195.3,-25.8L197.8,-26L199.2,-26L201.5,-26.5L203.4,-25.8L206.8,-25.5L208.9,-25L214.8,-24.2L216.9,-24.1L219.8,-24.6L221.1,-25L223.9,-25.2L225.8,-24.5L229.6,-23.7L231.3,-24.5L233.9,-24.1L236.6,-23.3L238,-23.2L240.1,-23.5L241.7,-24L243.7,-24.4L245.1,-25.6L246.6,-30.2L247.6,-35.6L248.3,-36.6L248.1,-40L250.6,-40L252.3,-40L253.6,-40L252.1,-40L248.3,-40L249.7,-40L247.6,-40L246.1,-40L242.1,-40L240.8,-40L239.4,-40L238,-40L239.7,-40L241.8,-40L240.3,-40L236.5,-40L235,-40L233.3,-40L232,-40L230.4,-40L228.4,-40L226.7,-40L224.9,-40L221,-40L219.3,-40L217.8,-40L216.2,-40L213.2,-40L214.9,-40L216.2,-40L214.9,-40L217.6,-40L216.3,-40L214.8,-40L212.8,-40L214.7,-40L219.4,-40L221.4,-40L222.9,-40L224.6,-40L227.7,-40L230,-40L232.1,-40L235.5,-40L239.2,-40L240.9,-40L245.6,-40L244.4,-40L243.1,-40L241.9,-40L244.1,-40L246.3,-40L247.7,-40L250.4,-40L252.3,-40L254.8,-40L258.4,-40L259.9,-40L261.4,-40L264.2,-40L262.8,-40L261.3,-40L266.2,-40L269.2,-40L272.4,-40L274.1,-40L275.5,-40L276.7,-40L279.1,-40L284.5,-40L289.6,-40L292.2,-40L293.5,-40L295.9,-40L297.2,-40L298.8,-40L300.1,-40L302.2,-40L300.1,-40L298.2,-40L296.9,-40L295.2,-40L297.4,-40L298.9,-40L301.4,-40L302.8,-40L300.8,-40L299.5,-40L300.8,-40L302.1,-40L303.8,-40L305.6,-40L307.1,-40L308.4,-40L310.6,-40L313.6,-40L315.3,-40L318.7,-40L320.6,-40L323.5,-40L325.6,-40L328.2,-40L329.7,-40L332,-40L330.5,-40L332.1,-40L336.3,-40L340.1,-40L341.7,-40L343,-40L344.5,-40L345.8,-40L349,-40L352.1,-40L355.9,-40L357.8,-40L356.3,-40L353.1,-40L350.7,-40L349.2,-40L347.8,-40L346.5,-40L348.3,-40L349.6,-40L347.9,-40L346.6,-40L343.5,-40L341.3,-40L342.8,-40L344.7,-40L346.1,-40L347.4,-40L348.9,-40L350.7,-40L352,-40L349.9,-40L347.7,-40L346,-40L344.7,-40L343.5,-40L346.2,-40L348.1,-40L349.5,-40L353,-40L354.3,-40L358.2,-40L359.6,-40L362.6,-40L365.3,-40L363.4,-40L364.9,-40L368.5,-40L366.2,-40L364.3,-40L362.3,-40L360.2,-40L358.1,-40L356.6,-40L355.1,-40L356.5,-40L358.9,-40L360.2,-40L358.7,-40L361.4,-40L363.6,-40L367.3,-40L369.6,-40L368.1,-40L371,-40L374,-40L377,-40L381.1,-40L383,-40L385.8,-40L387.8,-40L390.3,-40L394.5,-40L397.3,-40L398.7,-40L400.2,-40L402.5,-40L404.9,-40L403.5,-40L401.7,-40L400.5,-40L399.3,-40L402.1,-40L403.8,-40L407.2,-40L412.9,-40L419,-40L420.4,-40L421.9,-40L423.7,-40L425.6,-40L428.9,-40L430.1,-40L432.6,-40L438.4,-40L440.8,-40L443.2,-40L445.3,-40L447.6,-40L445,-40L446.7,-40L448.4,-40L449.8,-40L454.1,-40L455.6,-40L457.6,-40L459.4,-40L461.1,-40L464,-40L465.2,-40L466.8,-40L468.5,-40L470.2,-40L468.6,-40L465.9,-40L467.7,-40L470,-40L471.9,-40L470.6,-40L472.6,-40L474,-40L477.3,-40L479.4,-40L482.3,-40L485.6,-40L490.4,-40L492.9,-40L496.5,-40L499.3,-40L500.5,-40L502.8,-40L504,-40L505.4,-40L503.9,-40L502.4,-40L501.1,-40L497.7,-40L495.6,-40L494.3,-40L496.4,-40L497.8,-40L500.8,-40L503.8,-40L505.8,-40L508.8,-40L514.4,-40L516.2,-40L517.9,-40L524.6,-40L526.2,-40L528.5,-40L529.7,-40L533.4,-40L538.9,-40L540.1,-40L542.1,-40L543.3,-40L545.2,-40L547.5,-40L549.5,-40L550.8,-40L556.7,-40L561.2,-40L559.8,-40L557.2,-40L555.7,-40L553.7,-40L550.7,-40L548.1,-40L546.4,-40L545.2,-40L546.5,-40L545.1,-40L541.8,-40L538,-40L536.7,-40L535.2,-40L532.4,-40L530.7,-40L529.5,-40L527.2,-40L525.3,-40L523.8,-40L522.1,-40L520.4,-40L518.5,-40L517.2,-40L515.5,-40L512.7,-40L509.6,-40L506,-40L504.5,-40L500.2,-40L497.2,-40L495.9,-40L494.6,-40L493.3,-40L491.8,-40L490.2,-40L491.9,-40L490,-40L488.7,-40L487,-40L484.6,-40L485.9,-40L482.6,-40L479.3,-40L478,-40L476.1,-40L474.4,-40L475.7,-40L473.9,-40L472.6,-40L471.1,-40L474.6,-40L476.5,-40L478,-40L481.2,-40L483.2,-40L485.3,-40L487.6,-40L490.1,-40L492.5,-40L495,-40L496.5,-40L498.6,-40L500.2,-40L502.8,-40L504.4,-40L506.6,-40L509.4,-40L511.3,-40L512.9,-40L508.4,-40L506.8,-40L505.3,-40L504,-40L502.4,-40L498.9,-40L496.9,-40L494.2,-40L492.2,-40L489.2,-40L487.5,-40L486.2,-40L484.7,-40L483.4,-40L480.9,-40L479.2,-40L476.8,-40L475.3,-40L474.1,-40L475.4,-40L472.9,-40L471.4,-40L472.8,-40L475.2,-40L472.6,-40L470.2,-40L467.6,-40L464.5,-40L462.1,-40L459.1,-40L457.8,-40L456.5,-40L455,-40L453.6,-40L450.4,-40L448.2,-40L446.7,-40L445.3,-40L444.1,-40L442.5,-40L440.7,-40L439.5,-40L437.2,-40L435.7,-40L434.1,-40L435.3,-40L434.1,-40L432,-40L433.6,-40L435.6,-40L437.4,-40L438.7,-40L440.1,-40L441.6,-40L444,-40L445.6,-40L447.9,-40L449.3,-40L447.2,-40L445.8,-40L444,-40L442.8,-40L439.7,-40L441.3,-40L442.7,-40L443.9,-40L445.6,-40L444.2,-40L442.9,-40L441,-40L439.7,-40L438.3,-40L436.7,-40L434.6,-40L431,-40L429.8,-40L426.4,-40L423.2,-40L424.8,-40L426.8,-40L429.3,-40L426.5,-40L424.8,-40L423.5,-40L422.2,-40L420,-40L418.3,-40L416.3,-40L413.3,-40L410.5,-40L407.8,-40L406.5,-40L404.7,-40L402.6,-40L400.8,-40L398.1,-40L393.2,-40L388.9,-40L385.9,-40L387.5,-40L389.2,-40L387.9,-40L385.7,-40L384.2,-40L381.5,-40L379.6,-40L377.3,-40L375.5,-40L373.3,-40L372.1,-40L373.9,-40L371.3,-40L370,-40L368.3,-40L366.4,-40L364.9,-40L362.4,-40L360.8,-40L359.6,-40L358,-40L356.4,-40L353.1,-40L351.8,-40L349.3,-40L345.2,-40L343.1,-40L341.7,-40L340.4,-40L338.8,-40L334.6,-40L331.9,-40L330,-40L328.8,-40L327.3,-40L325.9,-40L323.9,-40L320.5,-40L317.1,-40L315.9,-40L318.6,-40L321,-40L323.6,-40L321,-40L318.9,-40L320.5,-40L322,-40L324.2,-40L322.8,-40L321.6,-40L320.2,-40L318.4,-40L317.2,-40L315.6,-40L313.6,-40L311.7,-40L313,-40L314.7,-40L317.7,-40L319.9,-40L322.2,-40L320.6,-40L318.3,-40L320,-40L321.4,-40L323.5,-40L325.2,-40L326.6,-40L327.9,-40L329.5,-40L328.1,-40L323.5,-40L321.5,-40L319.7,-40L318,-40L315.6,-40L313.6,-40L311.9,-40L313.8,-40L316.9,-40L314.2,-40L312.9,-40L311.4,-40L315.5,-40L312.4,-40L311.2,-40L312.9,-40L315.1,-40L319.9,-40L322.9,-40L324.2,-40L326.1,-40L327.8,-40L329,-40L330.4,-40L335.4,-40L334,-40L332.8,-40L329.4,-40L328,-40L326.6,-40L324.9,-40L320.8,-40L316.5,-40L314.5,-40L313.3,-40L311.1,-40L312.6,-40L311,-40L309.3,-40L311.2,-40L314.7,-40L317.9,-40L320.2,-40L324.7,-40L327.3,-40L324,-40L321.3,-40L316.6,-40L314.7,-40L312.7,-40L311,-40L312.4,-40L314.2,-40L317.2,-40L319.1,-40L320.8,-40L322.1,-40L325.8,-40L324.6,-40L322.6,-40L321.4,-40L322.7,-40L324.4,-40L326.2,-40L327.4,-40L329.6,-40L332.8,-40L334.9,-40L336.5,-40L335.3,-40L338,-40L340.9,-40L334.1,-40L332.4,-40L331.1,-40L327.8,-40L329.3,-40L333.9,-40L335.7,-40L337.3,-40L338.6,-40L341,-40L343.1,-40L346.2,-40L343.4,-40L341.6,-40L345.8,-40L343.9,-40L345.8,-40L348.4,-40L351.4,-40L353.2,-40L355.2,-40L357,-40L358.3,-40L359.8,-40L361.9,-40L363.4,-40L365.9,-40L367.6,-40L369.5,-40L371.2,-40L373.7,-40L372.1,-40L374.6,-40L373.1,-40L370.8,-40L369.1,-40L370.5,-40L363.4,-40L360.6,-40L359.2,-40L357.7,-40L356,-40L358.7,-40L360.1,-40L362.4,-40L365.6,-40L368.3,-40L370.9,-40L372.3,-40L375.3,-40L373.9,-40L381.6,-40L383.1,-40L385.1,-40L387.4,-40L389.2,-40L387.2,-40L385.1,-40L383.6,-40L382,-40L383.5,-40L386.3,-40L388.2,-40L389.8,-40L388,-40L393.9,-40L396.7,-40L399.2,-40L396.8,-40L395,-40L393.5,-40L391.2,-40L393.1,-40L394.5,-40L396.2,-40L397.9,-40L399.6,-40L397,-40L398.8,-40L400.2,-40L402,-40L403.4,-40L404.7,-40L406,-40L407.8,-40L414.2,-40L408.2,-40L405.8,-40L404.4,-40L405.8,-40L407.5,-40L409.6,-40L411.2,-40L412.9,-40L414.1,-40L415.5,-40L416.9,-40L414.9,-40L413.5,-40L412.2,-40L413.5,-40L410.4,-40L408.6,-40L410.5,-40L412.7,-40L414,-40L416.2,-40L413.6,-40L414.9,-40L416.6,-40L418.5,-40L420.1,-40L422.6,-40L423.9,-40L422.6,-40L423.9,-40L426.2,-40L428.6,-40L430.9,-40L433.4,-40L434.8,-40L432,-40L425.8,-40L428.9,-40L431.3,-40L433.9,-40L435.4,-40L437,-40L441,-40L442.6,-40L444.8,-40L446.5,-40L448.6,-40L446.2,-40L447.7,-40L449.9,-40L452,-40L456.9,-40L458.6,-40L460.7,-40L462.2,-40L463.6,-40L460.4,-40L462,-40L464.9,-40L467.4,-40L465.6,-40L468.4,-40L469.7,-40L471.6,-40L474.3,-40L475.9,-40L477.8,-40L479.3,-40L478,-40L476.1,-40L474,-40L475.4,-40L477.8,-40L479.9,-40L482.2,-40L483.8,-40L486.9,-40L488.5,-40L489.8,-40L491.8,-40L493.6,-40L496.6,-40L499,-40L500.4,-40L502.8,-40L504.2,-40L502.7,-40L504.4,-40L506.6,-40L508.3,-40L510.4,-40L511.7,-40L513.2,-40L515.7,-40L517.1,-40L514.7,-40L512.7,-40L511.5,-40L509.9,-40L512.1,-40L514.2,-40L519.9,-40L522.3,-40L525.1,-40L526.6,-40L529.9,-40L531.5,-40L533.1,-40L535.5,-40L532.7,-40L536,-40L537.3,-40L541.4,-40L543.9,-40L539.5,-40L542.2,-40L544.4,-40L546.1,-40L547.5,-40L551,-40L553.2,-40L556.4,-40L558,-40L559.6,-40L562.4,-40L564.2,-40L565.9,-40L569.3,-40L564.7,-40L562.6,-40L559.3,-40L547.8,-40L556,-40L557.9,-40L559.9,-40L561.6,-40L563.5,-40L564.8,-40L567.1,-40L568.7,-40L570.5,-40L574.5,-40L576.7,-40L577.9,-40L580,-40L583.9,-40L585.6,-40L589.4,-40L587.5,-40L581.8,-40L583.3,-40L586.4,-40L588.8,-40L590.2,-40L592.6,-40L593.8,-40L592,-40L593.3,-40L596.3,-40L602.3,-40L603.5,-40L608.6,-40L610.1,-40L611.7,-40L618.6,-40L626.2,-40L637.3,-40L643.6,-40L646.6,-40L648.3,-40L655.7,-40L658.2,-40L660.3,-40L662.1,-40L663.8,-40L665.3,-40L666.6,-40L669.7,-40L671.3,-40L672.6,-40L665.2,-40L661,-40L652.9,-40L646.6,-40L644,-40L639,-40L636.3,-40L632.9,-40L629.8,-40L627.7,-40L623.7,-40L615.1,-40L613.6,-40L608.2,-40L606.1,-40L604.8,-40L601.4,-40L598.9,-40L597.6,-40L595.9,-40L591.5,-40L590,-40L588.5,-40L584,-40L578.9,-40L582,-40L583.4,-40L585,-40L586.9,-40L588.6,-40L591.8,-40L594.1,-40L596.5,-40L594.8,-40L601.1,-40L604,-40L606.9,-40L605.4,-40L604.1,-40L605.4,-40L606.7,-40L608,-40L609.5,-40L612.9,-40L614.3,-40L616.5,-40L618,-40L621.5,-40L623,-40L627.1,-40L629.7,-40L633.7,-40L636.4,-40L639.7,-40L638.4,-40L634.3,-40L632.9,-40L630.4,-40L627.7,-40L626.2,-40L627.9,-40L630.5,-40L635.3,-40L640.1,-40L642.3,-40L644.1,-40L645.4,-40L650.5,-40L655.7,-40L657.6,-40L660.6,-40L662,-40L664.1,-40L662.8,-40L661.4,-40L659,-40L657.5,-40L663.3,-40L665.1,-40L666.9,-40L670.7,-40L674.7,-40L677.8,-40L680.8,-40L682.1,-40L684.5,-40L686,-40L688.1,-40L690,-40L692.3,-40L695.5,-40L697.4,-40L699.4,-40L701.1,-40L703.1,-40L704.9,-40L702.9,-40L700.7,-40L698.5,-40L700.4,-40L702.2,-40L694,-40L700.5,-40L701.7,-40L710.8,-40L715.2,-40L718.9,-40L721.6,-40L724.3,-40L726.8,-40L724.3,-40L721.8,-40L715.3,-40L713.7,-40L709.4,-40L711.4,-40L715.6,-40L717.5,-40L718.8,-40L720.8,-40L723,-40L724.5,-40L726.9,-40L735,-40L736.6,-40L738.4,-40L742.8,-40L746.5,-40L748.3,-40L747,-40L748.4,-40L751.6,-40L759.3,-40L762.3,-40L764.1,-40L767,-40L768.4,-40L770.8,-40L773.3,-40L776.2,-40L779.9,-40L781.3,-40L782.9,-40L784.8,-40L786.7,-40L784.4,-40L786.8,-40L794.1,-40L798,-40L801.9,-40L804.9,-40L798.7,-40L796.9,-40L795.7,-40L793.4,-40L795.2,-40L799.1,-40L801,-40L802.3,-40L803.9,-40L805.6,-40L807.2,-40L808.6,-40L811.5,-40L814.2,-40L816.8,-40L819.2,-40L822.7,-40L826.2,-40L829.1,-40L831.3,-40L834.4,-40L841.7,-40L843.5,-40L849.2,-40L850.6,-40L852.2,-40L853.7,-40L852.2,-40L851,-40L853.1,-40L856,-40L857.3,-40L858.6,-40L861.6,-40L864.9,-40L866.4,-40L868.1,-40L866.7,-40L863.4,-40L861.7,-40L865.6,-40L868.1,-40L870.2,-40L877.7,-40L886.3,-40L893.6,-40L900,-40L-40,-40ZM766.8,-40L765.3,-40L763.1,-40L761,-40L758.9,-40L757.6,-40L756.3,-40L754.4,-40L752.9,-40L751.2,-40L748.1,-40L746.9,-40L745.4,-40L742.6,-40L740.5,-40L738.3,-40L737,-40L735.7,-40L734.1,-40L732.2,-40L731.2,-39.1L729.8,-38.3L728.4,-37.2L727.2,-35.6L727.5,-34.2L729.2,-33.9L731.2,-32.6L732.3,-31.9L733.6,-29.9L734.3,-27.8L734.6,-25.6L735.6,-28.3L735.7,-26.9L735.1,-25.1L734.9,-23.8L735.1,-22.2L734.6,-20.3L736.3,-19L737.1,-18.1L737.3,-16.8L740.8,-13.5L742.3,-11.8L743,-10.8L743.8,-9.5L745.7,-8.5L748.3,-6.3L750.5,-3.7L751.4,-2.2L752.3,-0.3L754.6,2L755.6,2.8L757.2,3.9L758.5,4.2L759.9,4.2L761.2,4.7L762.5,5.4L763.7,7.2L761.4,6.8L759.2,6.8L757.9,7.1L756.7,7.5L755.5,8.1L754.8,9.1L754.2,11.6L753.3,13.9L753.7,16L752.7,17.2L752,19.3L750.1,18.7L749.3,20.4L748.5,21.6L748.7,25.6L749,28.6L749.3,29.8L749.6,31.1L750.2,32.2L750.8,33.3L753.7,34.8L757.3,35.2L759.8,35.6L761.3,35.9L763.4,38.5L765.3,39.9L769.3,41.9L771.2,42.6L777.6,43.9L781.9,43.8L793.7,41.3L797.7,40.7L799.2,40.7L796.8,41.5L799.1,41.9L800.2,41L799.5,38.2L799.2,36.6L798.5,33.3L798.2,30.7L798.5,27.1L798.4,24.8L798.7,22.6L798.9,21.4L798.2,19.8L797.3,19L796.2,17.8L794.8,16.9L793.4,16.6L792,16.8L791.2,15.7L792.4,13.9L793.9,14.6L796,14.5L794.7,13.3L794.6,11.7L794,10.4L791.4,10.2L789.9,10.1L790.3,12.3L789,10.9L788,9.5L787.5,7.8L787.4,6L787.9,4.5L788.5,3.1L788.9,1.4L789.4,-0.4L790.6,1.1L791.9,1.9L793.3,2.2L795.2,1.7L796.9,2.5L798.7,3.5L800.9,2.9L802.8,3.1L803.2,1.7L805.5,1.7L806.9,1.3L807.2,-0.1L805.9,-1.9L802.8,-3.6L801.8,-4.3L801,-5.2L800.4,-6.4L800,-7.7L798.5,-10.9L796.2,-11.4L794.9,-11.2L792.9,-10.8L791.6,-10.9L789.7,-9.8L788.1,-7.1L788.3,-3.4L788.6,-2.1L787.5,-3.7L786.1,-5.3L784.9,-7.8L784.6,-10.5L785.2,-12.4L786.2,-14.3L786.4,-15.6L786,-17.6L784.9,-18.2L783.2,-18.2L781.8,-18.7L780.2,-18.6L778.5,-19.1L777,-21L775.1,-21.7L773.5,-21.7L773.1,-23.6L773,-24.8L771.4,-26.5L770.6,-27.5L769.4,-29.6L768.3,-31.9L766.9,-32.7L764.7,-32.9L763.3,-33.3L762.5,-34.6L763,-35.8L766.5,-36.3L768.6,-36.3L770.5,-35.3L771.8,-35L773.1,-35.3L775.4,-35.3L774.3,-36L773.1,-36.2L772.2,-37.1L770.6,-38.1L770.4,-39.8L772.5,-40L774.2,-40L775.4,-40L777.3,-40L780.5,-40L784.3,-40L787.7,-40L789.1,-40L790.8,-40L792,-40L788.4,-40L790.4,-40L791.7,-40L790.3,-40L786.8,-40L784.8,-40L783.4,-40L781.9,-40L780.1,-40L777.5,-40L776.2,-40L772.9,-40L769.2,-40L767.3,-40ZM426.5,-20L428.4,-19.7L429.7,-19.8L430.9,-19.6L429.8,-19.3L428.5,-19L427,-19.3ZM629,156.2L627.7,155L625.3,154L627.5,154.4L629.2,155.7ZM797.6,283.6L799.2,283.4L801.9,283.4L805.1,284.5L802.7,285.5L801.3,286.4L797.2,286.8L796,286.6L795,285.7L793.1,284.7L794,283.7L795.3,282.8L797.6,283.6ZM847.2,207.8L846.4,206.6L847.9,205L848.8,203.2L849.5,204.8L848.3,205.8L847.7,207.3ZM821.9,140.8L820.9,142L819.5,143L817.5,143.1L815.4,143.8L814.2,144.2L812.9,143.6L815.3,142.9L817.6,141.9L817.5,140.7L819.1,140.9L820.7,140.2L822.1,140ZM799.3,168.2L798,168.6L796.4,168.3L798.3,167.4L799.3,168.2ZM679.9,242.9L681.7,242.9L681.6,244.3L680.7,243.3L679,243.2L678,242.2L678.6,241.1L679.5,241.9ZM661.4,253L664.1,253.7L662,254L659.8,253.9L660.2,252.7L659.5,251.1L661,251.6L661.4,253ZM766.1,151.2L764.7,150.3L764.5,148.1L765.6,147.5L766.1,148.8L766.2,150L766.1,151.2ZM742.7,113.8L741.4,113.3L740.8,112L741.6,110.4L743.5,112.2L742.7,113.8ZM538.4,50.7L537.1,50.4L537.6,49.3L537.8,47.9L539.1,46.5L541.7,45.7L541.4,47.9L540.9,49.3L539.7,49.5L538.4,50.7ZM531.7,55.3L530.7,54L531.6,52.7L532.1,54.4ZM529.5,42.7L530.6,41.6L532.1,41L533.5,41.3L531.9,41.9L530.3,42.3ZM515.5,40.3L514,40.2L515.3,38L515.8,39.6ZM528.3,31.9L529.5,32.2L530.6,32.9L528.4,33.6L527.2,33L525.8,32.8L527.4,31.9ZM520.3,34.7L520.9,33.6L522.1,33.6L523.3,33.3L522.1,34.3L520.3,34.7ZM518.6,42.1L519.4,41.1L520.7,41L518.6,42.1ZM509.9,32.4L508,31.8L507,30.4L508.6,30.9L509.8,32ZM520.9,27.8L518.9,27.6L519.9,26.5L518.5,24.9L520.1,24L521.6,24.6L521.6,27ZM524.1,16.7L525.3,18.3L526,19.5L524.7,20.3L521.6,19.7L522.5,18.4L520.7,19L519.1,18.6L519.1,17.1L520.9,17L523.5,16.2ZM506.8,21.9L505.4,22.1L504.6,21.1L505.8,21.2ZM516.8,5.7L514.5,5.2L515.7,4.8L516.8,5.7ZM514.4,10.2L513.6,11.9L512.5,11.1L511.3,11.7L510.5,10.2L512.3,9.9L513.7,9.8ZM507.7,3.9L506.5,4.2L505.1,3.5L505.9,2.3L507.2,2.1L507.7,3.4ZM519.7,8.6L517.4,8.9L518.8,7.7L519.7,8.6ZM98.8,299.4L97.7,299.1L99,298.1L98.8,299.4ZM88.1,81.3L89.4,81.8L90.7,81.6L92.3,82.3L91.6,83.5L89.8,83.4L88.3,82.8L88.1,81.3ZM96.6,126.2L95.8,128.5L95,129.4L93.4,129.9L92,128.5L91.4,127.1L92.5,126.3L94.4,126L96.8,124.4L98.8,124.2L96.6,126.2ZM122.9,120.9L121.4,121.3L121.8,119.9L123.5,118.8L125,117.9L125.2,119.9L122.9,120.9ZM118,128.3L116.7,129.4L115.3,129.2L116.4,128.7L117.7,127.8L118.5,125.9L119.7,123.8L120.4,122.6L121.7,123.1L121.4,125.9L120.7,127.5L118,128.3ZM134.7,335.6L130.5,334.3L133.8,333.6L135,334.7ZM106,128.5L106.2,130.1L105.6,131.9L104.4,132.5L102.9,132.2L101.9,131.1L102.8,129.4L105.5,128.6ZM8.3,240.5L6.9,240.6L6.6,239.3L8.9,238.1L10.2,239L8.3,240.5ZM88.2,129.8L86.7,128.8L87.9,128L89,128.9L88.2,129.8ZM101,295.3L99.8,294.7L100.9,294.1L101,295.3ZM100.1,291.2L99.6,292.4L98.5,291.5L99.8,291.1ZM81.1,131.9L80.2,133.5L78.9,132.9L80.8,131.5ZM30.8,247.6L32.5,247.8L33.2,248.9L31.8,250.1L30.4,249.6L30.8,247.6ZM16.9,261.4L15.6,261.7L14.8,260.7L16.1,259.6L17.1,260.7ZM81.7,125.1L80,122.4L82,121.5L82.8,122.8L82.4,124.3ZM19.1,243.8L17.6,244L16.8,245.1L16,243.8L17.3,243.5L19.1,243.8ZM28.2,258.6L27.6,257.6L28.6,256.8L28.8,258.3ZM25.5,259.9L23.6,260.8L22.2,259.2L22.5,257.6L24.2,258.4L25.5,259.9ZM704.8,530.8L705.3,532.2L705.1,533.6L703.8,532.5L702.2,531.7L703.8,531.7L704.8,530.8ZM711.8,539.8L710.7,539L710.4,537L712.2,537.5L711.8,539.2ZM694.7,529L693,528.4L692.6,524.3L693.9,524.1L693.8,526.1L694.5,527.5L694.7,529ZM657.1,489.8L657.2,488.3L658.5,487.3L658.3,489L657.1,489.8ZM655,471.7L655.7,473.9L654.5,474.2L653.1,472.8L651.8,471.7L651.9,469.3L653.1,467.2L653.7,469.5L654.3,471.2ZM836.5,614.8L835.2,615.1L833.8,615L833.6,613.4L834.2,611.8L835.2,610.6L836.6,609.9L837.4,611L837.9,612.1L837.2,613.7L836.5,614.8ZM818,623.4L816.5,623.7L813.6,622.7L812.3,620.6L813.1,619L814.5,618.6L816,618.8L817.4,620.2L818.4,621.4L818.2,622.8ZM743.4,543.6L742.1,543.9L741.9,542.6L743.1,542L743.4,543.6ZM759.4,579L758.2,580.9L758.6,579.3L759.8,577.1L759.4,579ZM658.6,459.1L658.6,461.6L658,463.9L656.7,464.1L657,461.1L656.7,459.3L658.6,459.1ZM347.4,372.4L349.1,372.4L349.5,373.7L347.9,376L347,377.8L344.8,377.4L344.5,375.8L345.8,375.2L346.4,373.3L347.4,372.4ZM326.6,408.8L325.6,409.5L324.7,407.7L325.3,406.6L326.9,405.9L327.5,407.6L326.6,408.8ZM333,365.8L331.4,366.1L332.3,364.7L333,365.8ZM369.6,72.8L367.8,72.8L367.3,71.4L369.2,71.1L370.3,71.9ZM364,-18.6L364.2,-17.1L362.1,-17.4L362.9,-18.3ZM302.9,11.6L299.7,10.5L298.4,10.2L300.6,9.3L302.2,9.7L303.1,10.8ZM274.5,20.8L272.6,21.2L273,19.7L275.6,18.8L275,20.7ZM-10.7,23.6L-13,23.4L-13.9,22.3L-12.6,22L-11.3,22.1L-10.4,23.2ZM-17.8,24.4L-20.9,23.8L-23.1,22.6L-19.6,23.6L-17.8,24.4ZM3.5,31.6L7.3,31.5L5.6,32.8L2.7,32.4L1.5,31.3L3.5,31.6ZM405.7,51.5L404.4,51.8L403.5,50.2L405.4,51.1ZM436.1,-17.7L437.4,-17L433.4,-17.9L436.1,-17.7ZM466.1,26.2L466.9,27.5L467.9,28.6L466,28.8L465,28.2L463.5,28.2L464.1,26.6L465.5,26.1ZM468.9,31.9L469.9,32.9L468.2,33.4L467.1,32.6L466.2,31.5L467.6,31.5L468.9,31.9ZM466.9,23.9L465.5,24.2L465.9,22.4L466.9,21.6L467.2,23.6ZM460.8,15.7L458.8,15.4L458.1,14.2L456.5,12.7L458.4,11.8L459.4,12.5L459,13.8L459.6,15.3L460.8,15.7ZM490.5,48.1L489.1,47.8L489.3,46.3L491,47.5Z';
+const RELIEF = 'stern-von-afrika-relief.jpg';
+
+// ================= Geometrie & Daten =================
+const LON0 = -26, LAT0 = 41, S = 10, STEP = 24, MW = 860, MH = 790;
+const P = (lon, lat) => [(lon - LON0) * S, (LAT0 - lat) * S];
+const NS = 'http://www.w3.org/2000/svg';
+const $ = s => document.querySelector(s);
+const COLORS = ['#ff4b3a', '#ffd23a', '#37c46a', '#3d8bff', '#b46bff'];
+const DEFAULT_NAMES = ['Spieler 1', 'Lotta', 'Emil', 'Ida', 'Paul'];
+
+const CITY_DEFS = [
+  ['tanger','Tanger',-5.8,35.6,'l',1],
+  ['kairo','Kairo',31.2,30.0,'r',1],
+  ['marrakesch','Marrakesch',-8,31.6,'l'],
+  ['algier','Algier',3,36.4,'t'],
+  ['tunis','Tunis',9.9,36.6,'t'],
+  ['tripolis','Tripolis',13.2,32.5,'b'],
+  ['bengasi','Bengasi',20.4,31.9,'t'],
+  ['siwa','Siwa',25.5,29.2,'l'],
+  ['kufra','Kufra',23.3,24.2,'r'],
+  ['tibesti','Tibesti',18,21,'r'],
+  ['tamanrasset','Tamanrasset',5.5,22.8,'r'],
+  ['agadez','Agadez',8,17,'r'],
+  ['timbuktu','Timbuktu',-3,16.8,'r'],
+  ['kanaren','Kanaren',-15.6,28.0,'b',0,1],
+  ['kapverde','Kap Verde',-23.6,15.1,'b',0,1],
+  ['dakar','Dakar',-17.2,14.7,'r'],
+  ['freetown','Freetown',-13.0,8.5,'l'],
+  ['goldkueste','Goldküste',-1,5.8,'b'],
+  ['sklavenkueste','Sklavenküste',3,6.9,'t'],
+  ['kano','Kano',8.5,12,'l'],
+  ['tschadsee','Tschadsee',14,13,'r'],
+  ['darfur','Darfur',25,13,'b'],
+  ['khartum','Khartum',32.5,15.6,'l'],
+  ['assuan','Assuan',32.9,24.1,'r'],
+  ['suakin','Suakin',37.0,19.1,'r'],
+  ['massaua','Massaua',39.2,15.4,'r'],
+  ['addis','Addis Abeba',38.7,9,'b'],
+  ['guardafui','Kap Guardafui',50.8,11.6,'b'],
+  ['mogadischu','Mogadischu',45.1,2.2,'r'],
+  ['bahr','Bahr el Ghazal',28,8,'r'],
+  ['stanley','Stanleyfälle',25.2,0.5,'r'],
+  ['kamerun','Kamerun',10.2,4.2,'l'],
+  ['kongo','Kongo',15.3,-4.3,'r'],
+  ['luanda','Luanda',13.6,-8.9,'l'],
+  ['victoriasee','Victoriasee',32.6,-0.6,'t'],
+  ['mombasa','Mombasa',39.4,-3.8,'r'],
+  ['sansibar','Sansibar',39.35,-6.1,'r',0,1],
+  ['katanga','Katanga',27.5,-11.7,'b'],
+  ['mosambik','Mosambik',40.0,-15,'r'],
+  ['victoriafaelle','Victoriafälle',25.9,-17.9,'r'],
+  ['walfisch','Walfischbucht',14.9,-22.9,'l'],
+  ['kalahari','Kalahari',22,-23,'t'],
+  ['transvaal','Transvaal',28,-26.2,'r'],
+  ['durban','Durban',30.8,-29.8,'r'],
+  ['kapstadt','Kapstadt',18.8,-33.8,'l'],
+  ['sthelena','St. Helena',-5.7,-15.95,'b',0,1],
+  ['tamatave','Tamatave',49.2,-18.1,'r'],
+  ['tulear','Tulear',43.9,-23.3,'b'],
+];
+const LAND = [
+  ['tanger','marrakesch'],['tanger','algier',[[-1,34.6]]],['algier','tunis'],['tunis','tripolis',[[10,34.5],[11,33]]],
+  ['tripolis','bengasi',[[17,30.4]]],['bengasi','siwa'],['siwa','kairo'],['kairo','assuan'],['bengasi','kufra'],['kufra','assuan'],
+  ['algier','tamanrasset'],['tamanrasset','timbuktu'],['tamanrasset','agadez'],['agadez','kano'],['agadez','tibesti'],
+  ['tibesti','tripolis'],['tibesti','kufra'],['tibesti','darfur'],['marrakesch','timbuktu'],['marrakesch','dakar',[[-12,24]]],
+  ['dakar','timbuktu'],['dakar','freetown',[[-14,11.5]]],['freetown','goldkueste',[[-7,7.4]]],['timbuktu','goldkueste'],['timbuktu','kano'],
+  ['goldkueste','sklavenkueste',[[1,7]]],['sklavenkueste','kano'],['sklavenkueste','kamerun',[[7,6.2]]],['kano','tschadsee'],['tschadsee','darfur'],
+  ['tschadsee','kamerun'],['darfur','khartum'],['darfur','bahr'],['khartum','assuan'],['khartum','suakin'],['khartum','addis'],
+  ['suakin','massaua',[[37.8,17]]],['massaua','addis'],['addis','guardafui'],['addis','victoriasee'],['guardafui','mogadischu',[[47.8,7]]],
+  ['mogadischu','mombasa',[[41.6,0]]],['bahr','victoriasee'],['bahr','stanley'],['stanley','victoriasee'],['stanley','kongo'],
+  ['kamerun','kongo'],['kongo','luanda'],['luanda','katanga'],['katanga','victoriasee'],['katanga','victoriafaelle'],
+  ['katanga','mosambik'],['victoriasee','mombasa'],['mombasa','mosambik',[[38,-9]]],['luanda','walfisch',[[15,-15]]],
+  ['walfisch','kalahari'],['walfisch','kapstadt',[[17,-28]]],['kalahari','kapstadt'],['kalahari','victoriafaelle'],
+  ['victoriafaelle','transvaal'],['mosambik','transvaal',[[35,-18]]],['transvaal','durban'],['durban','kapstadt',[[25,-32.4]]],['tamatave','tulear',[[46.5,-20.5]]],
+];
+const SEA = [
+  ['tanger','kanaren',[[-11,33.5]]],['kanaren','dakar',[[-19,21]]],['kanaren','kapverde',[[-21.5,22]]],['dakar','kapverde'],
+  ['goldkueste','sthelena',[[-1.5,2]]],['sthelena','luanda'],['sthelena','kapstadt'],['mombasa','sansibar',[[40.4,-4.9]]],['sansibar','mogadischu',[[42.5,-3]]],
+  ['sansibar','mosambik',[[41.6,-10],[41.3,-13.5]]],['sansibar','tamatave',[[47,-10],[50.2,-10.9],[51.2,-14.5]]],['mosambik','tulear',[[41.5,-19.5]]],['durban','tulear',[[37,-27.5]]],
+];
+const AIR = [
+  ['tanger','kanaren'],['tanger','timbuktu'],['kairo','khartum'],['khartum','victoriasee'],['khartum','addis'],
+  ['timbuktu','goldkueste'],['goldkueste','kongo'],['kongo','victoriasee'],['kongo','kapstadt'],
+  ['kapstadt','tamatave'],['kanaren','sthelena'],['addis','mogadischu'],['victoriasee','tamatave'],
+];
+const TOKEN_SET = { star:1, horseshoe:5, robber:3, ruby:3, emerald:4, topaz:6 };
+const TOKEN_INFO = {
+  star:{name:'Stern von Afrika', text:'Der größte Diamant der Welt', color:'#ffe9a0'},
+  horseshoe:{name:'Hufeisen', text:'Siegt, sobald der Stern gefunden ist', color:'#c9d8e6'},
+  robber:{name:'Räuber', text:'Nimmt dir dein ganzes Geld', color:'#ff3b2a'},
+  ruby:{name:'Rubin', value:1000, text:'£ 1000', color:'#ff2d4f'},
+  emerald:{name:'Smaragd', value:600, text:'£ 600', color:'#2bea86'},
+  topaz:{name:'Topas', value:300, text:'£ 300', color:'#ffb02e'},
+  blank:{name:'Leer', text:'Nur Sand und Staub', color:'#b9a886'},
+};
+
+const cities = {}; const nodes = []; const routeDraw = [];
+CITY_DEFS.forEach(([id,name,lon,lat,lbl,start,island]) => {
+  const [x,y] = P(lon,lat);
+  cities[id] = {id,name,x,y,lbl,start:!!start,island:!!island,node:nodes.length,airport:false};
+  nodes.push({x,y,city:id,sea:false,adj:[]});
+});
+AIR.forEach(([a,b]) => { cities[a].airport = cities[b].airport = true; });
+function link(a,b,sea){ nodes[a].adj.push({to:b,sea}); nodes[b].adj.push({to:a,sea}); }
+function addRoute(a,b,via,sea){
+  const pts = [[cities[a].x,cities[a].y], ...(via||[]).map(v=>P(v[0],v[1])), [cities[b].x,cities[b].y]];
+  const segs = []; let L = 0;
+  for (let i=1;i<pts.length;i++){ const d = Math.hypot(pts[i][0]-pts[i-1][0], pts[i][1]-pts[i-1][1]); segs.push(d); L += d; }
+  const n = Math.max(1, Math.round(L/STEP));
+  let prev = cities[a].node; const dots = [];
+  for (let k=1;k<n;k++){
+    let t = L*k/n, i = 0;
+    while (t > segs[i]) { t -= segs[i]; i++; }
+    const f = t/segs[i];
+    const id = nodes.length;
+    nodes.push({x:pts[i][0]+(pts[i+1][0]-pts[i][0])*f, y:pts[i][1]+(pts[i+1][1]-pts[i][1])*f, city:null, sea, adj:[]});
+    dots.push(id); link(prev,id,sea); prev = id;
+  }
+  link(prev,cities[b].node,sea);
+  routeDraw.push({pts,sea,dots,a,b});
+}
+LAND.forEach(([a,b,v]) => addRoute(a,b,v,false));
+SEA.forEach(([a,b,v]) => addRoute(a,b,v,true));
+function bfs(sources){
+  const d = new Array(nodes.length).fill(Infinity), q = [];
+  sources.forEach(s => { d[s] = 0; q.push(s); });
+  for (let i=0;i<q.length;i++){ const u=q[i]; for (const e of nodes[u].adj) if (d[e.to]===Infinity){ d[e.to]=d[u]+1; q.push(e.to); } }
+  return d;
+}
+const distHome = bfs([cities.tanger.node, cities.kairo.node]);
+function airCurve(a,b){
+  const A=cities[a], B=cities[b], mx=(A.x+B.x)/2, my=(A.y+B.y)/2, dx=B.x-A.x, dy=B.y-A.y;
+  return {A, B, C:[mx-dy*.2, my+dx*.2]};
+}
+
+// ================= Grafiken =================
+function starPts(R, r, n=5){ let s=''; for (let i=0;i<n*2;i++){ const a=-Math.PI/2+i*Math.PI/n, rr=i%2?r:R; s+=`${(Math.cos(a)*rr).toFixed(2)},${(Math.sin(a)*rr).toFixed(2)} `; } return s; }
+$('#brandStar').setAttribute('points', starPts(11,4.8));
+function iconInner(type){
+  switch(type){
+    case 'star': return `<polygon points="${starPts(8.4,3.7)}" fill="#ffd84a" stroke="#8a5a00" stroke-width="1"/><polygon points="${starPts(3.8,1.7)}" fill="#fff8d0"/>`;
+    case 'horseshoe': return `<path d="M-5,-6 V0 A5,5 0 0 0 5,0 V-6" fill="none" stroke="#4d5a62" stroke-width="3.8" stroke-linecap="round"/><path d="M-5,-6 V0 A5,5 0 0 0 5,0 V-6" fill="none" stroke="#dfe8ee" stroke-width="1.3" stroke-linecap="round"/>`;
+    case 'robber': return `<circle r="7" fill="#2a2420" stroke="#000" stroke-width=".8"/><rect x="-6" y="-3" width="12" height="3.6" rx="1.6" fill="#e0402f"/><circle cx="-2.6" cy="-1.2" r="1.1" fill="#fff"/><circle cx="2.6" cy="-1.2" r="1.1" fill="#fff"/>`;
+    case 'ruby': case 'emerald': case 'topaz': {
+      const c = {ruby:['#e8223f','#ff9aa6','#6f0b18'],emerald:['#1fae62','#9cf5c2','#0b4a29'],topaz:['#f6a51f','#ffe4a0','#8a5300']}[type];
+      return `<polygon points="0,-7 7,-1.5 3.5,7 -3.5,7 -7,-1.5" fill="${c[0]}" stroke="${c[2]}" stroke-width=".9"/><polygon points="0,-7 3,-1.5 0,7 -3,-1.5" fill="${c[1]}" opacity=".6"/>`;
+    }
+    case 'blank': return `<circle r="6" fill="#e9dcb9" stroke="#9c8a63" stroke-width="1"/><path d="M-2.5,-2.5 L2.5,2.5 M2.5,-2.5 L-2.5,2.5" stroke="#9c8a63" stroke-width="1.1"/>`;
+  }
+  return '';
+}
+const icon = (type, size=18) => `<svg width="${size}" height="${size}" viewBox="-9 -9 18 18" aria-hidden="true">${iconInner(type)}</svg>`;
+
+// Große Fundgrafiken (200×200)
+function sparkle(x,y,r,o=1){ return `<path transform="translate(${x} ${y})" d="M0,${-r} Q${r*.18},${-r*.18} ${r},0 Q${r*.18},${r*.18} 0,${r} Q${-r*.18},${r*.18} ${-r},0 Q${-r*.18},${-r*.18} 0,${-r}Z" fill="#fff" opacity="${o}"/>`; }
+function brilliant(id, c){
+  return `<defs>
+    <linearGradient id="${id}a" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${c[0]}"/><stop offset=".55" stop-color="${c[1]}"/><stop offset="1" stop-color="${c[2]}"/></linearGradient>
+    <linearGradient id="${id}b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".95"/><stop offset="1" stop-color="${c[0]}" stop-opacity=".4"/></linearGradient>
+  </defs>
+  <polygon points="28,74 62,38 138,38 172,74 100,176" fill="url(#${id}a)" stroke="${c[3]}" stroke-width="2.5" stroke-linejoin="round"/>
+  <polygon points="62,38 138,38 124,74 76,74" fill="url(#${id}b)" opacity=".75"/>
+  <polygon points="28,74 62,38 76,74" fill="#fff" opacity=".35"/>
+  <polygon points="172,74 138,38 124,74" fill="${c[2]}" opacity=".35"/>
+  <polygon points="76,74 124,74 100,176" fill="#fff" opacity=".22"/>
+  <polygon points="28,74 76,74 100,176" fill="${c[1]}" opacity=".25"/>
+  <polygon points="124,74 172,74 100,176" fill="${c[2]}" opacity=".45"/>
+  <g stroke="${c[3]}" stroke-width="1.2" opacity=".55" fill="none"><path d="M28,74H172M62,38L76,74L100,38L124,74L138,38M76,74L100,176L124,74M28,74L100,176M172,74L100,176"/></g>
+  ${sparkle(140,46,16)}${sparkle(56,124,10,.85)}${sparkle(160,110,7,.7)}`;
+}
+function emeraldCut(id){
+  return `<defs><linearGradient id="${id}a" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#b8ffd8"/><stop offset=".5" stop-color="#1fbf6a"/><stop offset="1" stop-color="#0a5a31"/></linearGradient></defs>
+  <polygon points="58,30 142,30 170,58 170,142 142,170 58,170 30,142 30,58" fill="url(#${id}a)" stroke="#06381e" stroke-width="2.5"/>
+  <polygon points="70,50 130,50 150,70 150,130 130,150 70,150 50,130 50,70" fill="#28d47c" opacity=".55" stroke="#0a5a31" stroke-width="1.2"/>
+  <polygon points="82,70 118,70 130,82 130,118 118,130 82,130 70,118 70,82" fill="#bfffe0" opacity=".45" stroke="#0a5a31" stroke-width="1"/>
+  <g stroke="#0a5a31" stroke-width="1" opacity=".6"><path d="M58,30L70,50M142,30L130,50M170,58L150,70M170,142L150,130M142,170L130,150M58,170L70,150M30,142L50,130M30,58L50,70"/></g>
+  <polygon points="58,30 142,30 130,50 70,50" fill="#fff" opacity=".35"/>
+  ${sparkle(146,44,15)}${sparkle(62,150,9,.8)}`;
+}
+function art(type){
+  let inner = '';
+  switch(type){
+    case 'star': inner = brilliant('gS', ['#ffffff','#d8f0ff','#8cc2f0','#4f86b8']) +
+      `<g opacity=".9">${sparkle(30,40,12)}${sparkle(176,150,12)}${sparkle(100,20,9)}</g>`; break;
+    case 'ruby': inner = brilliant('gR', ['#ffb3bf','#ee2547','#7a0a1e','#4a0510']); break;
+    case 'topaz': inner = brilliant('gT', ['#fff0c0','#ffb12e','#b06400','#6a3a00']); break;
+    case 'emerald': inner = emeraldCut('gE'); break;
+    case 'horseshoe': inner = `<defs><linearGradient id="gH" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".4" stop-color="#b9c7d2"/><stop offset=".7" stop-color="#6d7d89"/><stop offset="1" stop-color="#dfe7ee"/></linearGradient></defs>
+      <path d="M58,34 V104 A42,42 0 0 0 142,104 V34" fill="none" stroke="#2b343a" stroke-width="36" stroke-linecap="round"/>
+      <path d="M58,34 V104 A42,42 0 0 0 142,104 V34" fill="none" stroke="url(#gH)" stroke-width="28" stroke-linecap="round"/>
+      <path d="M50,40 V104 A50,50 0 0 0 76,148" fill="none" stroke="#fff" stroke-width="3" opacity=".6" stroke-linecap="round"/>
+      ${[[58,52],[58,82],[66,118],[134,118],[142,82],[142,52]].map(([x,y])=>`<rect x="${x-3}" y="${y-5}" width="6" height="10" rx="2" fill="#2b343a"/>`).join('')}
+      ${sparkle(150,40,14)}${sparkle(44,150,9,.8)}`; break;
+    case 'robber': inner = `<defs><radialGradient id="gRb" cx=".4" cy=".35"><stop offset="0" stop-color="#e3a675"/><stop offset="1" stop-color="#9a5f34"/></radialGradient></defs>
+      <ellipse cx="100" cy="178" rx="60" ry="10" fill="#000" opacity=".25"/>
+      <circle cx="100" cy="112" r="58" fill="url(#gRb)" stroke="#4a2a12" stroke-width="3"/>
+      <path d="M30,74 Q100,52 170,74 L160,84 Q100,68 40,84Z" fill="#1d1a18"/>
+      <path d="M58,76 Q60,22 100,22 Q140,22 142,76Z" fill="#26211e" stroke="#000" stroke-width="2"/>
+      <rect x="58" y="62" width="84" height="10" fill="#c73a2d"/>
+      <path d="M40,96 Q100,80 160,96 L160,120 Q100,108 40,120Z" fill="#d6302a" stroke="#6d0f0a" stroke-width="2.5"/>
+      <ellipse cx="78" cy="104" rx="11" ry="8" fill="#fff"/><ellipse cx="122" cy="104" rx="11" ry="8" fill="#fff"/>
+      <circle cx="80" cy="105" r="5" fill="#111"/><circle cx="120" cy="105" r="5" fill="#111"/>
+      <path d="M60,96 L92,102 M140,96 L108,102" stroke="#3a0805" stroke-width="4" stroke-linecap="round"/>
+      <path d="M70,140 Q86,128 100,138 Q114,128 130,140 Q114,146 100,142 Q86,146 70,140Z" fill="#2a1a10"/>
+      <path d="M88,156 Q100,150 112,156" stroke="#5a2a10" stroke-width="3" fill="none" stroke-linecap="round"/>`; break;
+    default: inner = `<defs><radialGradient id="gB" cx=".4" cy=".35"><stop offset="0" stop-color="#f3e3bd"/><stop offset="1" stop-color="#bba273"/></radialGradient></defs>
+      <circle cx="100" cy="100" r="66" fill="url(#gB)" stroke="#8a744b" stroke-width="3"/>
+      <path d="M62,82 L86,96 L80,118 L104,128 M120,70 L112,92 L134,106" fill="none" stroke="#8a744b" stroke-width="3" stroke-linecap="round"/>
+      ${[[70,140,5],[128,136,4],[140,84,3],[96,68,3.5],[110,150,3]].map(([x,y,r])=>`<circle cx="${x}" cy="${y}" r="${r}" fill="#9c8558"/>`).join('')}`;
+  }
+  return `<svg viewBox="0 0 200 200" aria-hidden="true">${inner}</svg>`;
+}
+const BACK_ART = `<svg viewBox="-50 -50 100 100" width="62%" height="62%" aria-hidden="true"><polygon points="${starPts(34,14)}" fill="none" stroke="#f2b632" stroke-width="3" stroke-linejoin="round"/><polygon points="${starPts(20,8.5)}" fill="#f2b632" opacity=".85"/></svg>`;
+$('#rvBack').innerHTML = BACK_ART;
+
+// ================= Karte aufbauen =================
+const svg = $('#map');
+function build(){
+  const vWorld = `-2000 -2000 ${MW+4000} ${MH+4000}`;
+  let h = `<defs>
+    <radialGradient id="tokG" cx=".38" cy=".32" r=".75"><stop offset="0" stop-color="#ff7a5c"/><stop offset=".55" stop-color="#c2311d"/><stop offset="1" stop-color="#6d1205"/></radialGradient>
+    <radialGradient id="startG" cx=".4" cy=".35"><stop offset="0" stop-color="#fff6cf"/><stop offset=".6" stop-color="#f5bb34"/><stop offset="1" stop-color="#a8650a"/></radialGradient>
+    <radialGradient id="glowG"><stop offset="0" stop-color="#ffd76a" stop-opacity=".9"/><stop offset="1" stop-color="#ffd76a" stop-opacity="0"/></radialGradient>
+    <radialGradient id="cityG" cx=".4" cy=".35"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#d9ccab"/></radialGradient>
+    <linearGradient id="edgeL" x1="0" x2="1"><stop offset="0" stop-color="#06243c"/><stop offset="1" stop-color="#06243c" stop-opacity="0"/></linearGradient>
+    <linearGradient id="edgeT" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#06243c"/><stop offset="1" stop-color="#06243c" stop-opacity="0"/></linearGradient>
+    <g id="tokBack"><circle r="8.2" fill="#000" opacity=".35" cy="1.6"/><circle r="8" fill="url(#tokG)" stroke="#f2b632" stroke-width="1.5"/><polygon points="${starPts(4.6,2)}" fill="#f6c24a"/><ellipse cx="-2.6" cy="-3.6" rx="3" ry="1.6" fill="#fff" opacity=".45"/></g>
+    <filter id="dropS" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="0" dy="1.5" stdDeviation="1.2" flood-color="#000" flood-opacity=".5"/></filter>
+  </defs>
+  <rect x="-2000" y="-2000" width="${MW+4000}" height="${MH+4000}" fill="#06243c"/>
+  <image href="${RELIEF}" x="0" y="0" width="${MW}" height="${MH}" preserveAspectRatio="none"/>
+  <rect x="0" y="0" width="40" height="${MH}" fill="url(#edgeL)"/><rect x="${MW-40}" y="0" width="40" height="${MH}" fill="url(#edgeL)" transform="rotate(180 ${MW-20} ${MH/2})"/>
+  <rect x="0" y="0" width="${MW}" height="40" fill="url(#edgeT)"/><rect x="0" y="${MH-40}" width="${MW}" height="40" fill="url(#edgeT)" transform="rotate(180 ${MW/2} ${MH-20})"/>`;
+  { const [hx,hy] = P(-5.7,-15.95); h += `<ellipse cx="${hx}" cy="${hy}" rx="6" ry="4.5" fill="#d9c08a" stroke="#fff6dc" stroke-width=".7"/>`; }
+  h += `<path d="${COAST}" fill="none" stroke="#fff6dc" stroke-width=".7" opacity=".55" stroke-linejoin="round"/>`;
+  let g = '';
+  for (let lat=-30; lat<=40; lat+=10){ const y=P(0,lat)[1]; g += `<line x1="0" x2="${MW}" y1="${y}" y2="${y}"/>`; }
+  for (let lon=-20; lon<=60; lon+=10){ const x=P(lon,0)[0]; g += `<line y1="0" y2="${MH}" x1="${x}" x2="${x}"/>`; }
+  h += `<g stroke="#bfe3ff" stroke-width=".5" opacity=".18">${g}</g>`;
+  const eq = P(0,0)[1];
+  h += `<text x="12" y="${eq-4}" font-family="var(--label)" font-size="9" fill="#bfe3ff" opacity=".6" style="letter-spacing:.2em">ÄQUATOR</text>`;
+  h += `<text x="${P(-11,-6)[0]}" y="${P(-11,-6)[1]}" font-family="var(--display)" font-size="17" fill="#8fc4ea" opacity=".55" text-anchor="middle" style="letter-spacing:.4em">ATLANTIK</text>`;
+  h += `<text x="${P(54,-29)[0]}" y="${P(54,-29)[1]}" font-family="var(--display)" font-size="12" fill="#8fc4ea" opacity=".55" text-anchor="middle" style="letter-spacing:.3em">INDISCHER OZEAN</text>`;
+  h += `<text x="${P(19,35.3)[0]}" y="${P(19,35.3)[1]}" font-family="var(--display)" font-size="11" fill="#8fc4ea" opacity=".6" text-anchor="middle" style="letter-spacing:.3em">MITTELMEER</text>`;
+  // Kompass
+  const [cx,cy] = P(55,-8);
+  h += `<g transform="translate(${cx} ${cy})" opacity=".8"><circle r="26" fill="rgba(6,30,50,.35)" stroke="#cfe6f0" stroke-width=".8"/><circle r="20" fill="none" stroke="#cfe6f0" stroke-width=".4"/>
+    <polygon points="0,-32 5,-5 0,0 -5,-5" fill="#f6ead0"/><polygon points="0,32 5,5 0,0 -5,5" fill="#7fb3d5"/><polygon points="-32,0 -5,-5 0,0 -5,5" fill="#7fb3d5"/><polygon points="32,0 5,-5 0,0 5,5" fill="#7fb3d5"/>
+    <text y="-37" text-anchor="middle" font-family="var(--display)" font-size="11" fill="#f6ead0">N</text></g>`;
+  // Fluglinien
+  let air = '';
+  AIR.forEach(([a,b]) => { const {A,B,C} = airCurve(a,b); air += `<path d="M${A.x},${A.y} Q${C[0].toFixed(1)},${C[1].toFixed(1)} ${B.x},${B.y}"/>`; });
+  h += `<g fill="none" stroke="#3a0a05" stroke-width="3" opacity=".35">${air}</g><g fill="none" stroke="#ff5a46" stroke-width="1.5" stroke-dasharray="6 4" opacity=".95">${air}</g>`;
+  // Wege
+  let lines = '', dots = '';
+  routeDraw.forEach(r => {
+    const pts = r.pts.map(p=>p.map(v=>v.toFixed(1)).join(',')).join(' ');
+    lines += r.sea ? `<polyline points="${pts}" stroke="#e8f6ff" stroke-dasharray="1.5 5" stroke-linecap="round" opacity=".55"/>` : `<polyline points="${pts}" stroke="#3a2410" opacity=".55"/>`;
+    r.dots.forEach(id => { const n=nodes[id]; const x=n.x.toFixed(1), y=n.y.toFixed(1);
+      dots += r.sea ? `<circle cx="${x}" cy="${y}" r="3" fill="#f6ead0" stroke="#0a3354" stroke-width="1"/>` : `<circle cx="${x}" cy="${y}" r="3" fill="#3a2410" stroke="#fff3d6" stroke-width=".9"/>`; });
+  });
+  h += `<g fill="none" stroke-width="1.3">${lines}</g><g>${dots}</g>`;
+  // Städte
+  let cs = '';
+  Object.values(cities).forEach(c => {
+    if (c.airport) cs += `<circle cx="${c.x}" cy="${c.y}" r="11.5" fill="none" stroke="#ff5a46" stroke-width="1.8"/>`;
+    cs += c.start
+      ? `<circle cx="${c.x}" cy="${c.y}" r="22" fill="url(#glowG)" class="startglow"/><circle cx="${c.x}" cy="${c.y}" r="10.5" fill="url(#startG)" stroke="#3d2204" stroke-width="1.8" filter="url(#dropS)"/><polygon transform="translate(${c.x} ${c.y})" points="${starPts(6.6,2.8)}" fill="#c4271a"/>`
+      : `<circle cx="${c.x}" cy="${c.y}" r="8" fill="url(#cityG)" stroke="#2a1a0a" stroke-width="1.6" filter="url(#dropS)"/>`;
+  });
+  h += `<g>${cs}</g>`;
+  h += `<g id="lyPath"></g><g id="lyTokens"></g><g id="lyLabels"></g><g id="lyTrail"></g><g id="lyTargets"></g><g id="lyPawns"></g><g id="lyFx"></g>`;
+  svg.innerHTML = h;
+  // Beschriftungen (Größe passt sich dem Zoom an)
+  let ls = '';
+  Object.values(cities).forEach(c => { ls += `<text class="lbl ${c.start?'big':''}" data-c="${c.id}"></text>`; });
+  $('#lyLabels').innerHTML = ls;
+  $('#lyLabels').querySelectorAll('text').forEach(t => t.textContent = cities[t.dataset.c].name);
+  $('#minimap').style.backgroundImage = `url("${RELIEF}")`;
+}
+function layoutLabels(z){
+  const fs = 10.5 * z, sw = 3 * z;
+  $('#lyLabels').querySelectorAll('text').forEach(t => {
+    const c = cities[t.dataset.c], o = (c.start ? 14 : 11.5) * Math.max(.7, Math.min(1, z * 1.2));
+    const [x,y,an] = {r:[c.x+o,c.y+fs*.35,'start'],l:[c.x-o,c.y+fs*.35,'end'],t:[c.x,c.y-o-2*z,'middle'],b:[c.x,c.y+o+fs*.8,'middle']}[c.lbl];
+    t.setAttribute('x',x.toFixed(1)); t.setAttribute('y',y.toFixed(1)); t.setAttribute('text-anchor',an);
+    t.style.fontSize = (c.start ? fs*1.2 : fs).toFixed(2)+'px'; t.style.strokeWidth = sw.toFixed(2)+'px';
+  });
+}
+
+// ================= Kamera =================
+const cam = {cx:MW/2, cy:MH/2, w:MW, t:{cx:MW/2, cy:MH/2, w:MW}, speed:3, follow:true};
+let lastZ = -1;
+function aspect(){ const r = svg.getBoundingClientRect(); return r.width > 0 ? r.height / r.width : MH/MW; }
+function limits(){ const a = aspect(); return {maxW: Math.max(MW, MH/a) * 1.03, minW: 150}; }
+function clampView(v){
+  const a = aspect(), L = limits();
+  v.w = Math.min(L.maxW, Math.max(L.minW, v.w));
+  const h = v.w * a;
+  v.cx = v.w >= MW ? MW/2 : Math.min(MW - v.w/2, Math.max(v.w/2, v.cx));
+  v.cy = h >= MH ? MH/2 : Math.min(MH - h/2, Math.max(h/2, v.cy));
+  return v;
+}
+function camSet(cx, cy, w, speed=3){ cam.t = clampView({cx, cy, w}); cam.speed = speed; kickCam(); }
+function camFit(points, pad=70, minW=280, speed=2.6){
+  if (!points.length) return;
+  const xs = points.map(p=>p[0]), ys = points.map(p=>p[1]);
+  const x0=Math.min(...xs), x1=Math.max(...xs), y0=Math.min(...ys), y1=Math.max(...ys), a = aspect();
+  const w = Math.max(x1-x0+pad*2, (y1-y0+pad*2)/a, minW);
+  camSet((x0+x1)/2, (y0+y1)/2, w, speed);
+}
+const autoCam = (fn) => { if (cam.follow) fn(); };
+let camRAF = 0, camLast = 0;
+function kickCam(){ if (!camRAF){ camLast = performance.now(); camRAF = requestAnimationFrame(camLoop); } }
+function camLoop(now){
+  const dt = Math.min(.05, (now - camLast)/1000); camLast = now;
+  const k = reduced ? 1 : 1 - Math.exp(-dt * cam.speed);
+  cam.cx += (cam.t.cx - cam.cx) * k; cam.cy += (cam.t.cy - cam.cy) * k;
+  cam.w = Math.exp(Math.log(cam.w) + (Math.log(cam.t.w) - Math.log(cam.w)) * k);
+  const done = Math.abs(cam.t.cx-cam.cx) < .2 && Math.abs(cam.t.cy-cam.cy) < .2 && Math.abs(cam.t.w-cam.w) < .3;
+  if (done){ cam.cx = cam.t.cx; cam.cy = cam.t.cy; cam.w = cam.t.w; }
+  applyCam();
+  camRAF = done ? 0 : requestAnimationFrame(camLoop);
+}
+function applyCam(){
+  const a = aspect(), h = cam.w * a;
+  svg.setAttribute('viewBox', `${(cam.cx-cam.w/2).toFixed(2)} ${(cam.cy-h/2).toFixed(2)} ${cam.w.toFixed(2)} ${h.toFixed(2)}`);
+  const z = Math.max(.42, Math.min(1.25, Math.pow(cam.w/MW, .62)));
+  if (Math.abs(z - lastZ) > .008){ lastZ = z; layoutLabels(z); if (state) placeAllPawns(); }
+  const v = $('#mmView');
+  v.style.left = ((cam.cx-cam.w/2)/MW*100)+'%'; v.style.top = ((cam.cy-h/2)/MH*100)+'%';
+  v.style.width = (cam.w/MW*100)+'%'; v.style.height = (h/MH*100)+'%';
+}
+function pawnScale(){ return Math.max(.7, Math.min(1.25, Math.pow(cam.w/MW, .35))); }
+function setFollow(on){ cam.follow = on; $('#camFollow').setAttribute('aria-pressed', on); if (on && state && state.phase==='play') focusPawn(); }
+function focusPawn(w=380){ const p = cur(); const n = nodes[p.node]; camSet(n.x, n.y, w, 2.4); }
+
+// Manuelle Steuerung: Ziehen, Mausrad, zwei Finger
+const pointers = new Map(); let dragMoved = false, pinchD = 0, dragStart = null;
+function worldPerPx(){ const r = svg.getBoundingClientRect(); return cam.w / r.width; }
+svg.addEventListener('pointerdown', e => {
+  pointers.set(e.pointerId, {x:e.clientX, y:e.clientY});
+  if (pointers.size === 1){ dragMoved = false; dragStart = {x:e.clientX, y:e.clientY}; }
+  if (pointers.size === 2){ const [a,b] = [...pointers.values()]; pinchD = Math.hypot(a.x-b.x, a.y-b.y); }
+});
+window.addEventListener('pointermove', e => {
+  if (!pointers.has(e.pointerId)) return;
+  const prev = pointers.get(e.pointerId), cur_ = {x:e.clientX, y:e.clientY};
+  pointers.set(e.pointerId, cur_);
+  if (pointers.size === 1){
+    if (!dragMoved && Math.hypot(cur_.x-dragStart.x, cur_.y-dragStart.y) < 6) return;
+    if (!dragMoved){ dragMoved = true; svg.classList.add('dragging'); setFollow(false); }
+    const s = worldPerPx();
+    const v = clampView({cx: cam.cx - (cur_.x-prev.x)*s, cy: cam.cy - (cur_.y-prev.y)*s, w: cam.w});
+    Object.assign(cam, {cx:v.cx, cy:v.cy}); cam.t = {...v}; applyCam();
+  } else if (pointers.size === 2){
+    const [a,b] = [...pointers.values()], d = Math.hypot(a.x-b.x, a.y-b.y);
+    if (pinchD){ dragMoved = true; setFollow(false); zoomAt((a.x+b.x)/2, (a.y+b.y)/2, pinchD/d, true); }
+    pinchD = d;
+  }
+});
+const endPointer = e => { pointers.delete(e.pointerId); if (pointers.size < 2) pinchD = 0; if (!pointers.size) svg.classList.remove('dragging'); };
+window.addEventListener('pointerup', endPointer); window.addEventListener('pointercancel', endPointer);
+function zoomAt(clientX, clientY, factor, instant){
+  const r = svg.getBoundingClientRect(), a = aspect();
+  const base = instant ? cam : cam.t;
+  const wx = base.cx - base.w/2 + (clientX - r.left)/r.width * base.w;
+  const wy = base.cy - base.w*a/2 + (clientY - r.top)/r.height * base.w*a;
+  const nw = Math.min(limits().maxW, Math.max(limits().minW, base.w * factor));
+  const ncx = wx - ((clientX - r.left)/r.width - .5) * nw, ncy = wy - ((clientY - r.top)/r.height - .5) * nw * a;
+  const v = clampView({cx:ncx, cy:ncy, w:nw});
+  if (instant){ Object.assign(cam, {cx:v.cx, cy:v.cy, w:v.w}); cam.t = {...v}; applyCam(); }
+  else camSet(v.cx, v.cy, v.w, 10);
+}
+svg.addEventListener('wheel', e => { e.preventDefault(); setFollow(false); zoomAt(e.clientX, e.clientY, Math.exp(e.deltaY * .0018)); }, {passive:false});
+$('#camIn').addEventListener('click', () => { setFollow(false); camSet(cam.t.cx, cam.t.cy, cam.t.w/1.5, 4); });
+$('#camOut').addEventListener('click', () => { setFollow(false); camSet(cam.t.cx, cam.t.cy, cam.t.w*1.5, 4); });
+$('#camAll').addEventListener('click', () => { setFollow(false); camSet(MW/2, MH/2, 9999, 3); });
+$('#camFollow').addEventListener('click', () => setFollow(!cam.follow));
+$('#minimap').addEventListener('click', e => { const r = e.currentTarget.getBoundingClientRect(); setFollow(false); camSet((e.clientX-r.left)/r.width*MW, (e.clientY-r.top)/r.height*MH, Math.min(cam.t.w, 420), 4); });
+window.addEventListener('resize', () => { cam.t = clampView({...cam.t}); Object.assign(cam, clampView({cx:cam.cx, cy:cam.cy, w:cam.w})); applyCam(); FX.resize(); });
+
+// ================= Sound (WebAudio, alles synthetisch) =================
+const Snd = (() => {
+  let ctx = null, master, sfx, mus, revIn, noiseBuf, musTimer = null, nextT = 0, step = 0, musLevel = .2;
+  let sfxOn = true, musicOn = true;
+  try { const s = JSON.parse(localStorage.getItem('sva2-audio')); if (s){ sfxOn = !!s.sfx; musicOn = !!s.music; } } catch(e){}
+  const persist = () => { try { localStorage.setItem('sva2-audio', JSON.stringify({sfx:sfxOn, music:musicOn})); } catch(e){} };
+  function init(){
+    if (ctx){ if (ctx.state === 'suspended') ctx.resume(); return; }
+    const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
+    ctx = new AC();
+    master = ctx.createGain(); master.gain.value = .85;
+    const comp = ctx.createDynamicsCompressor(); comp.threshold.value = -16; comp.ratio.value = 5;
+    master.connect(comp); comp.connect(ctx.destination);
+    sfx = ctx.createGain(); sfx.gain.value = sfxOn ? 1 : 0; sfx.connect(master);
+    mus = ctx.createGain(); mus.gain.value = musicOn ? musLevel : 0; mus.connect(master);
+    const rev = ctx.createConvolver(); const len = ctx.sampleRate * 2.4, b = ctx.createBuffer(2, len, ctx.sampleRate);
+    for (let c=0;c<2;c++){ const d = b.getChannelData(c); for (let i=0;i<len;i++) d[i] = (Math.random()*2-1) * Math.pow(1-i/len, 2.6); }
+    rev.buffer = b; revIn = ctx.createGain(); revIn.gain.value = .3; revIn.connect(rev); rev.connect(master);
+    noiseBuf = ctx.createBuffer(1, ctx.sampleRate*2, ctx.sampleRate); const nd = noiseBuf.getChannelData(0); for (let i=0;i<nd.length;i++) nd[i] = Math.random()*2-1;
+  }
+  const T = () => ctx.currentTime;
+  function tone(f, t, dur, o={}){
+    const osc = ctx.createOscillator(); osc.type = o.type || 'sine'; osc.frequency.setValueAtTime(f, t);
+    if (o.to) osc.frequency.exponentialRampToValueAtTime(o.to, t + (o.glide || dur));
+    if (o.detune) osc.detune.value = o.detune;
+    const g = ctx.createGain(), a = o.a || .004, pk = o.gain ?? .2;
+    g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(pk, t + a); g.gain.exponentialRampToValueAtTime(.0001, t + a + dur);
+    let n = osc;
+    if (o.lp){ const fl = ctx.createBiquadFilter(); fl.type = 'lowpass'; fl.frequency.value = o.lp; fl.Q.value = o.q || .8; osc.connect(fl); n = fl; }
+    n.connect(g); g.connect(o.dest || sfx);
+    if (o.rev){ const s = ctx.createGain(); s.gain.value = o.rev; g.connect(s); s.connect(revIn); }
+    osc.start(t); osc.stop(t + a + dur + .05);
+  }
+  function noise(t, dur, o={}){
+    const src = ctx.createBufferSource(); src.buffer = noiseBuf; src.loop = true;
+    const fl = ctx.createBiquadFilter(); fl.type = o.ft || 'bandpass'; fl.frequency.setValueAtTime(o.f || 1000, t);
+    if (o.to) fl.frequency.exponentialRampToValueAtTime(o.to, t + (o.glide || dur)); fl.Q.value = o.q || 1;
+    const g = ctx.createGain(), a = o.a || .004, pk = o.gain ?? .2;
+    g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(pk, t + a); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+    src.connect(fl); fl.connect(g); g.connect(o.dest || sfx);
+    if (o.rev){ const s = ctx.createGain(); s.gain.value = o.rev; g.connect(s); s.connect(revIn); }
+    src.start(t, Math.random()); src.stop(t + dur + .05);
+  }
+  function bell(f, t, dur=1.2, gain=.1, dest){ [[1,1],[2.76,.4],[5.4,.2],[8.93,.1]].forEach(([m,a]) => tone(f*m, t, dur/Math.pow(m,.5), {gain:gain*a, a:.002, dest, rev:.7})); }
+  function brass(f, t, dur, gain=.07){ [-7,7].forEach(d => tone(f, t, dur, {type:'sawtooth', gain, a:.04, lp:Math.min(4000, f*5), detune:d, rev:.35})); }
+  const coin = (t, f) => { bell(f || 2400 + Math.random()*1600, t, .35, .05); };
+  const PENTA = [523.25,587.33,659.25,783.99,880,1046.5,1174.7,1318.5,1568,1760,2093,2349,2637];
+  const fx = {
+    click(){ tone(1100, T(), .03, {type:'triangle', gain:.05}); },
+    dice(){ const t = T(); for (let i=0;i<10;i++){ const tt = t + i*.055 + Math.random()*.02; noise(tt, .035, {f:2200+Math.random()*2400, q:4, gain:.22}); tone(380+Math.random()*320, tt, .03, {type:'triangle', gain:.07}); } },
+    diceLand(){ const t = T(); tone(230, t, .09, {type:'triangle', to:120, gain:.28}); noise(t, .06, {f:1700, q:2, gain:.22}); tone(200, t+.17, .05, {type:'triangle', to:140, gain:.1}); },
+    step(sea){ const t = T(); if (sea){ tone(320, t, .14, {to:760, gain:.1}); noise(t, .2, {ft:'lowpass', f:500, to:1300, gain:.07}); } else { tone(180, t, .07, {to:85, gain:.24}); noise(t, .05, {ft:'lowpass', f:800, gain:.06}); } },
+    horn(){ const t = T(); [98,147,196].forEach((f,i) => tone(f, t, 1.1, {type:'sawtooth', gain:.07 - i*.015, a:.09, lp:650, rev:.5})); noise(t, 1.2, {ft:'lowpass', f:300, gain:.08, a:.2}); },
+    plane(){ const t = T(); noise(t, .95, {f:280, to:2600, glide:.9, q:.8, gain:.28, a:.45}); noise(t+.85, .9, {f:2600, to:320, q:.8, gain:.22, a:.05}); tone(72, t, 1.7, {type:'sawtooth', gain:.06, a:.4, lp:320}); },
+    arrive(){ const t = T(); bell(1046.5, t, .9, .06); bell(1568, t+.09, .9, .05); },
+    turn(){ const t = T(); bell(659.25, t, .6, .05); bell(987.8, t+.1, .7, .05); },
+    flip(){ const t = T(); noise(t, .28, {ft:'highpass', f:1200, to:6500, gain:.16, a:.03}); tone(500, t, .25, {to:1200, gain:.05, type:'triangle'}); },
+    pay(){ const t = T(); coin(t, 2600); coin(t+.09, 3100); },
+    gem(level){ const t = T(); const n = 4 + level*2;
+      for (let i=0;i<n;i++) bell(PENTA[i % PENTA.length], t + i*.07, 1.1, .08);
+      for (let i=0;i<4+level*3;i++) coin(t + .25 + i*.075);
+      noise(t, 1.4, {ft:'highpass', f:7000, gain:.05, a:.2, rev:.5});
+      brass(523.25, t+.05, .5, .04); brass(659.25, t+.05, .5, .035); brass(783.99, t+.05, .7, .035); },
+    robber(){ const t = T();
+      noise(t, 1.6, {ft:'lowpass', f:160, gain:.55, a:.02});
+      [[0,.22],[.3,.22],[.6,1.4]].forEach(([d,len],i) => { const fs = i<2 ? [82.4,116.5,164.8] : [77.8,110,155.6]; fs.forEach(f => tone(f, t+d, len, {type:'sawtooth', gain:.09, a:.01, lp:900, rev:.4})); });
+      for (let i=0;i<9;i++) coin(t + .75 + i*.09, 3200 - i*220); },
+    horseshoe(){ const t = T(); [1500,2410,3720,5150].forEach((f,i) => tone(f, t, 1.8/(i+1), {gain:.07/(i*.6+1), a:.002, rev:.8})); [783.99,987.77,1174.66,1567.98].forEach((f,i) => bell(f, t+.35+i*.09, .9, .055)); },
+    blank(){ const t = T(); tone(300, t, .4, {type:'triangle', to:130, gain:.12}); noise(t, .7, {ft:'lowpass', f:900, to:300, gain:.13, a:.02}); tone(90, t, .2, {gain:.2}); },
+    star(){ const t = T();
+      for (let i=0;i<18;i++) tone(62, t + i*.045, .22, {to:52, gain:.04 + i*.012});
+      noise(t, .9, {ft:'lowpass', f:220, gain:.25, a:.7});
+      const f0 = t + .85;
+      [392,523.25,659.25,783.99].forEach((f,i) => brass(f, f0 + i*.11, .18, .06));
+      [523.25,659.25,783.99,1046.5].forEach(f => brass(f, f0 + .5, 1.9, .05));
+      tone(65.4, f0 + .5, 1.8, {gain:.3, a:.01, to:60});
+      for (let i=0;i<14;i++) bell(PENTA[(i*3) % PENTA.length], f0 + .5 + i*.08 + Math.random()*.03, 1.3, .06);
+      noise(f0 + .5, 2.2, {ft:'highpass', f:6500, gain:.06, a:.3, rev:.6}); },
+    win(){ const t = T();
+      const seq = [[523.25,.0],[523.25,.16],[523.25,.32],[659.25,.48],[587.33,.9],[659.25,1.05],[783.99,1.2]];
+      seq.forEach(([f,d]) => brass(f, t+d, d>1.1 ? 1.8 : .14, .06));
+      [261.63,329.63,392].forEach(f => brass(f, t+1.2, 1.8, .045));
+      for (let i=0;i<20;i++) bell(PENTA[i % PENTA.length], t + 1.2 + i*.07, 1.2, .05);
+      tone(65.4, t+1.2, 1.6, {gain:.3}); },
+    lose(){ const t = T(); [392,370,349,330].forEach((f,i) => brass(f, t + i*.3, .28, .05)); },
+  };
+  // Musik: Kalimba, Marimba-Bass, Djembe, Shaker
+  const SC = [220,261.63,293.66,329.63,392,440,523.25,587.33,659.25,783.99];
+  const MEL = [
+    [5,-1,7,-1,8,-1,7,5,-1,6,-1,5,3,-1,5,-1],
+    [6,-1,5,-1,3,-1,1,-1,3,5,-1,3,1,-1,-1,-1],
+    [6,-1,8,-1,9,-1,8,6,-1,8,-1,6,5,-1,6,-1],
+    [4,-1,5,-1,7,-1,5,4,3,-1,4,-1,2,-1,3,-1],
+  ];
+  const ROOTS = [110,87.31,130.81,98];
+  const SIXT = 60/104/4;
+  function playStep(i, t){
+    const bar = Math.floor(i/16) % 4, s = i % 16, cycle = Math.floor(i/64);
+    if (s===0 || s===10) tone(ROOTS[bar], t, .38, {type:'triangle', gain:.24, dest:mus, lp:600});
+    if (s===6 || s===14) tone(ROOTS[bar]*1.5, t, .2, {type:'triangle', gain:.11, dest:mus, lp:600});
+    if (s===0 || s===7 || s===10) tone(150, t, .2, {to:55, gain:.32, dest:mus});
+    if (s===4 || s===12){ noise(t, .08, {f:1100, q:1.4, gain:.11, dest:mus}); tone(330, t, .06, {to:190, gain:.1, dest:mus}); }
+    if (s % 2 === 0) noise(t, .045, {ft:'highpass', f:6500, gain: s % 4 === 2 ? .05 : .025, dest:mus});
+    const m = MEL[bar][s];
+    if (m >= 0 && Math.random() > .08){
+      const f = SC[m] * (cycle % 2 && s > 7 ? 2 : 1);
+      tone(f, t, .7, {gain:.11, a:.002, dest:mus, rev:.25}); tone(f*4.07, t, .07, {gain:.025, a:.001, dest:mus}); tone(f*2, t, .25, {type:'triangle', gain:.025, dest:mus});
+    }
+  }
+  function sched(){ while (nextT < ctx.currentTime + .25){ playStep(step, nextT); nextT += SIXT; step++; } }
+  function startMusic(){ if (!ctx || musTimer || !musicOn) return; nextT = ctx.currentTime + .1; musTimer = setInterval(sched, 50); }
+  function stopMusic(){ clearInterval(musTimer); musTimer = null; }
+  return {
+    init, startMusic, stopMusic,
+    play(name, ...a){ if (!ctx || !sfxOn) return; try { fx[name](...a); } catch(e){} },
+    duck(on){ if (!ctx || !musicOn) return; mus.gain.setTargetAtTime(on ? musLevel*.2 : musLevel, ctx.currentTime, .15); },
+    get sfxOn(){ return sfxOn; }, get musicOn(){ return musicOn; },
+    toggleSfx(){ sfxOn = !sfxOn; if (sfx) sfx.gain.value = sfxOn ? 1 : 0; persist(); return sfxOn; },
+    toggleMusic(){ musicOn = !musicOn; if (mus) mus.gain.setTargetAtTime(musicOn ? musLevel : 0, ctx.currentTime, .1); if (musicOn) startMusic(); else stopMusic(); persist(); return musicOn; },
+  };
+})();
+$('#sfxBtn').setAttribute('aria-pressed', Snd.sfxOn); $('#musBtn').setAttribute('aria-pressed', Snd.musicOn);
+$('#sfxBtn').addEventListener('click', () => { Snd.init(); $('#sfxBtn').setAttribute('aria-pressed', Snd.toggleSfx()); });
+$('#musBtn').addEventListener('click', () => { Snd.init(); $('#musBtn').setAttribute('aria-pressed', Snd.toggleMusic()); });
+window.addEventListener('pointerdown', () => { Snd.init(); if (state && state.phase === 'play') Snd.startMusic(); }, {capture:true});
+
+// ================= Partikel =================
+const FX = (() => {
+  const cv = $('#fx'), g = cv.getContext('2d'); let parts = [], raf = 0, dpr = 1, last = 0;
+  function resize(){ dpr = Math.min(2, window.devicePixelRatio || 1); cv.width = innerWidth*dpr; cv.height = innerHeight*dpr; }
+  resize();
+  const CONF = ['#ffd23a','#ff4b3a','#37c46a','#3d8bff','#b46bff','#ffffff','#ff8ad8'];
+  function burst(x, y, kind, n, o={}){
+    if (reduced) n = Math.min(n, 12);
+    for (let i=0;i<n;i++){
+      const a = o.up ? -Math.PI/2 + (Math.random()-.5)*(o.spread||1.4) : Math.random()*Math.PI*2;
+      const sp = (o.speed||8) * (.35 + Math.random()*.9);
+      parts.push({kind, x, y, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp, life:0, max:(o.life||1.6)*(.6+Math.random()*.7),
+        size:(o.size||6)*(.6+Math.random()*.8), rot:Math.random()*6.28, vr:(Math.random()-.5)*.4,
+        color:o.colors ? o.colors[i % o.colors.length] : CONF[i % CONF.length], g:o.g ?? .25});
+    }
+    if (!raf){ last = performance.now(); raf = requestAnimationFrame(loop); }
+  }
+  function loop(now){
+    const dt = Math.min(2.5, (now - last)/16.67); last = now;
+    g.setTransform(dpr,0,0,dpr,0,0); g.clearRect(0,0,innerWidth,innerHeight);
+    parts = parts.filter(p => (p.life += dt/60) < p.max);
+    for (const p of parts){
+      p.vy += p.g*dt; p.vx *= Math.pow(.985, dt); p.vy *= Math.pow(.985, dt);
+      if (p.kind === 'confetti'){ p.vx += Math.sin(p.life*8 + p.rot)*.08*dt; p.vy = Math.min(p.vy, 3.2); }
+      p.x += p.vx*dt; p.y += p.vy*dt; p.rot += p.vr*dt;
+      const f = 1 - p.life/p.max;
+      g.save(); g.translate(p.x, p.y); g.rotate(p.rot);
+      if (p.kind === 'confetti'){ g.globalAlpha = Math.min(1, f*2); g.fillStyle = p.color; g.scale(1, Math.cos(p.life*10 + p.rot)); g.fillRect(-p.size/2, -p.size/4, p.size, p.size/2); }
+      else if (p.kind === 'spark'){ g.globalCompositeOperation = 'lighter'; g.globalAlpha = f; g.fillStyle = p.color; const s = p.size*(.5+f*.8);
+        g.beginPath(); g.moveTo(0,-s); g.quadraticCurveTo(s*.15,-s*.15,s,0); g.quadraticCurveTo(s*.15,s*.15,0,s); g.quadraticCurveTo(-s*.15,s*.15,-s,0); g.quadraticCurveTo(-s*.15,-s*.15,0,-s); g.fill();
+        g.globalAlpha = f*.35; g.beginPath(); g.arc(0,0,s*1.4,0,7); g.fill(); }
+      else if (p.kind === 'coin'){ g.globalAlpha = Math.min(1, f*2.5); const w = Math.abs(Math.cos(p.life*9 + p.rot));
+        g.scale(Math.max(.15, w), 1); g.fillStyle = '#f5bb34'; g.beginPath(); g.arc(0,0,p.size,0,7); g.fill(); g.strokeStyle = '#8a5a00'; g.lineWidth = 1.5; g.stroke();
+        g.fillStyle = '#ffe9a0'; g.beginPath(); g.arc(-p.size*.25,-p.size*.25,p.size*.35,0,7); g.fill(); }
+      else if (p.kind === 'dust'){ g.globalAlpha = f*.5; g.fillStyle = p.color; g.beginPath(); g.arc(0,0,p.size*(1.8-f),0,7); g.fill(); }
+      g.restore();
+    }
+    raf = parts.length ? requestAnimationFrame(loop) : 0;
+    if (!raf) g.clearRect(0,0,innerWidth,innerHeight);
+  }
+  return {burst, resize};
+})();
+
+// ================= Zustand =================
+let state = null, busy = false;
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const cur = () => state.players[state.cur];
+const cityAt = node => nodes[node].city;
+const hidden = cid => !!(cid && state.tokens[cid] && !state.tokens[cid].revealed);
+const canWin = p => p.star || (state.starFound && p.horseshoes > 0);
+const SAVE_KEY = 'stern-von-afrika-v2';
+
+function newGame(cfg){
+  const pool = [];
+  Object.entries(TOKEN_SET).forEach(([t,n]) => { for (let i=0;i<n;i++) pool.push(t); });
+  const ids = Object.values(cities).filter(c=>!c.start).map(c=>c.id);
+  while (pool.length < ids.length) pool.push('blank');
+  for (let i=pool.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [pool[i],pool[j]]=[pool[j],pool[i]]; }
+  const tokens = {}; ids.forEach((id,i) => tokens[id] = {type:pool[i], revealed:false});
+  state = {
+    players: cfg.map((c,i) => ({name:c.name||DEFAULT_NAMES[i], color:COLORS[i], ai:c.ai, money:300, node:cities[c.start].node, star:false, horseshoes:0})),
+    cur:0, tokens, starFound:false, step:'start', die:null, options:[], log:[], winner:null, turnId:0, phase:'play',
+  };
+  shownMoney = state.players.map(p => p.money);
+  addLog(`Die Expedition beginnt. ${state.players.length} Reisende, je £ 300 im Gepäck.`);
+  buildPawns(); renderTokens();
+  setFollow(true);
+  camSet(MW/2, MH/2, 9999, 3);
+  setTimeout(beginTurn, reduced ? 0 : 700);
+}
+function save(){ try { if (state && state.phase !== 'idle') localStorage.setItem(SAVE_KEY, JSON.stringify(state)); } catch(e){} }
+function loadSaved(){ try { const s = JSON.parse(localStorage.getItem(SAVE_KEY)); if (s && s.phase==='play' && s.players) return s; } catch(e){} return null; }
+function addLog(text, color){ state.log.unshift({text,color}); state.log.length = Math.min(state.log.length, 40); }
+
+// ================= Bewegung =================
+function reach(p, steps){
+  const res = new Map();
+  const stopAt = ni => { const c = cityAt(ni); return !!c && (hidden(c) || (cities[c].start && canWin(p))); };
+  const rec = (ni, path, sea) => { const o = res.get(ni); if (!o || (o.sea && !sea) || (o.sea===sea && path.length < o.path.length)) res.set(ni, {node:ni, path, sea}); };
+  (function dfs(ni, left, path, sea){
+    if (left === 0) return rec(ni, path, sea);
+    let moved = false;
+    for (const e of nodes[ni].adj){
+      if (path.includes(e.to)) continue;
+      moved = true;
+      const np = [...path, e.to], ns = sea || e.sea;
+      if (stopAt(e.to)) rec(e.to, np, ns); else dfs(e.to, left-1, np, ns);
+    }
+    if (!moved && path.length > 1) rec(ni, path, sea);
+  })(p.node, steps, [p.node], false);
+  let opts = [...res.values()].filter(o => o.node !== p.node);
+  const land = opts.filter(o => !o.sea);
+  if (p.money >= 100) opts.forEach(o => o.cost = o.sea ? 100 : 0);
+  else if (land.length) { opts = land; opts.forEach(o => o.cost = 0); }
+  else opts.forEach(o => { o.cost = 0; o.free = o.sea; });
+  return opts;
+}
+function flightsFrom(p){
+  const c = cityAt(p.node); if (!c || p.money < 300) return [];
+  return AIR.filter(([a,b]) => a===c || b===c).map(([a,b]) => ({node:cities[a===c?b:a].node, fly:true, cost:300, from:c, to:a===c?b:a}));
+}
+
+// ================= Spielfiguren =================
+const pawnEls = []; const pawnPos = [];
+function pawnSVG(i, color){
+  return `<defs><linearGradient id="pg${i}" x1="0" x2="1"><stop offset="0" stop-color="${color}"/><stop offset=".45" stop-color="#fff" stop-opacity=".55"/><stop offset=".55" stop-color="${color}"/><stop offset="1" stop-color="#000" stop-opacity=".55"/></linearGradient>
+    <radialGradient id="ph${i}" cx=".35" cy=".3"><stop offset="0" stop-color="#fff"/><stop offset=".35" stop-color="${color}"/><stop offset="1" stop-color="#000"/></radialGradient></defs>
+    <ellipse class="shadow" cx="0" cy="0" rx="8" ry="3" fill="#000" opacity=".45"/>
+    <g class="aura" opacity="0"><circle r="15" fill="none" stroke="#ffd76a" stroke-width="2" stroke-dasharray="3 4"/><circle r="12" fill="url(#glowG)" opacity=".6"/></g>
+    <circle class="activeRing" r="12" fill="none" stroke="${color}" stroke-width="2.2" opacity="0"/>
+    <g class="boat" opacity="0"><path d="M-12,-1 L12,-1 L8,5 L-8,5Z" fill="#7a4a1e" stroke="#2a1606" stroke-width="1"/><path d="M1,-1 V-19 L11,-4Z" fill="#f6ead0" stroke="#6b5636" stroke-width=".8"/></g>
+    <g class="body"><ellipse cx="0" cy="-1" rx="7.5" ry="3" fill="${color}" stroke="#140c05" stroke-width="1.1"/>
+      <path d="M-7,-1.5 C-6,-6 -3.4,-9 -2.6,-13 L2.6,-13 C3.4,-9 6,-6 7,-1.5Z" fill="url(#pg${i})" stroke="#140c05" stroke-width="1.1" stroke-linejoin="round"/>
+      <circle cy="-16.5" r="5" fill="url(#ph${i})" stroke="#140c05" stroke-width="1.1"/></g>`;
+}
+function buildPawns(){
+  const ly = $('#lyPawns'); ly.innerHTML = ''; pawnEls.length = 0; pawnPos.length = 0;
+  state.players.forEach((p,i) => {
+    const g = document.createElementNS(NS,'g'); g.innerHTML = pawnSVG(i, p.color); ly.appendChild(g); pawnEls.push(g);
+    pawnPos.push({x:nodes[p.node].x, y:nodes[p.node].y, hop:0, anim:false});
+  });
+  placeAllPawns();
+}
+function slotOffset(i, node){
+  const same = state.players.map((p,j)=>j).filter(j => state.players[j].node === node && !pawnPos[j]?.anim);
+  const k = same.indexOf(i), n = same.length, s = pawnScale();
+  return n > 1 && k >= 0 ? [(k-(n-1)/2) * 11 * s, 0] : [0,0];
+}
+function drawPawn(i){
+  const p = state.players[i], pp = pawnPos[i], el = pawnEls[i]; if (!el) return;
+  const s = pawnScale(), off = pp.anim ? [0,0] : slotOffset(i, p.node);
+  el.setAttribute('transform', `translate(${(pp.x+off[0]).toFixed(2)} ${(pp.y+off[1]).toFixed(2)}) scale(${s.toFixed(3)})`);
+  el.querySelector('.body').setAttribute('transform', `translate(0 ${(-pp.hop - (pp.boat?4:0)).toFixed(2)})`);
+  el.querySelector('.boat').setAttribute('opacity', pp.boat ? 1 : 0);
+  el.querySelector('.boat').setAttribute('transform', `translate(0 ${(-pp.hop*.3).toFixed(2)})`);
+  el.querySelector('.shadow').setAttribute('rx', (8 - pp.hop*.15).toFixed(2));
+  el.querySelector('.aura').setAttribute('opacity', p.star ? 1 : 0);
+  el.querySelector('.activeRing').setAttribute('opacity', i === state.cur && state.phase==='play' ? .9 : 0);
+  el.style.display = pp.hidden ? 'none' : '';
+}
+function placeAllPawns(){
+  if (!pawnEls.length) return;
+  state.players.forEach((p,i) => { if (!pawnPos[i].anim){ pawnPos[i].x = nodes[p.node].x; pawnPos[i].y = nodes[p.node].y; pawnPos[i].boat = nodes[p.node].sea; } drawPawn(i); });
+  const ly = $('#lyPawns'); if (pawnEls[state.cur]) ly.appendChild(pawnEls[state.cur]);
+  updateMinimapDots();
+}
+function hop(i, toNode, dur){
+  const pp = pawnPos[i], x0 = pp.x, y0 = pp.y, x1 = nodes[toNode].x, y1 = nodes[toNode].y;
+  pp.anim = true; pp.boat = nodes[toNode].sea || (nodes[toNode].city ? false : pp.boat);
+  return new Promise(res => {
+    const t0 = performance.now();
+    function f(now){
+      const t = Math.min(1, (now - t0)/dur), e = t<.5 ? 2*t*t : 1-Math.pow(-2*t+2,2)/2;
+      pp.x = x0 + (x1-x0)*e; pp.y = y0 + (y1-y0)*e; pp.hop = Math.sin(Math.PI*t) * 9;
+      drawPawn(i);
+      if (cam.follow) { cam.t = clampView({cx:pp.x, cy:pp.y, w:cam.t.w}); cam.speed = 5; kickCam(); }
+      if (t < 1) requestAnimationFrame(f); else { pp.hop = 0; pp.anim = false; drawPawn(i); res(); }
+    }
+    requestAnimationFrame(f);
+  });
+}
+function flyAnim(i, a, b){
+  const {A, B, C} = airCurve(a, b), pp = pawnPos[i];
+  pp.hidden = true; pp.anim = true; drawPawn(i);
+  const plane = document.createElementNS(NS,'g');
+  plane.innerHTML = `<ellipse class="psh" rx="10" ry="3.4" fill="#000" opacity=".35"/><g class="pl"><path d="M14,0 L4,-2 L-2,-13 L-6,-13 L-3,-2 L-11,-2 L-14,-7 L-17,-7 L-15,0 L-17,7 L-14,7 L-11,2 L-3,2 L-6,13 L-2,13 L4,2Z" fill="#f6ead0" stroke="#3a2a14" stroke-width="1.1" stroke-linejoin="round"/><circle cx="-3" cy="0" r="2.5" fill="${state.players[i].color}"/></g>`;
+  $('#lyFx').appendChild(plane);
+  const dur = reduced ? 50 : 1800;
+  autoCam(() => camFit([[A.x,A.y],[B.x,B.y],C], 70, 300, 2.2));
+  return new Promise(res => {
+    const t0 = performance.now();
+    function f(now){
+      const t = Math.min(1, (now - t0)/dur), e = t<.5 ? 4*t*t*t : 1-Math.pow(-2*t+2,3)/2, u = 1-e;
+      const x = u*u*A.x + 2*u*e*C[0] + e*e*B.x, y = u*u*A.y + 2*u*e*C[1] + e*e*B.y;
+      const dx = 2*u*(C[0]-A.x) + 2*e*(B.x-C[0]), dy = 2*u*(C[1]-A.y) + 2*e*(B.y-C[1]);
+      const alt = Math.sin(Math.PI*e), sc = (1 + alt*.9) * pawnScale();
+      plane.querySelector('.psh').setAttribute('transform', `translate(${x+alt*14} ${y+alt*18}) scale(${pawnScale()*(1-alt*.3)})`);
+      plane.querySelector('.pl').setAttribute('transform', `translate(${x} ${y}) rotate(${Math.atan2(dy,dx)*180/Math.PI}) scale(${sc})`);
+      pp.x = x; pp.y = y;
+      if (t < 1) requestAnimationFrame(f); else { plane.remove(); pp.hidden = false; pp.anim = false; res(); }
+    }
+    requestAnimationFrame(f);
+  });
+}
+function trailDot(node){
+  const n = nodes[node], c = document.createElementNS(NS,'circle');
+  c.setAttribute('cx', n.x); c.setAttribute('cy', n.y); c.setAttribute('r', 4.5); c.setAttribute('fill', cur().color); c.setAttribute('class','trail'); c.setAttribute('opacity','.85');
+  $('#lyTrail').appendChild(c); setTimeout(() => c.remove(), 2400);
+}
+function floatText(node, text, color){
+  const n = nodes[node], t = document.createElementNS(NS,'text'), z = Math.max(.6, pawnScale());
+  t.setAttribute('x', n.x); t.setAttribute('y', n.y - 30*z); t.setAttribute('text-anchor','middle'); t.setAttribute('class','float');
+  t.setAttribute('style', `font-family:var(--label);font-weight:700;font-size:${15*z}px;fill:${color};stroke:#08121c;stroke-width:${3.5*z}px;paint-order:stroke`);
+  t.textContent = text; $('#lyFx').appendChild(t); setTimeout(() => t.remove(), 1700);
+}
+function boom(node, color){
+  const n = nodes[node], c = document.createElementNS(NS,'circle');
+  c.setAttribute('cx', n.x); c.setAttribute('cy', n.y); c.setAttribute('r', 10); c.setAttribute('fill','none'); c.setAttribute('stroke', color); c.setAttribute('stroke-width', 3); c.setAttribute('class','boom');
+  $('#lyFx').appendChild(c); setTimeout(() => c.remove(), 1200);
+}
+function updateMinimapDots(){
+  const mm = $('#minimap'); mm.querySelectorAll('.mm-dot').forEach(d => d.remove());
+  if (!state || state.phase === 'idle') return;
+  state.players.forEach(p => { const d = document.createElement('span'); d.className = 'mm-dot'; d.style.setProperty('--c', p.color);
+    d.style.left = (nodes[p.node].x/MW*100)+'%'; d.style.top = (nodes[p.node].y/MH*100)+'%'; mm.appendChild(d); });
+}
+
+// ================= Darstellung =================
+const PIPS = {1:[4],2:[0,8],3:[0,4,8],4:[0,2,6,8],5:[0,2,4,6,8],6:[0,2,3,5,6,8]};
+const pipHTML = v => Array.from({length:9},(_,i)=>`<i class="${v && PIPS[v].includes(i)?'on':''}"></i>`).join('');
+function drawDie(v){ $('#die').innerHTML = pipHTML(v); $('#die').setAttribute('aria-label', v ? `Würfel zeigt ${v}` : 'Würfel'); }
+const FACE_ROT = {1:[0,0],2:[-90,0],3:[0,-90],4:[0,90],5:[90,0],6:[0,180]};
+const cubeRot = {x:0, y:0};
+function buildCube(){
+  const tf = ['rotateY(0deg)','rotateX(90deg)','rotateY(90deg)','rotateY(-90deg)','rotateX(-90deg)','rotateY(180deg)'];
+  $('#cube').innerHTML = [1,2,3,4,5,6].map((v,i) => `<div class="face f${v}" style="transform:${tf[i]} translateZ(60px)">${pipHTML(v)}</div>`).join('');
+}
+async function rollDie(){
+  const v = 1 + Math.floor(Math.random()*6);
+  const st = $('#diceStage'), cube = $('#cube');
+  Snd.play('dice');
+  const [fx, fy] = FACE_ROT[v];
+  cubeRot.x = (Math.ceil(cubeRot.x/360)+2)*360 + fx; cubeRot.y = (Math.ceil(cubeRot.y/360)+2)*360 + fy;
+  st.classList.remove('show'); void st.offsetWidth; st.classList.add('show');
+  cube.style.transform = `rotateX(${cubeRot.x}deg) rotateY(${cubeRot.y}deg)`;
+  const d = $('#die'); let k = 0;
+  const spin = setInterval(() => drawDie(1 + (k++ % 6)), 70);
+  await sleep(reduced ? 80 : 560); Snd.play('diceLand');
+  await sleep(reduced ? 20 : 420);
+  clearInterval(spin); drawDie(v); state.die = v;
+  d.animate?.([{transform:'scale(1.25)'},{transform:'scale(1)'}], {duration:300, easing:'cubic-bezier(.2,1.6,.4,1)'});
+  setTimeout(() => st.classList.remove('show'), reduced ? 100 : 700);
+  return v;
+}
+function locLabel(p){ const n = nodes[p.node]; if (n.city) return cities[n.city].name; return n.sea ? 'auf See' : 'unterwegs'; }
+let shownMoney = [];
+function renderPlayers(){
+  const box = $('#players');
+  if (box.children.length !== state.players.length){
+    box.innerHTML = state.players.map((p,i) => `<div class="pcard" style="--c:${p.color}"><span class="chip"></span><div style="min-width:0"><div class="pname"></div><div class="ploc"></div></div><div class="pmoney"></div></div>`).join('');
+    shownMoney = state.players.map(p => p.money);
+  }
+  state.players.forEach((p,i) => {
+    const card = box.children[i];
+    card.classList.toggle('active', i===state.cur && state.phase==='play');
+    card.querySelector('.pname').innerHTML = esc(p.name) + (p.ai ? '<small>KI</small>' : '');
+    card.querySelector('.ploc').innerHTML = esc(locLabel(p)) + (p.star ? icon('star',17) : '') + Array.from({length:p.horseshoes},()=>icon('horseshoe',15)).join('');
+    const m = card.querySelector('.pmoney');
+    if (shownMoney[i] !== p.money){
+      const from = shownMoney[i] ?? p.money, to = p.money, diff = to - from; shownMoney[i] = to;
+      const dl = document.createElement('span'); dl.className = 'delta ' + (diff > 0 ? 'plus' : 'minus'); dl.textContent = (diff > 0 ? '+' : '−') + '£ ' + Math.abs(diff);
+      card.appendChild(dl); setTimeout(() => dl.remove(), 1500);
+      const t0 = performance.now();
+      (function tick(now){ const t = Math.min(1, (now-t0)/800), e = 1-Math.pow(1-t,3); m.textContent = '£ ' + Math.round(from + diff*e); if (t < 1) requestAnimationFrame(tick); })(t0);
+    } else m.textContent = '£ ' + p.money;
+  });
+}
+function renderTokens(){
+  let h = '';
+  Object.entries(state.tokens).forEach(([cid,t]) => {
+    const c = cities[cid];
+    if (!t.revealed) h += `<g class="tokidle" style="animation-delay:${(c.x*7 % 4000)|0}ms"><use href="#tokBack" x="${c.x}" y="${c.y}"/></g>`;
+    else if (t.type !== 'blank') h += `<g transform="translate(${c.x} ${c.y})"><circle r="10" fill="url(#glowG)" opacity=".55"/><g transform="scale(.8)">${iconInner(t.type)}</g></g>`;
+  });
+  $('#lyTokens').innerHTML = h;
+}
+function renderTargets(){
+  const ly = $('#lyTargets'); ly.innerHTML = ''; $('#lyPath').innerHTML = '';
+  const p = cur();
+  if (state.phase!=='play' || p.ai || !['rolled','fly'].includes(state.step)) return;
+  state.options.forEach((o,idx) => {
+    const n = nodes[o.node];
+    const g = document.createElementNS(NS,'g'); g.setAttribute('class','hit'); g.setAttribute('tabindex','0'); g.setAttribute('role','button');
+    g.setAttribute('aria-label', (n.city ? cities[n.city].name : (n.sea?'Seefeld':'Wegfeld')) + (o.cost ? `, kostet £ ${o.cost}` : ''));
+    const col = o.fly ? '#ff6b57' : o.sea && o.cost ? '#8fdcff' : '#ffd23a';
+    const r = n.city ? 13 : 8;
+    g.innerHTML = `<circle cx="${n.x}" cy="${n.y}" r="${r}" fill="none" stroke="${col}" stroke-width="2" class="ring"/>
+      <circle cx="${n.x}" cy="${n.y}" r="${r}" fill="${col}" fill-opacity=".28" stroke="${col}" stroke-width="2.6" class="tgt"/>
+      <circle cx="${n.x}" cy="${n.y}" r="17" fill="transparent"/>` +
+      (o.cost ? `<text x="${n.x}" y="${n.y-18}" text-anchor="middle" font-family="var(--label)" font-weight="700" font-size="10.5" fill="${col}" stroke="#08121c" stroke-width="3" paint-order="stroke">£${o.cost}</text>` : '');
+    g.addEventListener('mouseenter', () => previewPath(o));
+    g.addEventListener('focus', () => previewPath(o));
+    g.addEventListener('mouseleave', () => $('#lyPath').innerHTML = '');
+    g.addEventListener('click', () => { if (!dragMoved) chooseOption(idx); });
+    g.addEventListener('keydown', e => { if (e.key==='Enter'||e.key===' '){ e.preventDefault(); chooseOption(idx); } });
+    ly.appendChild(g);
+  });
+}
+function previewPath(o){
+  if (o.fly){ const {A,B,C} = airCurve(o.from, o.to); $('#lyPath').innerHTML = `<path d="M${A.x},${A.y} Q${C[0]},${C[1]} ${B.x},${B.y}" fill="none" stroke="#ff6b57" stroke-width="4.5" stroke-linecap="round" opacity=".85"/>`; return; }
+  const pts = o.path.map(i=>`${nodes[i].x.toFixed(1)},${nodes[i].y.toFixed(1)}`).join(' ');
+  $('#lyPath').innerHTML = `<polyline points="${pts}" fill="none" stroke="#000" stroke-opacity=".35" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/><polyline points="${pts}" fill="none" stroke="#ffd23a" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="1 9"/>`;
+}
+function renderLog(){ $('#logList').innerHTML = state.log.map(l => `<li style="${l.color?`--c:${l.color}`:''}">${l.text}</li>`).join(''); }
+function btn(label, fn, cls='', disabled=false){ return {label, fn, cls, disabled}; }
+function renderActions(){
+  const p = cur(), box = $('#actions'), msg = $('#msg');
+  box.innerHTML = '';
+  $('#turnHead').innerHTML = state.phase==='play' ? `Am Zug: <span style="color:${p.color}">${esc(p.name)}</span>` : 'Spiel beendet';
+  if (state.phase !== 'play'){ msg.innerHTML = state.winner ? `<b>${esc(state.winner)}</b> hat gewonnen.` : 'Noch keine Expedition unterwegs.'; return; }
+  if (p.ai){ msg.innerHTML = `${esc(p.name)} plant die Route …`; return; }
+  const list = [], c = cityAt(p.node);
+  if (state.step === 'start'){
+    if (hidden(c)){
+      msg.innerHTML = `Du stehst in <b>${cities[c].name}</b> vor einem verdeckten Plättchen.`;
+      list.push(btn('Aufdecken <small>£ 100</small>', payOpen, 'primary', p.money < 100));
+      list.push(btn('Glück versuchen <small>4–6</small>', tryLuck, p.money < 100 ? 'primary' : ''));
+      list.push(btn('Weiterreisen', rollMove));
+    } else {
+      msg.innerHTML = canWin(p) ? `Bring ${p.star?'den Stern':'dein Hufeisen'} nach <b>Kairo</b> oder <b>Tanger</b>!` : 'Würfle und reise durch Afrika.';
+      list.push(btn('Würfeln', rollMove, 'primary'));
+    }
+    if (cities[c]?.airport) list.push(btn('Fliegen <small>£ 300</small>', startFly, '', !flightsFrom(p).length));
+  } else if (state.step === 'rolled'){
+    msg.innerHTML = `Du hast eine <b>${state.die}</b> gewürfelt. Tippe auf ein leuchtendes Ziel.`;
+  } else if (state.step === 'fly'){
+    msg.innerHTML = 'Wähle ein Flugziel.';
+    list.push(btn('Abbrechen', () => { state.step='start'; state.options=[]; render(); autoCam(() => focusPawn()); }));
+  } else if (state.step === 'arrived'){
+    msg.innerHTML = `Angekommen in <b>${cities[c].name}</b>. Plättchen jetzt aufdecken?`;
+    list.push(btn('Aufdecken <small>£ 100</small>', payOpen, 'primary', p.money < 100));
+    list.push(btn('Zug beenden', () => endTurn(), p.money < 100 ? 'primary' : ''));
+  }
+  list.forEach(b => { const e = document.createElement('button'); e.type='button'; e.className = 'btn ' + b.cls; e.innerHTML = b.label; e.disabled = b.disabled || busy;
+    e.addEventListener('click', () => { Snd.play('click'); b.fn(); }); box.appendChild(e); });
+}
+function render(){ renderPlayers(); renderTokens(); placeAllPawns(); renderTargets(); renderActions(); renderLog(); save(); }
+
+let toastT;
+function toast(html, ms=2400){ const t = $('#toast'); t.innerHTML = html; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(()=>t.classList.remove('show'), ms); }
+let bannerT;
+function banner(p){
+  $('#bname').textContent = p.name; $('#bchip').style.setProperty('--c', p.color);
+  const b = $('#banner'); b.classList.add('show'); clearTimeout(bannerT); bannerT = setTimeout(() => b.classList.remove('show'), 1700);
+}
+
+// ================= Fund-Enthüllung =================
+function screenPos(node){
+  const r = svg.getBoundingClientRect(), a = aspect(), n = nodes[node];
+  return [r.left + (n.x - (cam.cx - cam.w/2))/cam.w*r.width, r.top + (n.y - (cam.cy - cam.w*a/2))/(cam.w*a)*r.height];
+}
+async function showReveal(type, opts){
+  const R = $('#reveal'), info = TOKEN_INFO[type];
+  R.style.setProperty('--rc', info.color);
+  $('#rvFront').innerHTML = art(type);
+  $('#rvTitle').textContent = opts.title; $('#rvSub').textContent = opts.sub || '';
+  const val = $('#rvValue'); val.textContent = ''; val.classList.toggle('neg', !!opts.neg);
+  R.classList.remove('go','flipped','out'); R.hidden = false; void R.offsetWidth; R.classList.add('go');
+  Snd.duck(true); Snd.play('flip');
+  await sleep(reduced ? 60 : 750);
+  R.classList.add('flipped');
+  const cx = innerWidth/2, cy = innerHeight*.44;
+  ({
+    star(){ Snd.play('star'); setTimeout(() => { FX.burst(cx, cy, 'confetti', 160, {speed:15, life:3.2, size:9}); FX.burst(cx, cy, 'spark', 70, {speed:11, life:1.6, size:9, g:.02, colors:['#fff6c8','#ffd23a','#ffffff']}); }, reduced?0:850);
+      FX.burst(cx, cy, 'spark', 30, {speed:5, life:1.2, size:6, g:0, colors:['#fff6c8','#ffffff']}); },
+    ruby(){ Snd.play('gem', 3); FX.burst(cx, cy, 'spark', 60, {speed:10, size:8, g:.03, colors:['#ff9aa6','#ff2d4f','#fff']}); FX.burst(cx, cy, 'coin', 30, {speed:12, up:true, spread:2.2, life:2.2, size:8, g:.35}); },
+    emerald(){ Snd.play('gem', 2); FX.burst(cx, cy, 'spark', 50, {speed:9, size:8, g:.03, colors:['#9cf5c2','#2bea86','#fff']}); FX.burst(cx, cy, 'coin', 20, {speed:11, up:true, spread:2.2, life:2.2, size:8, g:.35}); },
+    topaz(){ Snd.play('gem', 1); FX.burst(cx, cy, 'spark', 40, {speed:8, size:7, g:.03, colors:['#ffe4a0','#ffb02e','#fff']}); FX.burst(cx, cy, 'coin', 12, {speed:10, up:true, spread:2, life:2, size:7, g:.35}); },
+    horseshoe(){ Snd.play('horseshoe'); FX.burst(cx, cy, 'spark', 45, {speed:8, size:8, g:.02, colors:['#ffffff','#c9d8e6','#ffd23a']}); },
+    robber(){ Snd.play('robber'); $('#board').classList.remove('shake'); void $('#board').offsetWidth; $('#board').classList.add('shake');
+      const fl = $('#flash'); fl.classList.remove('go'); void fl.offsetWidth; fl.classList.add('go');
+      if (opts.amount) setTimeout(() => FX.burst(cx, cy + 40, 'coin', Math.min(40, 6 + opts.amount/40), {speed:13, life:2.4, size:8, g:.45}), 600);
+      FX.burst(cx, cy, 'dust', 26, {speed:5, life:1.4, size:14, g:-.02, colors:['#3a2a20','#5a3a2a']}); },
+    blank(){ Snd.play('blank'); FX.burst(cx, cy + 30, 'dust', 34, {speed:4.5, life:1.5, size:12, g:-.03, colors:['#c9b48a','#a8946a','#e0cfa8']}); },
+  })[type]();
+  opts.apply?.();
+  if (opts.value){
+    const t0 = performance.now();
+    (function tick(now){ const t = Math.min(1, (now-t0)/900), e = 1-Math.pow(1-t,3); val.textContent = (opts.neg ? '−' : '+') + '£ ' + Math.round(opts.value*e); if (t<1) requestAnimationFrame(tick); })(t0);
+  } else if (opts.valueText) val.textContent = opts.valueText;
+  const dur = {blank:1500, topaz:2600, emerald:2800, ruby:3000, horseshoe:3000, robber:3200, star:5200}[type];
+  await new Promise(res => {
+    let done = false; const fin = () => { if (!done){ done = true; R.removeEventListener('click', clk); document.removeEventListener('keydown', key, true); res(); } };
+    const t0 = performance.now();
+    const clk = () => { if (performance.now() - t0 > 500) fin(); };
+    const key = e => { if ([' ','Enter','Escape'].includes(e.key)){ e.preventDefault(); e.stopPropagation(); clk(); } };
+    R.addEventListener('click', clk); document.addEventListener('keydown', key, true);
+    setTimeout(fin, reduced ? Math.min(dur, 1600) : dur);
+  });
+  R.classList.add('out'); Snd.duck(false);
+  await sleep(300); R.hidden = true;
+}
+
+// ================= Spielablauf =================
+function beginTurn(){
+  if (state.phase !== 'play') return;
+  state.step = 'start'; state.options = []; state.turnId++;
+  const p = cur();
+  if (cities[cityAt(p.node)]?.start && canWin(p)) return win(p);
+  render(); banner(p); Snd.play('turn');
+  autoCam(() => focusPawn(400));
+  if (p.ai) aiTurn(state.turnId);
+}
+async function endTurn(delay=350){
+  busy = true; renderActions();
+  await sleep(delay);
+  busy = false;
+  if (state.phase !== 'play') return;
+  state.cur = (state.cur + 1) % state.players.length;
+  beginTurn();
+}
+async function rollMove(){
+  if (busy) return; busy = true; renderActions();
+  const p = cur(), v = await rollDie();
+  state.options = reach(p, v); state.step = 'rolled'; busy = false;
+  if (!state.options.length){ addLog(`${esc(p.name)} würfelt ${v}, findet aber keinen Weg.`, p.color); render(); return endTurn(700); }
+  render();
+  autoCam(() => { const pts = [[nodes[p.node].x, nodes[p.node].y]]; state.options.forEach(o => (o.path||[o.node]).forEach(n => pts.push([nodes[n].x, nodes[n].y]))); camFit(pts, 60, 260); });
+}
+function startFly(){
+  const p = cur(); state.options = flightsFrom(p); state.step = 'fly'; render();
+  autoCam(() => camFit([[nodes[p.node].x, nodes[p.node].y], ...state.options.map(o => [nodes[o.node].x, nodes[o.node].y])], 60, 300));
+}
+async function chooseOption(idx){
+  if (busy) return;
+  const o = state.options[idx]; if (!o) return;
+  const p = cur(), i = state.cur;
+  busy = true; state.step = 'moving'; state.options = []; renderTargets(); renderActions();
+  if (o.fly){
+    p.money -= 300; renderPlayers(); floatText(p.node, '−£300', '#ff8a7a');
+    Snd.play('plane');
+    await flyAnim(i, o.from, o.to);
+    p.node = o.node; placeAllPawns(); Snd.play('arrive');
+    addLog(`${esc(p.name)} fliegt von ${cities[o.from].name} nach ${cities[o.to].name}.`, p.color);
+  } else {
+    autoCam(() => { const n = nodes[p.node]; camSet(n.x, n.y, Math.min(cam.t.w, 340), 3); });
+    let paid = false;
+    for (const ni of o.path.slice(1)){
+      const sea = nodes[ni].sea;
+      if (sea && !paid){ paid = true; if (o.cost){ p.money -= o.cost; renderPlayers(); floatText(p.node, `−£${o.cost}`, '#8fdcff'); } Snd.play('horn'); }
+      trailDot(p.node);
+      Snd.play('step', sea);
+      await hop(i, ni, reduced ? 30 : 250);
+      p.node = ni;
+    }
+    pawnPos[i].boat = nodes[p.node].sea;
+    placeAllPawns();
+    if (o.cost) addLog(`${esc(p.name)} zahlt £ ${o.cost} für die Schiffsreise.`, p.color);
+    else if (o.free) addLog(`${esc(p.name)} ist pleite und reist kostenlos per Schiff weiter.`, p.color);
+  }
+  busy = false;
+  arrive();
+}
+function arrive(){
+  const p = cur(), c = cityAt(p.node);
+  if (c && cities[c].start && canWin(p)) return win(p);
+  if (c) Snd.play('arrive');
+  if (hidden(c)){
+    addLog(`${esc(p.name)} erreicht ${cities[c].name}.`, p.color);
+    state.step = 'arrived'; render();
+    autoCam(() => camSet(cities[c].x, cities[c].y, 300, 2.5));
+    if (p.ai) aiArrived(state.turnId);
+    return;
+  }
+  if (c) addLog(`${esc(p.name)} reist nach ${cities[c].name}.`, p.color);
+  render(); endTurn(500);
+}
+async function reveal(p){
+  const c = cityAt(p.node), t = state.tokens[c];
+  const info = TOKEN_INFO[t.type], where = cities[c].name, nm = esc(p.name);
+  autoCam(() => camSet(cities[c].x, cities[c].y, 200, 3));
+  t.revealed = true;
+  const after = () => { renderTokens(); renderPlayers(); boom(p.node, info.color); };
+  switch (t.type){
+    case 'ruby': case 'emerald': case 'topaz':
+      await showReveal(t.type, {title: info.name + '!', sub: `${p.name} findet einen ${info.name} in ${where}.`, value: info.value, apply(){ p.money += info.value; after(); }});
+      addLog(`${nm} findet in ${where} einen ${info.name} (+£ ${info.value}).`, p.color); break;
+    case 'robber': {
+      const amt = p.money;
+      await showReveal('robber', {title:'Räuber!', sub: amt ? `${p.name} wird in ${where} bis auf den letzten Penny ausgeraubt.` : `Zum Glück war die Reisekasse von ${p.name} schon leer.`, value: amt, neg:true, amount: amt, valueText: amt ? '' : '£ 0', apply(){ p.money = 0; after(); }});
+      addLog(`Räuber in ${where}! ${nm} verliert £ ${amt}.`, p.color); break;
+    }
+    case 'horseshoe':
+      await showReveal('horseshoe', {title:'Hufeisen!', sub: state.starFound ? `Der Stern ist schon unterwegs. Mit diesem Glücksbringer kann ${p.name} ihn noch schlagen!` : 'Ein Glücksbringer. Er wird wertvoll, sobald jemand den Stern findet.', apply(){ p.horseshoes++; after(); }});
+      addLog(`${nm} findet in ${where} ein Hufeisen.`, p.color); break;
+    case 'star':
+      await showReveal('star', {title:'Der Stern von Afrika!', sub: `${p.name} hat den legendären Diamanten in ${where} gefunden. Jetzt schnell nach Kairo oder Tanger!`, valueText:'', apply(){ p.star = true; state.starFound = true; after(); placeAllPawns(); }});
+      addLog(`<b style="color:var(--gold)">${nm} findet den Stern von Afrika in ${where}!</b>`, p.color);
+      state.players.forEach(q => { if (q !== p && q.horseshoes) toast(`${esc(q.name)} hat ein Hufeisen und ist jetzt im Rennen!`, 3000); });
+      break;
+    default:
+      await showReveal('blank', {title:'Leer', sub:`Nur Sand und Staub in ${where}.`, apply: after});
+      addLog(`${nm} deckt in ${where} ein leeres Plättchen auf.`, p.color);
+  }
+}
+async function payOpen(){
+  if (busy) return; const p = cur(); if (p.money < 100) return;
+  busy = true; p.money -= 100; Snd.play('pay'); floatText(p.node, '−£100', '#ff8a7a'); renderPlayers(); renderActions();
+  await sleep(350);
+  await reveal(p); busy = false; render(); endTurn(300);
+}
+async function tryLuck(){
+  if (busy) return; busy = true; renderActions();
+  const p = cur(), v = await rollDie();
+  if (v >= 4){ toast(`${esc(p.name)} würfelt ${v}. Das Plättchen wird umgedreht!`, 1500); await sleep(600); await reveal(p); }
+  else { addLog(`${esc(p.name)} würfelt ${v}. Kein Glück in ${cities[cityAt(p.node)].name}.`, p.color); toast(`${v}: leider kein Glück`, 1500); }
+  busy = false; render(); endTurn(700);
+}
+function win(p){
+  state.phase = 'over'; state.winner = p.name; state.step = 'over';
+  const home = cities[cityAt(p.node)].name;
+  addLog(`<b style="color:var(--gold)">${esc(p.name)} erreicht ${home} und gewinnt!</b>`, p.color);
+  render();
+  camSet(nodes[p.node].x, nodes[p.node].y, 260, 2);
+  Snd.duck(true); Snd.play(p.ai && state.players.some(q => !q.ai) ? 'lose' : 'win');
+  $('#winTitle').textContent = `${p.name} gewinnt!`;
+  $('#winText').textContent = p.star ? `Der Stern von Afrika ist sicher in ${home} angekommen.` : `Mit dem Hufeisen als Glücksbringer zuerst in ${home}, während der Stern noch unterwegs war.`;
+  $('#winIcon').innerHTML = art(p.star ? 'star' : 'horseshoe');
+  const rank = [...state.players].sort((a,b) => (b===p) - (a===p) || b.money - a.money);
+  $('#ranking').innerHTML = rank.map((q,i) => `<div class="rank"><b>${i+1}.</b><span class="chip" style="--c:${q.color}"></span><span>${esc(q.name)} ${q.star?icon('star',16):''}${Array.from({length:q.horseshoes},()=>icon('horseshoe',14)).join('')}</span><span class="pm">£ ${q.money}</span></div>`).join('');
+  setTimeout(() => {
+    $('#win').hidden = false;
+    let n = 0; const iv = setInterval(() => {
+      FX.burst(innerWidth*(.15+Math.random()*.7), innerHeight*.15, 'confetti', 40, {speed:8, life:3.5, size:9});
+      FX.burst(innerWidth*Math.random(), innerHeight*(.2+Math.random()*.3), 'spark', 20, {speed:7, size:8, g:.03, colors:['#fff6c8','#ffd23a','#fff']});
+      if (++n > 7) clearInterval(iv);
+    }, 450);
+    setTimeout(() => Snd.duck(false), 3500);
+  }, reduced ? 0 : 1100);
+}
+
+// ================= Computer-Gegner =================
+let aiHiddenDist = [];
+function aiMetric(p, node){ if (canWin(p)) return distHome[node]; if (hidden(cityAt(node))) return 0; return aiHiddenDist[node]; }
+async function aiTurn(id){
+  await sleep(1300); if (id !== state.turnId || state.phase!=='play') return;
+  const p = cur(), c = cityAt(p.node);
+  aiHiddenDist = bfs(Object.keys(state.tokens).filter(hidden).map(k => cities[k].node));
+  if (hidden(c) && !canWin(p)) return p.money >= 100 ? payOpen() : tryLuck();
+  const flights = flightsFrom(p);
+  if (flights.length){
+    const here = canWin(p) ? distHome[p.node] : aiHiddenDist[p.node];
+    let best = null;
+    flights.forEach(f => { const m = aiMetric(p, f.node); if (!best || m < best.m) best = {...f, m}; });
+    if (best && best.m + 9 < here && (canWin(p) || p.money >= 600)){
+      state.options = flights; state.step = 'fly';
+      return chooseOption(flights.findIndex(f => f.node === best.node));
+    }
+  }
+  await rollMove(); if (id !== state.turnId || state.step !== 'rolled') return;
+  await sleep(900);
+  let bestI = 0, bestS = -Infinity;
+  state.options.forEach((o,i) => {
+    let s = -aiMetric(p, o.node) * 10;
+    if (canWin(p) && cities[cityAt(o.node)]?.start) s += 1000;
+    if (!canWin(p) && hidden(cityAt(o.node))) s += 50;
+    s -= (o.cost || 0) / 20; s += Math.random() * 3;
+    if (s > bestS){ bestS = s; bestI = i; }
+  });
+  previewPath(state.options[bestI]);
+  await sleep(450);
+  $('#lyPath').innerHTML = '';
+  chooseOption(bestI);
+}
+async function aiArrived(id){
+  await sleep(1000); if (id !== state.turnId || state.step !== 'arrived') return;
+  const p = cur();
+  if (!canWin(p) && p.money >= 200) payOpen(); else endTurn();
+}
+
+// ================= Setup & Bedienung =================
+const setupCfg = [
+  {name:'Spieler 1', ai:false, start:'kairo'}, {name:'Lotta', ai:true, start:'tanger'},
+  {name:'Emil', ai:true, start:'kairo'}, {name:'Ida', ai:true, start:'tanger'}, {name:'Paul', ai:true, start:'kairo'},
+];
+let setupCount = 3;
+function renderSetup(){
+  $('#countSeg').innerHTML = [2,3,4,5].map(n => `<button type="button" aria-pressed="${n===setupCount}" data-n="${n}">${n}</button>`).join('');
+  $('#setupRows').innerHTML = setupCfg.slice(0,setupCount).map((c,i) => `
+    <div class="prow">
+      <span class="chip" style="--c:${COLORS[i]}"></span>
+      <input id="pn${i}" value="${esc(c.name)}" maxlength="16" aria-label="Name Reisende ${i+1}">
+      <select id="pt${i}" aria-label="Art"><option value="h" ${!c.ai?'selected':''}>Mensch</option><option value="c" ${c.ai?'selected':''}>Computer</option></select>
+      <select id="ps${i}" aria-label="Start"><option value="kairo" ${c.start==='kairo'?'selected':''}>ab Kairo</option><option value="tanger" ${c.start==='tanger'?'selected':''}>ab Tanger</option></select>
+    </div>`).join('');
+}
+function readSetup(){ setupCfg.slice(0,setupCount).forEach((c,i) => { c.name = $('#pn'+i).value.trim() || DEFAULT_NAMES[i]; c.ai = $('#pt'+i).value==='c'; c.start = $('#ps'+i).value; }); }
+$('#countSeg').addEventListener('click', e => { const n = +e.target.dataset.n; if (!n) return; Snd.init(); Snd.play('click'); readSetup(); setupCount = n; renderSetup(); });
+let driftT = 0;
+function drift(){
+  clearTimeout(driftT);
+  if (state && state.phase === 'play') return;
+  const ids = Object.keys(cities), c = cities[ids[Math.floor(Math.random()*ids.length)]];
+  camSet(c.x, c.y, 300 + Math.random()*250, .35);
+  driftT = setTimeout(drift, 7000);
+}
+function showSetup(){ renderSetup(); $('#cancelSetup').hidden = !(state && state.phase==='play'); $('#setup').hidden = false; }
+$('#startBtn').addEventListener('click', () => {
+  Snd.init(); readSetup(); clearTimeout(driftT);
+  $('#setup').hidden = true; $('#win').hidden = true;
+  Snd.play('turn'); Snd.startMusic();
+  FX.burst(innerWidth/2, innerHeight/2, 'spark', 40, {speed:9, size:8, g:.02, colors:['#fff6c8','#ffd23a','#fff']});
+  newGame(setupCfg.slice(0,setupCount));
+});
+$('#cancelSetup').addEventListener('click', () => $('#setup').hidden = true);
+$('#newBtn').addEventListener('click', showSetup);
+$('#againBtn').addEventListener('click', () => { $('#win').hidden = true; showSetup(); });
+$('#viewBoard').addEventListener('click', () => { $('#win').hidden = true; Object.values(state.tokens).forEach(t=>t.revealed=true); render(); camSet(MW/2, MH/2, 9999, 2); });
+$('#rulesBtn').addEventListener('click', () => $('#rules').hidden = false);
+$('#closeRules').addEventListener('click', () => $('#rules').hidden = true);
+$('#tokLegend').innerHTML = [...Object.keys(TOKEN_SET),'blank'].map(t => `<div>${icon(t,24)}<span><b>${TOKEN_INFO[t].name}</b> ×${TOKEN_SET[t]||'Rest'}<br><small>${TOKEN_INFO[t].text}</small></span></div>`).join('');
+document.querySelectorAll('.overlay').forEach(o => o.addEventListener('click', e => { if (e.target === o && o.id === 'rules') o.hidden = true; }));
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape'){ $('#rules').hidden = true; if (state && state.phase==='play') $('#setup').hidden = true; }
+  if ((e.key === ' ' || e.key === 'Enter') && (e.target === document.body || e.target.closest?.('.cam-ctl'))){ const b = $('#actions .btn.primary:not(:disabled)'); if (b){ e.preventDefault(); b.click(); } }
+});
+
+// ================= Start =================
+function resume(){
+  if (['moving','rolled','fly'].includes(state.step)){ state.step = 'start'; state.options = []; }
+  shownMoney = state.players.map(p => p.money);
+  buildPawns(); drawDie(state.die); render();
+  if (state.phase === 'play'){
+    focusPawn(420);
+    if (cur().ai){ state.turnId++; if (state.step === 'arrived') aiArrived(state.turnId); else aiTurn(state.turnId); }
+  }
+}
+function boot(data){
+  build(); buildCube(); drawDie(null); applyCam();
+  const s = (data && data.state) || loadSaved();
+  if (s){ state = s; resume(); return; }
+  state = {players:[], cur:0, tokens:{}, starFound:false, step:'start', options:[], log:[{text:'Wähle Mitreisende und starte die Expedition.'}], phase:'idle', turnId:0};
+  Object.values(cities).filter(c=>!c.start).forEach(c => state.tokens[c.id] = {type:'blank', revealed:false});
+  renderTokens(); renderLog();
+  $('#turnHead').textContent = 'Bereit'; $('#msg').textContent = 'Noch keine Expedition unterwegs.';
+  showSetup(); drift();
+}
+window.claude?.hot?.snapshot?.(() => ({ state: state && state.phase === 'play' && !busy ? state : null }));
+window.claude?.hot?.ready ? window.claude.hot.ready(boot) : boot(window.claude?.hot?.data ?? {});
+})();
+</script>
