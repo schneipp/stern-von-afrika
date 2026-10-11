@@ -1,6 +1,6 @@
 // Offline-Cache für den Stern von Afrika.
 // Seite: erst Netz, dann Cache (Updates kommen sofort an). Bilder/Icons: Cache zuerst. Schriften: aus dem Cache, im Hintergrund auffrischen.
-const VERSION = 'sva-7';
+const VERSION = 'sva-8';
 const CORE = [
   './', './index.html', './stern-von-afrika-relief.jpg', './manifest.webmanifest',
   './icons/icon.svg', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png', './icons/favicon-32.png',
@@ -34,6 +34,8 @@ self.addEventListener('fetch', e => {
     return;
   }
   if (url.origin !== location.origin) return;
+  // Teilanfragen (Audio in Safari) direkt ans Netz, der Cache kann keine 206-Antworten liefern
+  if (req.headers.has('range')) return;
 
   if (req.mode === 'navigate') {
     e.respondWith(fetch(req)

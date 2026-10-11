@@ -39,7 +39,9 @@ Wer den Stern findet, muss ihn heim nach Kairo oder Tanger bringen. Sobald er ab
 - 🎲 **3D-Würfel**, der aufs Brett fällt und ausrollt
 - 💎 **Große Funde:** jedes Plättchen dreht sich mitten im Bild um, mit Lichtstrahlen, Partikeln und hochzählendem Gewinn
 - ✈️ **Flugzeug und Schiff:** Flüge als animierter Bogen mit Schatten, auf See sitzt die Figur im Boot
-- 🔊 **Sound und Musik**, komplett im Browser erzeugt: Würfelklappern, Schritte, Schiffshorn, Fanfaren und Kalimba-Musik im Hintergrund
+- 🔊 **Sound und Musik:** echte Afrika-Musik im Hintergrund (vier CC0-Stücke von John Bartmann), dazu im Browser erzeugte Effekte wie Würfelklappern, Schiffshorn und Fanfaren
+- 🎶 **Jingle für jeden Ort:** bei jeder Ankunft ein kurzes Motiv im Stil der Region, mit Oud und Darbuka im Norden, Wüstengitarre in der Sahara, Kora und Balafon im Westen, Krar am Horn von Afrika, Mbira und Marimba im Süden und Valiha auf Madagaskar
+- 🏷️ **Namen über den Figuren** und ein **einklappbares Pult**: dann gehört das ganze Bild der Karte, die Reisekasse steht direkt an der Figur
 - 🤖 **Computergegner** für beliebig viele Plätze
 - 💾 **Spielstand bleibt erhalten**, auch nach einem Neuladen
 - 📱 **Als App installierbar (PWA)**, läuft danach auch offline, im Vollbild und ohne Browserleiste
@@ -97,4 +99,4 @@ Die Seite lässt sich auch direkt per Doppelklick auf `index.html` öffnen. Nur 
 
 Eine Fan-Umsetzung von *Afrikan tähti* (Kari Mannerla, 1951). Städte, Wege und Plättchenverteilung sind an das Original angelehnt, aber frei gestaltet. Kein offizielles Produkt.
 
-Kartendaten: [Natural Earth](https://www.naturalearthdata.com/), gemeinfrei. Stadtfotos: [Wikimedia Commons](https://commons.wikimedia.org/), Urheber und Lizenz (CC BY, CC BY-SA, CC0, FAL, gemeinfrei) werden im Spiel bei jedem Foto angezeigt und sind in `index.html` (`CITY_PHOTOS`) hinterlegt. Schriften: Alfa Slab One, Archivo und Archivo Narrow über Google Fonts.
+Kartendaten: [Natural Earth](https://www.naturalearthdata.com/), gemeinfrei. Musik: John Bartmann, „Happy African Village“, „African Moon“, „West in Africa“ und „A Kwela Fella“ ([Free Music Archive](https://freemusicarchive.org/), CC0). Stadtfotos: [Wikimedia Commons](https://commons.wikimedia.org/), Urheber und Lizenz (CC BY, CC BY-SA, CC0, FAL, gemeinfrei) werden im Spiel bei jedem Foto angezeigt und sind in `index.html` (`CITY_PHOTOS`) hinterlegt. Schriften: Alfa Slab One, Archivo und Archivo Narrow über Google Fonts.
