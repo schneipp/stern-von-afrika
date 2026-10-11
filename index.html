@@ -103,10 +103,13 @@ button:focus-visible,input:focus-visible,select:focus-visible,[tabindex]:focus-v
 .cityclip.go::before,.cityclip.go::after{transform:none}
 .cc-shade{position:absolute;inset:0;background:linear-gradient(0deg,rgba(0,0,0,.72),transparent 48%),radial-gradient(120% 90% at 50% 50%,transparent 55%,rgba(0,0,0,.45))}
 .cc-text{position:absolute;left:calc(28px + var(--sal));right:28px;bottom:calc(9% + 22px);z-index:2}
-.cc-text span{display:block;font-family:var(--label);text-transform:uppercase;letter-spacing:.2em;font-size:12.5px;color:var(--gold-hi);opacity:0;transform:translateY(10px);transition:opacity .4s .25s,transform .5s .25s}
+.cc-text span{display:block;font-family:var(--label);text-transform:uppercase;letter-spacing:.2em;font-size:12.5px;color:var(--gold-hi);text-shadow:0 1px 3px #000,0 0 12px rgba(0,0,0,.8);opacity:0;transform:translateY(10px);transition:opacity .4s .25s,transform .5s .25s}
 .cc-text b{display:block;font-family:var(--display);font-weight:400;font-size:clamp(34px,6.5vw,68px);line-height:1;color:#fff;text-shadow:0 3px 0 rgba(0,0,0,.45),0 0 30px rgba(0,0,0,.5);opacity:0;transform:translateX(-24px);transition:opacity .45s .35s,transform .6s .35s cubic-bezier(.2,1,.3,1)}
 .cc-text small{display:block;margin-top:6px;font-size:15px;color:#efe4ca;opacity:0;transition:opacity .4s .6s}
-.cityclip.go .cc-text span,.cityclip.go .cc-text b,.cityclip.go .cc-text small{opacity:1;transform:none}
+.cc-fact{margin:12px 0 0;max-width:46ch;padding:9px 13px;border-radius:10px;background:rgba(7,19,29,.72);border-left:3px solid var(--gold);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);font-size:clamp(14px,1.7vw,17px);line-height:1.4;color:#fff;opacity:0;transform:translateY(10px);transition:opacity .45s .9s,transform .5s .9s}
+.cc-fact i{display:block;font-style:normal;font-family:var(--label);font-weight:700;text-transform:uppercase;letter-spacing:.14em;font-size:11px;color:var(--gold-hi);margin-bottom:2px}
+.cityclip.go .cc-text span,.cityclip.go .cc-text b,.cityclip.go .cc-text small,.cityclip.go .cc-fact{opacity:1;transform:none}
+@media (max-height: 540px){ .cc-fact{margin-top:6px;padding:6px 10px;font-size:13px} .cc-text b{font-size:clamp(26px,5vw,44px)} }
 .cc-credit{position:absolute;right:calc(10px + var(--sar));bottom:calc(10px + var(--sab));z-index:2;font-size:10.5px;color:rgba(255,255,255,.6);max-width:60%;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cc-credit a{color:inherit}
 
@@ -387,7 +390,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,[tabindex]:focus-v
     <div class="banner" id="banner"><span class="bchip" id="bchip"></span><div><span>Am Zug</span><br><b id="bname"></b></div></div>
     <div class="mapacts" id="mapActs" role="group" aria-label="Nächste Aktion"><div class="ma-msg" id="maMsg"></div><div id="actions"></div></div>
     <div class="hintpill" id="hintPill" hidden><i></i><span id="hintText"></span></div>
-    <div class="cityclip" id="cityClip" hidden role="img"><img id="ccImg" alt=""><div class="cc-shade"></div><div class="cc-text"><span id="ccKicker">Willkommen in</span><b id="ccName"></b><small id="ccCap"></small></div><div class="cc-credit" id="ccCredit"></div></div>
+    <div class="cityclip" id="cityClip" hidden role="img"><img id="ccImg" alt=""><div class="cc-shade"></div><div class="cc-text"><span id="ccKicker">Willkommen in</span><b id="ccName"></b><small id="ccCap"></small><p class="cc-fact" id="ccFact"></p></div><div class="cc-credit" id="ccCredit"></div></div>
     <div class="dice-stage" id="diceStage"><div class="dice-shadow"></div><div class="dice-drop"><div class="cube" id="cube"></div></div></div>
     <div id="toast" role="status" aria-live="polite"></div>
   </main>
@@ -625,56 +628,345 @@ const TOKEN_INFO = {
   blank:{name:'Leer', text:'Nur Sand und Staub', color:'#b9a886'},
 };
 
-// Stadtfotos (cities/<id>.jpg) von Wikimedia Commons: [Motiv, Urheber, Lizenz, Dateiname]
+// Stadtfotos von Wikimedia Commons, je Ort mehrere: [Motiv, Urheber, Lizenz, Dateiname]; das erste ist cities/<id>.jpg, die weiteren cities/<id>-2.jpg …
 const CITY_PHOTOS = {
-  addis:["Wasserspiele im Park vor der Skyline", "DaneyWiki", "CC BY-SA 4.0", "AddisView.jpg"],
-  agadez:["Die Große Moschee aus Lehm über der Altstadt", "Vincent van Zeijst", "CC BY-SA 4.0", "Niger, Agadez (28), grand mosque, old city.jpg"],
-  algier:["Notre-Dame d’Afrique über dem Meer", "Chettouh Nabil", "CC BY-SA 4.0", "Notre Dame d'Afrique2.jpg"],
-  assuan:["Der Isis-Tempel von Philae im Nil", "Diego Delso", "CC BY-SA 4.0", "File, Asuán, Egipto, 2022-04-01, DD 93.jpg"],
-  bahr:["Rinderherde im Staub des Südsudan", "Diego Delso", "CC BY-SA 4.0", "Ganado, Imehejek, Sudán del Sur, 2024-01-21, DD 10.jpg"],
-  bengasi:["Demeter-Tempel im antiken Kyrene", "عدسة قوريني", "CC BY-SA 4.0", "معبد ديميتر.jpg"],
-  dakar:["Die bunte Insel Gorée vor Dakar", "Fawaz.tairou", "CC BY-SA 4.0", "Côtes de l'île de Gorée au Sénégal 11.jpg"],
-  darfur:["Kraterseen im Jebel-Marra-Gebirge", "J Williams", "CC BY-SA 3.0", "Sudan Jebel Marra Deriba Lakes edited.jpg"],
-  durban:["Die Strandpromenade bei Nacht", "Marc Forrest", "CC BY 2.0", "Durban Beachfront At Night.jpg"],
-  freetown:["Straßenmarkt in Freetown", "Erik Cleves Kristensen", "CC BY 2.0", "Freetown street (13992704238).jpg"],
-  goldkueste:["Fischerboote vor dem Cape Coast Castle", "Jenef Offei Emmanuel", "CC BY 4.0", "Cape Coast Castle 09 05 2025.jpg"],
-  guardafui:["Fischerdorf Bargal am Horn von Afrika", "Rahim Alpa", "Public domain", "Somalia, Puntland, Bari, Bargal (01).jpg"],
-  kairo:["Die Pyramiden von Gizeh vor den Toren Kairos", "Ricardo Liberato", "CC BY-SA 2.0", "All Gizah Pyramids.jpg"],
-  kalahari:["Eine Giraffe zieht durch die Kalahari", "Giles Laurent", "CC BY-SA 4.0", "106 Angolan giraffe walking in the Kalahari Desert of Namibia Photo by Giles Laurent.jpg"],
-  kamerun:["Yaoundé zwischen grünen Hügeln", "Albert Bergonzo", "CC BY-SA 4.0", "Yaounde-BEAC.jpg"],
-  kanaren:["Roque Cinchado und der Vulkan Teide", "Thomas Wolf", "CC BY-SA 3.0 DE", "Roque Cinchado und Teide.jpg"],
-  kano:["Gidan Makama und die Zentralmoschee", "Olani Olabimpe", "CC BY-SA 4.0", "Gidan Makama Museum.jpg"],
-  kapstadt:["Die bunten Häuser von Bo-Kaap", "Dietmar Rabich", "CC BY-SA 4.0", "Cape Town (ZA), Wale Street -- 2024 -- 3544.jpg"],
-  kapverde:["Kokospalmen auf der Insel Boa Vista", "Ximonic (Simo Räsänen)", "CC BY-SA 4.0", "Coconut trees in Boa Vista, Cape Verde, December 2010.jpg"],
-  katanga:["Belebter Platz in Lubumbashi", "T. Thielemans", "CC BY 3.0", "Square in Lubumbashi, 2011.jpg"],
-  khartum:["Die Pyramiden von Meroe im Sudan", "Laurent de Walick", "CC BY 2.0", "Meroe Pyramids - 33110830438.jpg"],
-  kongo:["Sonnenaufgang auf dem Kongo-Strom", "Bsm15", "CC BY-SA 3.0", "Sunrise near Mossaka (Congo).JPG"],
-  kufra:["Endlose Dünen der libyschen Sahara", "Luca Galuzzi (Lucag)", "CC BY-SA 2.5", "Libya 4985 Tadrart Acacus Luca Galuzzi 2007.jpg"],
-  luanda:["Die Bucht von Luanda", "Paulo César Santos", "CC0", "Bay of Luanda.jpg"],
-  marrakesch:["Laternen am Platz Djemaa el Fna", "I. Barrios & J. Ligero", "CC BY-SA 3.0", "Lámparas, Djemaa el Fna -- 2014 -- Marrakech, Marruecos.jpg"],
-  massaua:["Die Altstadt auf der Insel Massaua", "Reinhard Dietrich", "CC0", "Historic Center Massawa Panorama.JPG"],
-  mogadischu:["Fischerboote im alten Hafen", "AMISOM", "CC0", "2013 05 22 Mogadishu Coast B.jpg (8778505657).jpg"],
-  mombasa:["Holzbalkone in der Altstadt", "FredD", "CC BY-SA 3.0", "Mombasa old town view.JPG"],
-  mosambik:["Bunte Gasse auf der Ilha de Moçambique", "Jcornelius", "CC BY-SA 4.0", "Avenida Amílcar Cabral, Ilha de Moçambique.jpg"],
-  sansibar:["Eine Dhau am Strand von Sansibar", "Anton Zelenov", "CC BY-SA 3.0", "Dhow boat Zanzibar.jpg"],
-  siwa:["Dattelpalmen im Abendlicht der Oase", "Vincent Battesti", "CC BY-SA 4.0", "Siwa Oasis, sunset on Maraqi (Egypt).jpg"],
-  sklavenkueste:["Ganvié, das Dorf auf Stelzen im See", "Dr. Ondřej Havelka (cestovatel)", "CC BY-SA 4.0", "The village of Ganvié on Lake Nokoué.jpg"],
-  stanley:["Der Kongo bei Kisangani von oben", "MONUSCO/Myriam Asmani", "CC BY-SA 2.0", "Aerial view of the Congo River near Kisangani.jpg"],
-  sthelena:["Jamestown im engen Tal von oben", "Andrew Neaum", "CC BY-SA 3.0", "St-Helena-Jamestown-from-above.jpg"],
-  suakin:["Moschee in der alten Hafenstadt", "Bertramz", "CC BY 3.0", "Suakin,el-Geyf mosque.jpg"],
-  tamanrasset:["Der Ilamane im Hoggar-Gebirge", "Bernard Gagnon", "CC BY 4.0", "Ilamane 01.jpg"],
-  tamatave:["Palmenstrand an Madagaskars Küste", "Diego Delso", "CC BY-SA 4.0", "Nosy Iranja, Madagascar, 2025-09-17, DD 21.jpg"],
-  tanger:["Die Altstadt am Hügel über dem Hafen", "Mike McBey", "CC BY 2.0", "Tangier - 44699733295.jpg"],
-  tibesti:["Felsbogen von Ourini im Ennedi", "Valerian Guillot", "CC BY 2.0", "Ourini Arch at sunset, Ennedi, Chad (40598172781).jpg"],
-  timbuktu:["Die Djinguereber-Moschee aus Lehm", "Ousmane Garba Kounta", "CC BY-SA 4.0", "La plus grande Mosquée de la ville de Tombouctou.jpg"],
-  transvaal:["Der Blyde River Canyon", "Dietmar Rabich", "CC BY-SA 4.0", "Blyde River Canyon Nature Reserve (ZA), Lowveld View, Blyde River -- 2024 -- 9964.jpg"],
-  tripolis:["Der Mark-Aurel-Bogen in der Altstadt", "Daniel and Kate Pett", "CC BY 2.0", "Marcus Aurelius Arch Tripoli Libya.jpg"],
-  tschadsee:["Grünes Ufer am Tschadsee", "Coolthoom1", "CC BY-SA 4.0", "An evergreen lake chad shore (detilt).jpg"],
-  tulear:["Die Allee der Baobabs auf Madagaskar", "Hiroki Ogawa", "CC BY 3.0", "Baobab Avenue Morondava Madagascar - panoramio.jpg"],
-  tunis:["Kuppel und Minarett der Zitouna-Moschee", "IssamBarhoumi", "CC BY-SA 4.0", "Dome and Minaret of Jamaa Zitouna.jpg"],
-  victoriafaelle:["Regenbogen über den Victoriafällen", "Diego Delso", "CC BY-SA 4.0", "Cataratas Victoria, Zambia-Zimbabue, 2018-07-27, DD 30-34 PAN.jpg"],
-  victoriasee:["Eine Dhau vor den Felseninseln bei Mwanza", "LizaLotter", "CC BY-SA 4.0", "Traffic on Lake Victoria, Mwanza.jpg"],
-  walfisch:["Flamingos in der Lagune vor den Dünen", "Diego Delso", "CC BY-SA 4.0", "Flamencos comunes (Phoenicopterus roseus), Walvis Bay, Namibia, 2018-08-05, DD 23.jpg"],
+  addis:[
+    ["Wasserspiele im Park vor der Skyline", "DaneyWiki", "CC BY-SA 4.0", "AddisView.jpg"],
+    ["Die Skyline von Addis Abeba", "Simfan34", "CC BY-SA 3.0", "Addis Ababa skyline.jpg"],
+    ["Die Dreifaltigkeitskathedrale", "A. Davey", "CC BY 2.0", "Holy Trinity Cathedral, Addis Ababa (3434312871).jpg"],
+    ["Die Kirche Entoto Maryam in den Bergen", "Diego Delso", "CC BY-SA 4.0", "Iglesia de Entoto Maryam, Adís Abeba, Etiopía, 2024-01-19, DD 01.jpg"],
+    ["Blick vom Entoto-Gebirge auf die Stadt", "Ninaras", "CC BY 4.0", "Addis Ababa from Entoto Mountains.jpg"]],
+  agadez:[
+    ["Die Große Moschee aus Lehm über der Altstadt", "Vincent van Zeijst", "CC BY-SA 4.0", "Niger, Agadez (28), grand mosque, old city.jpg"],
+    ["Lehmhäuser hinter der Großen Moschee", "Vincent van Zeijst", "CC BY-SA 4.0", "Niger, Agadez (32), graveyard behind grand mosque, old city.jpg"],
+    ["Altstadtgasse mit Blick aufs Minarett", "Vincent van Zeijst", "CC BY-SA 4.0", "Niger, Agadez (35), auberge Tellit and Grand Mosque, old town.jpg"],
+    ["Der Palast des Sultans", "Ryszard Vorbrich", "CC BY-SA 3.0 PL", "Pałac wodza Tuaregów - Agades - 001189s.jpg"],
+    ["Dünen und Felsen im Aïr-Gebirge", "Jacques Taberlet", "CC BY 3.0", "Bivouac à Arakao, Massif de l'Aïr, Niger.jpg"]],
+  algier:[
+    ["Notre-Dame d’Afrique über dem Meer", "Chettouh Nabil", "CC BY-SA 4.0", "Notre Dame d'Afrique2.jpg"],
+    ["Das Märtyrerdenkmal Maqam Echahid", "Magharebia (Flickr)", "CC BY 2.0", "Maqam Echahid Algiers.jpg"],
+    ["Die Grande Poste im maurischen Stil", "Muhammed amine benloulou", "CC BY-SA 4.0", "Algiers Grand Post.jpg"],
+    ["Die Ketchaoua-Moschee in der Kasbah", "Dan Sloan", "CC BY-SA 2.0", "Ketchaoua Mosque (15886790802).jpg"],
+    ["Die weiße Stadt an der Bucht", "Manini row", "CC BY-SA 4.0", "Bay of Algiers.jpg"]],
+  assuan:[
+    ["Der Isis-Tempel von Philae im Nil", "Diego Delso", "CC BY-SA 4.0", "File, Asuán, Egipto, 2022-04-01, DD 93.jpg"],
+    ["Der Tempel der Nefertari in Abu Simbel", "Diego Delso", "CC BY-SA 4.0", "Templo de Nefertari, Abu Simbel, Egipto, 2022-04-02, DD 153.jpg"],
+    ["Die Riesenstatuen von Abu Simbel", "Diego Delso", "CC BY-SA 4.0", "Templo de Ramsés II, Abu Simbel, Egipto, 2022-04-02, DD 03.jpg"],
+    ["Feluken auf dem Nil", "Marc Ryckaert (MJJR)", "CC BY 3.0", "Aswan Nile R17.jpg"],
+    ["Ein bunt bemaltes nubisches Dorf", "Marc Ryckaert (MJJR)", "CC BY 3.0", "Aswan Naj Suhayl Gharb R01.jpg"]],
+  bahr:[
+    ["Rinderherde im Staub des Südsudan", "Diego Delso", "CC BY-SA 4.0", "Ganado, Imehejek, Sudán del Sur, 2024-01-21, DD 10.jpg"],
+    ["Viehlager am Weißen Nil", "Diego Delso", "CC BY-SA 4.0", "Campamento de ganado de la tribu Mundari, Terekeka, Sudán del Sur, 2024-01-28, DD 155.jpg"],
+    ["Strohhütten im Südsudan", "Diego Delso", "CC BY-SA 4.0", "Kimotong, Sudán del Sur, 2024-01-23, DD 37.jpg"],
+    ["Der Fluss Jur bei Wau", "James Bol Bol Duer", "CC BY-SA 4.0", "River Jur.jpg"],
+    ["Abendstimmung im Viehlager", "Diego Delso", "CC BY-SA 4.0", "Campamento de ganado de la tribu Mundari, Terekeka, Sudán del Sur, 2024-01-28, DD 36.jpg"]],
+  bengasi:[
+    ["Demeter-Tempel im antiken Kyrene", "عدسة قوريني", "CC BY-SA 4.0", "معبد ديميتر.jpg"],
+    ["Säulen im antiken Kyrene", "Travcoa Travel", "CC BY 2.0", "Cyrene, Libya.jpg"],
+    ["Die Ruinen von Apollonia am Meer", "DAVID HOLT", "CC BY-SA 2.0", "Apollonia Libya.jpg"],
+    ["Die Uferpromenade von Bengasi", "Jaw101ie", "Public domain", "Benghazi Waterfront.JPG"],
+    ["Die Kathedrale von Bengasi", "AJ L", "Public domain", "Benghazi Cathedral.JPG"]],
+  dakar:[
+    ["Die bunte Insel Gorée vor Dakar", "Fawaz.tairou", "CC BY-SA 4.0", "Côtes de l'île de Gorée au Sénégal 11.jpg"],
+    ["Das Denkmal der Afrikanischen Renaissance", "Jeff Attaway", "CC BY 2.0", "African Renaissance Monument (5502494604).jpg"],
+    ["Der rosa Lac Rose", "Arnault", "CC BY-SA 2.0", "Lac Rose in Senegal.jpg"],
+    ["Die Große Moschee von Dakar", "M.GADJ!", "CC BY-SA 4.0", "Grande mosquée de Dakar.jpg"],
+    ["Pointe des Almadies, Afrikas westlichster Zipfel", "Jeff Attaway", "CC BY 2.0", "Pointe des Almadies - Senegal.jpg"]],
+  darfur:[
+    ["Kraterseen im Jebel-Marra-Gebirge", "J Williams", "CC BY-SA 3.0", "Sudan Jebel Marra Deriba Lakes edited.jpg"],
+    ["Ein Dorf in Darfur", "Chansey", "CC BY-SA 4.0", "DarfurVillage1.jpg"],
+    ["Furt durch einen Fluss in Darfur", "Chansey", "CC BY-SA 4.0", "Darfur Crossing River.jpg"],
+    ["Wasserfall im Jebel-Marra-Gebirge", "Mohamed Siddig Abdelaziz", "CC BY-SA 4.0", "Marrah Mountains waterfall - Sudan.jpg"],
+    ["Grüne Berge im Süden Darfurs", "FUDOL YOUSUF AHMED HAMID", "CC BY-SA 4.0", "Harry Mountain around Dougu Village in the Western Sudan, South Darfur State.jpg"]],
+  durban:[
+    ["Die Strandpromenade bei Nacht", "Marc Forrest", "CC BY 2.0", "Durban Beachfront At Night.jpg"],
+    ["Das Moses-Mabhida-Stadion", "South African Tourism", "CC BY 2.0", "Moses Mabhida Stadium, Durban, KwaZulu-Natal, South Africa (20504803572).jpg"],
+    ["Der Hafen von Durban", "RishHans", "CC0", "Durban Harbour View.jpg"],
+    ["Delfine im Meerespark uShaka", "Amada44", "CC BY-SA 3.0", "UShaka Dolphin show.JPG"],
+    ["Strand und Pier von uShaka", "Ossewa", "CC BY-SA 4.0", "UShaka Beach & Pier.jpg"]],
+  freetown:[
+    ["Straßenmarkt in Freetown", "Erik Cleves Kristensen", "CC BY 2.0", "Freetown street (13992704238).jpg"],
+    ["Der berühmte Cotton Tree", "Christian Trede", "CC BY-SA 2.0 DE", "Cotton Tree (Sierra Leone).jpg"],
+    ["Freetown zwischen Bergen und Meer", "David Hond", "CC BY 2.0", "Freetown-aerialview.jpg"],
+    ["Strand bei Freetown", "Erik Cleves Kristensen", "CC BY 2.0", "Beach in Freetown, Sierra Leone (14176784751).jpg"],
+    ["Palmen am Tokeh Beach", "Lars Bessel", "CC BY-SA 4.0", "Tokeh Beach.jpg"]],
+  goldkueste:[
+    ["Fischerboote vor dem Cape Coast Castle", "Jenef Offei Emmanuel", "CC BY 4.0", "Cape Coast Castle 09 05 2025.jpg"],
+    ["Das Elmina Castle", "Damien Halleux Radermecker", "CC BY-SA 2.0", "Elmina Castle - Ghana.jpg"],
+    ["Der Hof von Cape Coast Castle", "Matti Blume", "CC BY-SA 4.0", "Castle, Cape Coast (P1100223).jpg"],
+    ["Hängebrücken über dem Regenwald von Kakum", "daSupremo", "CC BY-SA 4.0", "Canopy walkway at Kakum National Park.jpg"],
+    ["Fischerboote am Volta-Fluss", "Peter Fitzgerald", "CC BY 3.0", "Ada fishing boats on the Volta.JPG"]],
+  guardafui:[
+    ["Fischerdorf Bargal am Horn von Afrika", "Rahim Alpa", "Public domain", "Somalia, Puntland, Bari, Bargal (01).jpg"],
+    ["Küstendorf in Puntland", "Abdiweli Hassan Ilmi", "Public domain", "Somalia, Puntland, Bari, Baarmadoobe (01).jpg"],
+    ["Die Hafenstadt Bosaso", "Omar Dr Abdulkadir", "CC BY-SA 4.0", "Bosaso, Somalia.jpg"],
+    ["Sonnenuntergang am Strand von Bosaso", "Omar Abdulkadir", "CC BY-SA 2.0", "SunSet at Bosaso Beach.png"],
+    ["Das Dorf Tooxin an der Spitze Afrikas", "Abdirahman Shire", "Public domain", "Somalia, Puntland, Bari, Tooxin (01).jpg"]],
+  kairo:[
+    ["Die Pyramiden von Gizeh vor den Toren Kairos", "Ricardo Liberato", "CC BY-SA 2.0", "All Gizah Pyramids.jpg"],
+    ["Kairo am Nil", "Vyacheslav Argenberg", "CC BY 4.0", "Cairo skyline, Nile River, Egypt.jpg"],
+    ["Die Muhammad-Ali-Moschee auf der Zitadelle", "kallerna", "CC BY-SA 3.0", "Muhammad Ali Mosque 1.jpg"],
+    ["Der Große Sphinx von Gizeh", "Petar Milošević", "CC BY-SA 4.0", "Great Sphinx (أبو الهول).jpg"],
+    ["Der Basar Khan el-Khalili", "V. Manninen", "CC BY 2.0", "The Khan el-Khalili market in Cairo, Egypt (2743501345).jpg"]],
+  kalahari:[
+    ["Eine Giraffe zieht durch die Kalahari", "Giles Laurent", "CC BY-SA 4.0", "106 Angolan giraffe walking in the Kalahari Desert of Namibia Photo by Giles Laurent.jpg"],
+    ["Giraffe im Morgenrot", "Giles Laurent", "CC BY-SA 4.0", "015a Angolan giraffe silhouette at sunrise in the Kalahari Desert of Namibia Photo by Giles Laurent.jpg"],
+    ["Rote Dünen der Kalahari", "Frank Vassen", "CC BY 2.0", "Kalahari Dunes, Namibia (3997934029).jpg"],
+    ["Erdmännchen halten Wache", "Charles J. Sharp", "CC BY-SA 4.0", "Meerkat (Suricata suricatta) Tswalu.jpg"],
+    ["Riesennester der Webervögel", "Giles Laurent", "CC BY-SA 4.0", "119 Sociable weaver nests on an Acacia tree in the Kalahari Desert of Namibia Photo by Giles Laurent.jpg"]],
+  kamerun:[
+    ["Yaoundé zwischen grünen Hügeln", "Albert Bergonzo", "CC BY-SA 4.0", "Yaounde-BEAC.jpg"],
+    ["Die Moschee von Foumban", "Jean-Louis Heckly", "CC BY-SA 4.0", "Mosquée à Foumban en mars 1973.jpg"],
+    ["Der Wasserfall Métchié", "KLO.J", "CC BY 2.0", "Chutes de la Métchié-2.jpg"],
+    ["Der Kamerunberg", "Adesolive", "CC BY-SA 4.0", "Mount Cameroon on a sunny day 05.jpg"],
+    ["Berghütte am Kamerunberg", "Betterfoto", "CC BY-SA 4.0", "Mount Cameroon hut 2.jpg"]],
+  kanaren:[
+    ["Roque Cinchado und der Vulkan Teide", "Thomas Wolf", "CC BY-SA 3.0 DE", "Roque Cinchado und Teide.jpg"],
+    ["Vulkanlandschaft auf Lanzarote", "H. Zell", "CC BY-SA 3.0", "Montaña del Selado - Caldera del Corazoncillo - Lanzarote.jpg"],
+    ["Die Dünen von Maspalomas auf Gran Canaria", "Marc Ryckaert (MJJR)", "CC BY 3.0", "GC Dunas de Maspalomas R08.jpg"],
+    ["Der Roque Agando auf La Gomera", "Till Niermann", "CC BY-SA 3.0", "La Gomera - Roque Agando.jpg"],
+    ["Die Steilküste Los Gigantes auf Teneriffa", "Diego Delso", "CC BY-SA 3.0", "Los Gigantes, Tenerife, España, 2012-12-16, DD 10.jpg"]],
+  kano:[
+    ["Gidan Makama und die Zentralmoschee", "Olani Olabimpe", "CC BY-SA 4.0", "Gidan Makama Museum.jpg"],
+    ["Die alte Stadtmauer aus Lehm", "Anasskoko", "CC BY-SA 4.0", "Ancient Walls of Kano Emirate 02.jpg"],
+    ["Eingang zu den Färbegruben Kofar Mata", "Solasly", "CC BY-SA 4.0", "Kofar Mata Dye Pit Entrance.jpg"],
+    ["Die Indigo-Färbegruben", "Solasly", "CC BY-SA 4.0", "Kofar Mata Dye Pit, Kano.jpg"],
+    ["Das Stadttor Kofar Mata", "Suleiman Umar, Aminu Abdullahi, Abubakar Yusuf, www.kanostreetsonosm.org.ng", "CC BY-SA 4.0", "Kofar Mata - Kano City Gate.jpg"]],
+  kapstadt:[
+    ["Die bunten Häuser von Bo-Kaap", "Dietmar Rabich", "CC BY-SA 4.0", "Cape Town (ZA), Wale Street -- 2024 -- 3544.jpg"],
+    ["Der Tafelberg", "Dietmar Rabich", "CC BY-SA 4.0", "Cape Town (ZA), Table Mountain -- 2024 -- 3437.jpg"],
+    ["Pinguine am Boulders Beach", "Diego Delso", "CC BY-SA 4.0", "Pingüinos de El Cabo (Spheniscus demersus), Playa de Boulders, Simon's Town, Sudáfrica, 2018-07-23, DD PAN 40-42.jpg"],
+    ["Am Kap der Guten Hoffnung", "Dietmar Rabich", "CC BY-SA 4.0", "Cape Town (ZA), Cape Peninsula National Park, Cape of Good Hope -- 2024 -- 3305.jpg"],
+    ["Blick vom Tafelberg", "Dietmar Rabich", "CC BY-SA 4.0", "Cape Town (ZA), Table Mountain -- 2024 -- 2794+96+98+2800+01.jpg"]],
+  kapverde:[
+    ["Kokospalmen auf der Insel Boa Vista", "Ximonic (Simo Räsänen)", "CC BY-SA 4.0", "Coconut trees in Boa Vista, Cape Verde, December 2010.jpg"],
+    ["Der Vulkan Pico do Fogo", "Cayambe", "CC BY-SA 3.0", "Cape Verde Pico do Fogo wide.jpg"],
+    ["Das grüne Tal von Paul auf Santo Antão", "As3.1415rin", "CC BY-SA 3.0", "The Valley at Paul on Santo Antão, Cape Verde.jpg"],
+    ["Die Hafenstadt Mindelo", "Manuel de Sousa", "CC BY-SA 3.0", "Mindelo (S Vicente, Cabo Verde).JPG"],
+    ["Türkises Meer vor der Insel Sal", "Cayambe", "CC BY-SA 3.0", "Cape Verde Sal kitesurfing.jpg"]],
+  katanga:[
+    ["Belebter Platz in Lubumbashi", "T. Thielemans", "CC BY 3.0", "Square in Lubumbashi, 2011.jpg"],
+    ["Die Innenstadt von Lubumbashi", "Oasisk.", "CC BY 2.5", "Downtown Lubumbashi, Democratic Republic of the Congo - 20061130.jpg"],
+    ["Das Museum von Lubumbashi", "Mike Rosenberg", "CC BY 2.0", "Lubumbashi Museum.jpg"]],
+  khartum:[
+    ["Die Pyramiden von Meroe im Sudan", "Laurent de Walick", "CC BY 2.0", "Meroe Pyramids - 33110830438.jpg"],
+    ["Blick über Khartum", "Shmyg", "CC BY-SA 3.0", "Khartoum City View.jpg"],
+    ["Wo Blauer und Weißer Nil sich treffen", "Petr Adam Dohnálek", "CC BY-SA 3.0", "Confluence of Nile (Khartoum) 001 (cropped).jpg"],
+    ["Die Pyramiden von Nuri", "Laurent de Walick", "CC BY 2.0", "Nuri Pyramids.jpg"],
+    ["Der heilige Berg Jebel Barkal", "LassiHU", "CC BY-SA 4.0", "Gebel Barkal.jpg"]],
+  kongo:[
+    ["Sonnenaufgang auf dem Kongo-Strom", "Bsm15", "CC BY-SA 3.0", "Sunrise near Mossaka (Congo).JPG"],
+    ["Kinshasa, gesehen von Brazzaville", "Karin Lakeman", "CC BY-SA 3.0", "2010-03-07-Kinshasa depuis Brazzaville.jpg"],
+    ["Kinshasa am Fluss", "Irene2005", "CC BY 2.0", "Kinshasa Congo.jpg"],
+    ["Der Kongo am Pool Malebo von oben", "Dicklyon", "CC BY-SA 4.0", "Congo River with upstream half of Pool Malebo and Mbamu.jpg"],
+    ["Der Boulevard Lumumba", "Lingabo", "CC0", "Boulevard Lumumba.jpg"]],
+  kufra:[
+    ["Endlose Dünen der libyschen Sahara", "Luca Galuzzi (Lucag)", "CC BY-SA 2.5", "Libya 4985 Tadrart Acacus Luca Galuzzi 2007.jpg"],
+    ["Sanddünen vor Felsbergen", "Luca Galuzzi", "CC BY-SA 2.5", "Libya 4983 Tadrart Acacus Luca Galuzzi 2007.jpg"],
+    ["Eine Oase in der libyschen Wüste", "Sfivat", "Public domain", "Oasis in Libya.jpg"],
+    ["Felsen in der Tadrart", "Pir6mon", "CC BY-SA 3.0", "Tadrart01.JPG"],
+    ["Schlucht im Akakus-Gebirge", "Luca Galuzzi", "CC BY-SA 2.5", "Libya 5076 Tadrart Acacus Luca Galuzzi 2007.jpg"]],
+  luanda:[
+    ["Die Bucht von Luanda", "Paulo César Santos", "CC0", "Bay of Luanda.jpg"],
+    ["Die Festung São Miguel", "Erik Cleves Kristensen", "CC BY 2.0", "Luanda-SMiguelFort2.jpg"],
+    ["Die Uferstraße Marginal", "Fabio Vanin", "CC BY-SA 3.0", "Marginal Avenida 4 de Fevreiro Luanda March 2013 14.JPG"],
+    ["Die Kalandula-Fälle", "Paulo César Santos", "CC0", "Kalandula waterfalls of the Lucala-River in Malange, Angola.JPG"],
+    ["Ein bunter Kolonialbau", "Edward Middleton", "CC BY-SA 4.0", "Prédio do Baleizão, Luanda - 2019-06-28.jpg"]],
+  marrakesch:[
+    ["Laternen am Platz Djemaa el Fna", "I. Barrios & J. Ligero", "CC BY-SA 3.0", "Lámparas, Djemaa el Fna -- 2014 -- Marrakech, Marruecos.jpg"],
+    ["Das Minarett der Koutoubia-Moschee", "Baca12", "CC BY-SA 4.0", "Mosquée de la Koutoubia - marakesh.jpg"],
+    ["Der Platz Djemaa el Fna bei Nacht", "procsilas", "CC BY 2.0", "Jemaa el-Fnaa at night.jpg"],
+    ["Der blaue Jardin Majorelle", "Viault", "CC BY-SA 4.0", "Le jardin des majorelle 16.JPG"],
+    ["Prunkdecke im Bahia-Palast", "C messier", "CC BY-SA 4.0", "Bahia palace celing 1205.jpg"]],
+  massaua:[
+    ["Die Altstadt auf der Insel Massaua", "Reinhard Dietrich", "CC0", "Historic Center Massawa Panorama.JPG"],
+    ["Alte Häuser in Massaua", "Mheidegger", "CC BY 4.0", "Massawa Old City 2024.jpg"],
+    ["Der Hafen von Massaua", "Reinhard Dietrich", "CC0", "Massawa harbour.JPG"],
+    ["Bucht am Roten Meer", "Serhio Magpie", "CC BY 4.0", "Gold Beach at Ras Um Sid Bay.jpg"],
+    ["Asmara, die Hauptstadt Eritreas", "Sailko", "CC BY 3.0", "Asmara, chiesa greco ortodossa 02.JPG"]],
+  mogadischu:[
+    ["Fischerboote im alten Hafen", "AMISOM", "CC0", "2013 05 22 Mogadishu Coast B.jpg (8778505657).jpg"],
+    ["Der Lido-Strand", "Khadija Isse", "CC BY-SA 4.0", "Mogadishu Liido beach.JPG"],
+    ["Die Altstadt am Meer", "AMISOM Public Information", "CC0", "Mogadishu WV banner.jpg"],
+    ["Die Küste von Mogadischu", "AMISOM Public Information", "CC0", "2013 05 22 Mogadishu Outing B (1) (8785324018).jpg"],
+    ["Das alte Parlamentsgebäude", "AMISOM Public Information", "CC0", "Former parliament building of Mogadishu, Somalia on 5 August 2013.jpg"]],
+  mombasa:[
+    ["Holzbalkone in der Altstadt", "FredD", "CC BY-SA 3.0", "Mombasa old town view.JPG"],
+    ["Mauern von Fort Jesus", "Kensta87", "CC BY-SA 4.0", "Fort jesus mombasa int.jpg"],
+    ["Die Stoßzahn-Bögen", "Bahnfrend", "CC BY-SA 4.0", "Mombasa tusks, 2025 (03).jpg"],
+    ["Der weiße Diani Beach", "Nicor", "CC BY 3.0", "Diani Beach 02.jpg"],
+    ["Fort Jesus in der Abendsonne", "Bertina Kanaka", "CC BY-SA 4.0", "Fort Jesus Mombasa Old Town 2.jpg"]],
+  mosambik:[
+    ["Bunte Gasse auf der Ilha de Moçambique", "Jcornelius", "CC BY-SA 4.0", "Avenida Amílcar Cabral, Ilha de Moçambique.jpg"],
+    ["Die grüne Moschee der Insel", "Cornelius Kibelka", "CC BY-SA 2.0", "23 Moschee auf der Ilha de Moçambique Mosque on Ilha de Moçambique (36259242923).jpg"],
+    ["Kapelle in der Festung São Sebastião", "Jcornelius", "CC BY-SA 4.0", "Igreja de São Sebastião no Forte São Sebastião, Ilha de Moçambique.jpg"],
+    ["Boot am Strand von Bazaruto", "FrogsLegs71", "CC BY-SA 3.0", "A boat on Bazaruto Island Mozambique.jpg"],
+    ["Dhaus vor der Insel", "Stig Nygaard", "CC BY 2.0", "Island of Mozambique boats.jpg"]],
+  sansibar:[
+    ["Eine Dhau am Strand von Sansibar", "Anton Zelenov", "CC BY-SA 3.0", "Dhow boat Zanzibar.jpg"],
+    ["Der Hafen von Stone Town", "Diego Delso", "CC BY-SA 4.0", "Puerto de Stone Town, Zanzíbar, Tanzania, 2024-05-31, DD 03.jpg"],
+    ["Das Alte Fort", "Diego Delso", "CC BY-SA 4.0", "Fuerte Viejo, Stone Town, Zanzíbar, Tanzania, 2024-05-31, DD 32.jpg"],
+    ["Eine Dhau unter Segeln", "Ikiwaner", "GFDL 1.2", "Sansibar Dhau1.jpg"],
+    ["Das Haus der Wunder", "Moongateclimber", "CC BY-SA 4.0", "House of wonders.jpg"]],
+  siwa:[
+    ["Dattelpalmen im Abendlicht der Oase", "Vincent Battesti", "CC BY-SA 4.0", "Siwa Oasis, sunset on Maraqi (Egypt).jpg"],
+    ["Die Lehmfestung Schali", "Michael Hermann", "CC BY-SA 4.0", "Shali (Historic Center of Siwa) 02.JPG"],
+    ["Der Tempel des Orakels", "Vyacheslav Argenberg", "CC BY 4.0", "Siwa Oasis, Temple of the Oracle of Amun, Egypt.jpg"],
+    ["Türkise Salzseen", "ولاء", "Public domain", "Siwa Salt pools13.jpg"],
+    ["Das Große Sandmeer", "ولاء", "Public domain", "Great Sand Sea42.jpg"]],
+  sklavenkueste:[
+    ["Ganvié, das Dorf auf Stelzen im See", "Dr. Ondřej Havelka (cestovatel)", "CC BY-SA 4.0", "The village of Ganvié on Lake Nokoué.jpg"],
+    ["Segelpiroge in Ganvié", "Adoscam", "CC BY-SA 4.0", "Pirogue à voile ou pirogue à balancier de type béninois sur le fleuve de Ganvié 05.jpg"],
+    ["Häuser auf Stelzen in Ganvié", "Dr. Ondřej Havelka (cestovatel)", "CC BY-SA 4.0", "Benin village on water Ganvié.jpg"],
+    ["Das Tor ohne Wiederkehr in Ouidah", "Borisghost", "CC0", "Porte du non-retour au Benin.jpg"],
+    ["Blick über Cotonou", "Adoscam", "CC BY-SA 4.0", "Vue panoramique quartier cadjéhoun-Cotonou au Bénin 1.jpg"]],
+  stanley:[
+    ["Der Kongo bei Kisangani von oben", "MONUSCO/Myriam Asmani", "CC BY-SA 2.0", "Aerial view of the Congo River near Kisangani.jpg"],
+    ["Die Stromschnellen bei Kisangani", "Ad Meskens", "CC BY-SA 3.0", "Zaire kisangani stroom 11 copy.jpg"],
+    ["Fischer-Gerüste in den Fällen", "Julien Harneis", "CC BY-SA 2.0", "Fishing at the falls - Julien Harneis - February 28, 2007 - 1.jpg"],
+    ["Regenwald am Kongo", "MONUSCO Photos", "CC BY-SA 2.0", "Rainforest - Ituri (20874628148).jpg"],
+    ["Die Kathedrale von Kisangani", "WilthineyKap", "CC0", "Cathédrale Notre-Dame Kisangani-RDC.jpg"]],
+  sthelena:[
+    ["Jamestown im engen Tal von oben", "Andrew Neaum", "CC BY-SA 3.0", "St-Helena-Jamestown-from-above.jpg"],
+    ["Jamestown im Tal", "Andrew Neaum", "CC BY-SA 3.0", "St-Helena-Jamestown.jpg"],
+    ["Die Treppe Jacob's Ladder", "Kevstan", "CC BY-SA 4.0", "Jacob's Ladder near St. James Cathedral in Jamestown Saint Helena.jpg"],
+    ["Die steile Nordküste", "Kevstan", "CC BY-SA 4.0", "North coast of Saint Helena looking east from Lemon Valley Bay towards Jamestown.jpg"],
+    ["Napoleons Haus Longwood", "Luke McKernan", "CC BY-SA 2.0", "Longwood House 3 (39248414020).jpg"]],
+  suakin:[
+    ["Moschee in der alten Hafenstadt", "Bertramz", "CC BY 3.0", "Suakin,el-Geyf mosque.jpg"],
+    ["Das alte Zollhaus", "Bertramz", "CC BY 3.0", "Suakin,custom office.jpg"],
+    ["Das Minarett der Schafai-Moschee", "Bertramz", "CC BY 3.0", "Suakin,Schafai minaret.jpg"],
+    ["Das Kitchener-Tor", "Bertramz", "CC BY 3.0", "Suakin,Kitcheners gate.jpg"],
+    ["Ruine der alten Bank", "Bertramz", "CC BY 3.0", "Suakin,national bank.jpg"]],
+  tamanrasset:[
+    ["Der Ilamane im Hoggar-Gebirge", "Bernard Gagnon", "CC BY 4.0", "Ilamane 01.jpg"],
+    ["Sonnenaufgang am Assekrem", "IssamBarhoumi", "CC BY-SA 4.0", "Sunrise from Assekrem refuge.jpg"],
+    ["Felsnadeln im Ahaggar", "Bernard Gagnon", "CC BY 4.0", "Parc culturel de l'Ahaggar 08.jpg"],
+    ["Gipfel im Abendlicht", "Mohammed Amri", "CC BY-SA 4.0", "اسكرام 2 - تمنراست.jpg"],
+    ["Felsturm und Akazie", "Hamza-sia", "CC BY-SA 3.0", "Parc Culturel De l'Ahaggar (37).JPG"]],
+  tamatave:[
+    ["Palmenstrand an Madagaskars Küste", "Diego Delso", "CC BY-SA 4.0", "Nosy Iranja, Madagascar, 2025-09-17, DD 21.jpg"],
+    ["Der Pangalanes-Kanal", "Privatemajory", "CC BY-SA 4.0", "Canal des Pangalanes à Mananjary.jpg"],
+    ["Regenwald an der Ostküste", "Frank Vassen", "CC BY 2.0", "Lowland rainforest, Masoala National Park, Madagascar (4026784053).jpg"],
+    ["Bucht auf der Île Sainte-Marie", "M worm", "Public domain", "Beache of La Crique Sainte Marie.jpg"],
+    ["Der Boulevard in Toamasina", "Privatemajory", "CC BY-SA 4.0", "Boulevard Labourdonnais Toamasina.jpg"]],
+  tanger:[
+    ["Die Altstadt am Hügel über dem Hafen", "Mike McBey", "CC BY 2.0", "Tangier - 44699733295.jpg"],
+    ["Der Leuchtturm am Kap Spartel", "Diego Delso", "CC BY-SA 4.0", "Faro del cabo Espartel, Marruecos, 2015-12-11, DD 02.JPG"],
+    ["Die Herkules-Grotten", "Diego Delso", "CC BY-SA 4.0", "Cuevas de Hércules, Cabo Espartel, Marruecos, 2015-12-11, DD 10-12 HDR.JPG"],
+    ["Strand und Bucht von Tanger", "Chahinmattyb", "CC BY-SA 4.0", "Markala beautiful beach in Tangier Morocco.jpg"],
+    ["Die Mauern der Kasbah", "Makbula Nassar", "CC BY-SA 4.0", "Tangier طنجة.jpg"]],
+  tibesti:[
+    ["Felsbogen von Ourini im Ennedi", "Valerian Guillot", "CC BY 2.0", "Ourini Arch at sunset, Ennedi, Chad (40598172781).jpg"],
+    ["Felsgipfel im Tibesti", "michael kerling", "Public domain", "Tibesti east of bardai.jpg"],
+    ["Die Guelta Maya im Ennedi", "Sven.oehm", "CC BY-SA 4.0", "Guelta Maya, Ennedi, Tschad.jpg"],
+    ["Der Krater Trou au Natron", "Gerhard Holub", "CC BY-SA 4.0", "Chad Trou au Natron 2301-2.jpg"],
+    ["Salz im Krater Trou au Natron", "Alexios Niarchos", "CC BY-SA 4.0", "Natron deposits, Trou au Natron, Chad.jpg"]],
+  timbuktu:[
+    ["Die Djinguereber-Moschee aus Lehm", "Ousmane Garba Kounta", "CC BY-SA 4.0", "La plus grande Mosquée de la ville de Tombouctou.jpg"],
+    ["Die Wüste vor Timbuktu", "upyernoz", "CC BY 2.0", "Sahara Desert, Timbuktu (6920271).jpg"],
+    ["Die Lehmmoschee von Djenné, flussaufwärts", "Ruud Zwart", "CC BY-SA 3.0", "Djenne great mud mosque.jpg"],
+    ["Sandige Gasse in Timbuktu", "upyernoz", "CC BY 2.0", "Timbuktu Street - 6916918.jpg"],
+    ["Die Sankore-Moschee", "Anne and David", "Public domain", "2007 Sankore Mosque Timbuktu 01.jpg"]],
+  transvaal:[
+    ["Der Blyde River Canyon", "Dietmar Rabich", "CC BY-SA 4.0", "Blyde River Canyon Nature Reserve (ZA), Lowveld View, Blyde River -- 2024 -- 9964.jpg"],
+    ["Johannesburg bei Nacht", "Frankbel", "CC BY-SA 4.0", "Johannesburg-city-skyline-night.jpg"],
+    ["Bourke's Luck Potholes", "Dietmar Rabich", "CC BY-SA 4.0", "Blyde River Canyon Nature Reserve (ZA), Blyde River, Bourke's Luck Potholes -- 2024 -- 9989.jpg"],
+    ["Elefant im Kruger-Nationalpark", "Dietmar Rabich", "CC BY-SA 4.0", "Kruger National Park (ZA), Elefant -- 2024 -- 0649.jpg"],
+    ["Die Union Buildings in Pretoria", "Bernard Gagnon", "CC BY-SA 4.0", "Delville Wood South African National Memorial, Union Buildings.jpg"]],
+  tripolis:[
+    ["Der Mark-Aurel-Bogen in der Altstadt", "Daniel and Kate Pett", "CC BY 2.0", "Marcus Aurelius Arch Tripoli Libya.jpg"],
+    ["Das römische Theater von Sabratha", "Marku1988", "CC BY-SA 2.0", "Theatre of Sabratha, Libya.jpg"],
+    ["Blick über Tripolis", "hakeem.ga", "GFDL 1.2", "Tripoli Skyline edit.jpg"],
+    ["Der Bogen des Septimius Severus in Leptis Magna", "Daviegunn", "Public domain", "Leptis Magna Arch of Septimius Severus.jpg"],
+    ["Das Theater von Leptis Magna", "bobrayner", "CC BY 2.0", "Theatre, Leptis Magna, Libya.jpg"]],
+  tschadsee:[
+    ["Grünes Ufer am Tschadsee", "Coolthoom1", "CC BY-SA 4.0", "An evergreen lake chad shore (detilt).jpg"],
+    ["Schilfboote auf dem Tschadsee", "Steve Bittinger", "CC BY 2.0", "Reed boats at Lake Chad.jpg"],
+    ["Ein Pottasche-Boot auf dem See", "Steve Bittinger", "CC BY 2.0", "Potash boat on the Lake Chad.jpg"],
+    ["Hüttenbau am Tschadsee", "Kino Glax", "CC BY-SA 4.0", "Building a house in lake Chad region.jpg"],
+    ["Ufer des Tschadsees", "Coolthoom1", "CC BY-SA 4.0", "Lake chad shore (detilt).jpg"]],
+  tulear:[
+    ["Die Allee der Baobabs auf Madagaskar", "Hiroki Ogawa", "CC BY 3.0", "Baobab Avenue Morondava Madagascar - panoramio.jpg"],
+    ["Baobabs im Sonnenuntergang", "Gavinevans", "CC BY-SA 3.0", "Avenue of the Baobabs at Sunset.jpg"],
+    ["Ein riesiger Baobab", "Ryj", "Public domain", "Baobab M.jpg"],
+    ["Der Nationalpark Isalo", "Bernard Gagnon", "CC BY-SA 3.0", "Isalo National Park 04.jpg"],
+    ["Abendrot bei Ifaty", "Bernard Gagnon", "CC BY-SA 3.0", "Sunset Ifaty Madagascar.jpg"]],
+  tunis:[
+    ["Kuppel und Minarett der Zitouna-Moschee", "IssamBarhoumi", "CC BY-SA 4.0", "Dome and Minaret of Jamaa Zitouna.jpg"],
+    ["Die Dächer der Medina", "IssamBarhoumi", "CC BY-SA 3.0", "Medina old Town of Tunis.jpeg"],
+    ["Die Antoninus-Thermen in Karthago", "Silar", "CC BY-SA 4.0", "01996 01434 Ruins of Antonine Baths at Carthage.jpg"],
+    ["Innenhof einer Koranschule", "Diego Delso", "CC BY-SA 4.0", "Patio de la madrasa de Bir Lahjar, Medina de Túnez, Túnez, 2016-09-04, DD 83.jpg"],
+    ["Die Avenue Habib Bourguiba", "Dacoslett", "CC0", "TunisAveHabibBourguiba.jpg"]],
+  victoriafaelle:[
+    ["Regenbogen über den Victoriafällen", "Diego Delso", "CC BY-SA 4.0", "Cataratas Victoria, Zambia-Zimbabue, 2018-07-27, DD 30-34 PAN.jpg"],
+    ["Die Gischt von Mosi-oa-Tunya", "Matti Blume", "CC BY-SA 4.0", "Mosi-oa-Tunya, Livingstone (20260519-P1075699).jpg"],
+    ["Die Brücke über die Schlucht", "Diego Delso", "CC BY-SA 4.0", "Puente de las cataratas Victoria, Zambia-Zimbabue, 2018-07-27, DD 10.jpg"],
+    ["Die Fälle von oben", "Diego Delso", "CC BY-SA 4.0", "Cataratas Victoria, Zambia-Zimbabue, 2018-07-27, DD 02.jpg"],
+    ["Der Sambesi oberhalb der Fälle", "Diego Delso", "CC BY-SA 4.0", "Río Zambeze, Zambia-Zimbabue, 2018-07-27, DD 25.jpg"]],
+  victoriasee:[
+    ["Eine Dhau vor den Felseninseln bei Mwanza", "LizaLotter", "CC BY-SA 4.0", "Traffic on Lake Victoria, Mwanza.jpg"],
+    ["Felsen bei Mwanza", "Dickson Eremiah", "CC BY-SA 4.0", "Mwanza Bwiru.jpg"],
+    ["Bunte Boote in Kisumu", "Josep M. Gracia", "CC BY-SA 4.0", "KISU - Boats and landing sites on Lake Victoria at Kisumu, Kenya, 2012.jpg"],
+    ["Fischer im Abendrot", "Josep M. Gracia", "CC BY-SA 4.0", "KISU - Fisherman returning at sunset on Lake Victoria, Kisumu, Kenya, 2012.jpg"],
+    ["Die Quelle des Nils bei Jinja", "Ina96", "CC BY 3.0", "Source of the Nile in Jinja PICT0147.JPG"]],
+  walfisch:[
+    ["Flamingos in der Lagune vor den Dünen", "Diego Delso", "CC BY-SA 4.0", "Flamencos comunes (Phoenicopterus roseus), Walvis Bay, Namibia, 2018-08-05, DD 23.jpg"],
+    ["Düne 45 bei Sossusvlei", "Giles Laurent", "CC BY-SA 4.0", "006 Dune 45 in Sossusvlei at sunrise Photo by Giles Laurent.jpg"],
+    ["Tote Bäume im Deadvlei", "Ikiwaner", "GFDL 1.2", "Dead Vlei 5.jpg"],
+    ["Rote Dünen der Namib", "Luca Galuzzi", "CC BY-SA 2.5", "Sossusvlei Dune Namib Desert Namibia Luca Galuzzi 2004.JPG"],
+    ["Die Seebrücke von Swakopmund", "Daniel Kraft", "CC BY-SA 3.0", "Swakopmund Jetty HDR.jpg"]],
+};
+// Kurze Fakten für den Stadtfilm, pro Ankunft wird einer zufällig gezeigt
+const CITY_FACTS = {
+  tanger:["Von Tanger aus kann man bei klarem Wetter bis nach Spanien hinübersehen.", "Nur etwa 14 Kilometer Meer trennen hier Afrika von Europa.", "Der berühmte Reisende Ibn Battuta wurde 1304 in Tanger geboren und war fast 30 Jahre unterwegs.", "In den Herkules-Grotten hat die Öffnung zum Meer die Form von Afrika.", "Am Kap Spartel treffen das Mittelmeer und der Atlantik aufeinander."],
+  kairo:["Kairo ist die größte Stadt Afrikas: Im Großraum leben über 20 Millionen Menschen.", "Die Cheops-Pyramide war fast 4000 Jahre lang das höchste Bauwerk der Welt.", "Der Nil fließt mitten durch Kairo und ist einer der längsten Flüsse der Erde.", "Kairo wird auch die „Stadt der tausend Minarette“ genannt.", "Der Sphinx bewacht die Pyramiden schon seit über 4500 Jahren."],
+  marrakesch:["Marrakesch heißt wegen ihrer rötlichen Mauern auch die „Rote Stadt“.", "Abends treten auf dem Platz Djemaa el Fna Gaukler, Musiker und Geschichtenerzähler auf.", "Das Minarett der Koutoubia-Moschee ist rund 77 Meter hoch.", "Hinter der Stadt liegen die oft schneebedeckten Gipfel des Hohen Atlas.", "Die alte Stadtmauer von Marrakesch ist fast 20 Kilometer lang."],
+  algier:["Algier wird wegen ihrer weißen Häuser „die Weiße“ genannt.", "Die Kasbah, die Altstadt am steilen Hang, gehört zum UNESCO-Welterbe.", "Algerien ist flächenmäßig das größte Land Afrikas.", "Das Denkmal Maqam Echahid ist 92 Meter hoch und von überall in der Stadt zu sehen.", "Die Basilika Notre-Dame d’Afrique thront hoch über dem Meer."],
+  tunis:["Ganz in der Nähe lag Karthago, eine antike Großstadt und Rivalin Roms.", "Die Medina von Tunis gehört zum UNESCO-Welterbe.", "Im Dorf Sidi Bou Said sind fast alle Häuser weiß, mit blauen Türen und Fenstern.", "Die Zitouna-Moschee ist über 1200 Jahre alt.", "Im Bardo-Museum gibt es eine der größten Sammlungen römischer Mosaike der Welt."],
+  tripolis:["Tripolis ist die Hauptstadt Libyens und liegt direkt am Mittelmeer.", "Der Mark-Aurel-Bogen steht schon seit über 1850 Jahren.", "Der Name Tripolis kommt aus dem Griechischen und bedeutet „drei Städte“.", "Östlich von Tripolis liegt Leptis Magna, eine der besterhaltenen Römerstädte der Welt.", "Im Theater von Sabratha schauten die Römer vor fast 2000 Jahren Aufführungen."],
+  bengasi:["Bengasi ist die zweitgrößte Stadt Libyens.", "In der Nähe liegt Kyrene, eine über 2600 Jahre alte griechische Stadt.", "Die grünen Hügel östlich der Stadt heißen Dschebel Achdar, „Grüner Berg“.", "Libyen besteht zu über 90 Prozent aus Wüste.", "Die antike Hafenstadt Apollonia liegt heute teilweise unter Wasser."],
+  siwa:["Siwa liegt mitten in der Wüste, rund 300 Kilometer von der nächsten Stadt entfernt.", "Alexander der Große besuchte hier das berühmte Orakel des Amun.", "Die alte Festung Schali wurde aus Salz und Lehm gebaut.", "In der Oase wachsen Hunderttausende Dattel- und Olivenbäume.", "In den Salzseen ist das Wasser so salzig, dass man darin von allein oben treibt."],
+  kufra:["Kufra ist eine der abgelegensten Oasen der Sahara.", "Die Sahara ist die größte Hitzewüste der Welt, fast so groß wie die USA.", "Nur ein kleiner Teil der Sahara besteht aus Sanddünen, der Rest ist Fels und Geröll.", "Unter der Wüste liegt uraltes Grundwasser, mit dem hier Felder bewässert werden.", "Wanderdünen können sich jedes Jahr mehrere Meter weit bewegen."],
+  tibesti:["Das Tibesti ist ein Vulkangebirge mitten in der Sahara.", "Der Emi Koussi ist mit 3415 Metern der höchste Berg der Sahara.", "Der Krater Trou au Natron ist fast 1000 Meter tief und innen weiß von Salz.", "Im benachbarten Ennedi stehen riesige Felsbögen aus Sandstein.", "In einem Wasserloch im Ennedi leben bis heute Krokodile, mitten in der Wüste."],
+  tamanrasset:["Tamanrasset liegt im Hoggar-Gebirge im Süden Algeriens.", "Die Gipfel des Hoggar sind die Reste uralter Vulkane.", "Vom Assekrem aus sieht man einen der berühmtesten Sonnenaufgänge der Sahara.", "Hier leben viele Tuareg, die auch „blaue Männer der Wüste“ genannt werden.", "Der höchste Berg Algeriens, der Tahat, ist über 2900 Meter hoch."],
+  agadez:["Das Minarett der Großen Moschee ist rund 27 Meter hoch, gebaut ganz aus Lehm.", "Die Holzstangen im Minarett dienen als Gerüst, wenn der Lehm ausgebessert wird.", "Agadez war ein wichtiger Halt für Karawanen auf dem Weg durch die Sahara.", "Die Altstadt von Agadez gehört zum UNESCO-Welterbe.", "Nördlich der Stadt beginnen das Aïr-Gebirge und die Ténéré-Wüste."],
+  timbuktu:["Timbuktu war vor 600 Jahren eine berühmte Stadt der Gelehrten.", "In Timbuktu werden bis heute Hunderttausende alter Handschriften aufbewahrt.", "Die Djinguereber-Moschee wurde 1327 gebaut, fast ganz aus Lehm.", "Karawanen brachten Salz aus der Wüste hierher und tauschten es gegen Gold.", "Für viele Europäer war „Timbuktu“ lange ein Wort für das Ende der Welt."],
+  kanaren:["Der Teide auf Teneriffa ist mit 3715 Metern der höchste Berg Spaniens.", "Die Kanaren sind Vulkaninseln mitten im Atlantik.", "Die Inseln gehören zu Spanien, liegen aber nur etwa 100 Kilometer vor Afrika.", "Der Name kommt vom lateinischen Wort „canis“, Hund.", "Auf Lanzarote ist der Boden mancherorts so heiß, dass man darauf grillen kann."],
+  kapverde:["Die Kapverden bestehen aus zehn Vulkaninseln im Atlantik.", "Auf der Insel Fogo steht ein aktiver Vulkan, der zuletzt 2014 ausbrach.", "Als die Portugiesen um 1460 ankamen, waren die Inseln unbewohnt.", "Die Sängerin Cesária Évora machte die Musik der Kapverden weltberühmt.", "Der Name kommt vom „Grünen Kap“ bei Dakar gegenüber auf dem Festland."],
+  dakar:["Dakar liegt am westlichsten Punkt des afrikanischen Festlands.", "Das Denkmal der Afrikanischen Renaissance ist 49 Meter hoch.", "Die Insel Gorée erinnert an den Sklavenhandel und gehört zum UNESCO-Welterbe.", "Der Lac Rose in der Nähe leuchtet wegen winziger Algen rosa.", "Viele Jahre lang endete die berühmte Rallye Dakar hier."],
+  freetown:["Freetown heißt „Freie Stadt“: Sie wurde 1792 für befreite Sklaven gegründet.", "Mitten in der Stadt stand jahrhundertelang ein riesiger Kapokbaum, der Cotton Tree.", "Freetown hat einen der größten Naturhäfen der Welt.", "Sierra Leone bedeutet „Löwengebirge“.", "Hinter der Stadt liegen grüne Berge, an der Küste weiße Palmenstrände."],
+  goldkueste:["Die Goldküste heißt heute Ghana.", "Den Namen bekam sie wegen des vielen Goldes, mit dem hier gehandelt wurde.", "Das Elmina Castle wurde schon 1482 von Portugiesen gebaut.", "Die Burgen an der Küste erinnern an die Zeit des Sklavenhandels.", "Ghana ist einer der größten Kakao-Produzenten der Welt."],
+  sklavenkueste:["Die Sklavenküste liegt im heutigen Benin, Togo und Nigeria.", "Ganvié heißt auch „Venedig Afrikas“: Alle Häuser stehen auf Stelzen im See.", "In Ganvié fahren die Kinder mit dem Boot zur Schule.", "In Ouidah erinnert das „Tor ohne Wiederkehr“ an Menschen, die verschleppt wurden.", "Benin gilt als Ursprungsland der Voodoo-Religion."],
+  kano:["Kano ist über 1000 Jahre alt und eine der ältesten Städte Westafrikas.", "In den Färbegruben von Kofar Mata wird seit über 500 Jahren Stoff mit Indigo gefärbt.", "Die alte Stadtmauer aus Lehm war einst viele Kilometer lang.", "Beim Durbar-Fest reiten Hunderte prächtig geschmückte Reiter durch die Stadt.", "Kano war ein großes Handelszentrum für Karawanen durch die Sahara."],
+  tschadsee:["Der Tschadsee ist seit den 1960er-Jahren um rund 90 Prozent geschrumpft.", "Vier Länder grenzen an den See: Tschad, Kamerun, Niger und Nigeria.", "Der See ist sehr flach, meist nur wenige Meter tief.", "Früher bauten die Menschen hier Boote aus Schilf.", "Vor Tausenden Jahren war der Tschadsee ein riesiges Binnenmeer."],
+  darfur:["Darfur liegt im Westen des Sudans und ist fast so groß wie Frankreich.", "Das Jebel-Marra-Gebirge ist ein alter Vulkan mit Kraterseen.", "Der höchste Gipfel des Jebel Marra ist über 3000 Meter hoch.", "In den Bergen regnet es mehr als ringsum, dort gibt es sogar Wasserfälle.", "Darfur bedeutet „Land der Fur“, nach dem Volk der Fur."],
+  khartum:["In Khartum fließen der Blaue und der Weiße Nil zusammen.", "Den Blauen Nil erkennt man oft an seinem dunkleren Wasser.", "Im Sudan gibt es mehr Pyramiden als in Ägypten, über 200.", "Die Pyramiden von Meroe sind schmaler und steiler als die in Ägypten.", "Der heilige Berg Jebel Barkal galt den alten Ägyptern als Wohnort ihres Gottes Amun."],
+  assuan:["Assuan ist eine der sonnigsten und trockensten Städte der Welt.", "Der Assuan-Staudamm staut den Nil zum riesigen Nassersee.", "Der Tempel von Philae wurde Stein für Stein auf eine andere Insel versetzt.", "Auch die Tempel von Abu Simbel wurden zerlegt und weiter oben neu aufgebaut.", "Mit Segelbooten, den Feluken, kann man hier über den Nil fahren."],
+  suakin:["Suakin war über Jahrhunderte der wichtigste Hafen des Sudans am Roten Meer.", "Die Häuser der Altstadt wurden aus Korallenstein gebaut.", "Von hier fuhren Pilger über das Rote Meer nach Mekka.", "Viele alte Häuser sind verfallen, deshalb nennt man Suakin auch eine Geisterstadt.", "Vor der Küste liegen bunte Korallenriffe."],
+  massaua:["Massaua ist die wichtigste Hafenstadt Eritreas.", "Die Altstadt liegt auf zwei Inseln, die durch Dämme mit dem Festland verbunden sind.", "Massaua gehört zu den heißesten Städten der Welt.", "Vor der Küste liegen über 200 Inseln des Dahlak-Archipels.", "In der Altstadt mischen sich türkische, ägyptische und italienische Baustile."],
+  addis:["Addis Abeba bedeutet „Neue Blume“.", "Die Stadt liegt auf rund 2400 Metern Höhe, eine der höchstgelegenen Hauptstädte der Welt.", "In Addis Abeba hat die Afrikanische Union ihren Sitz.", "Äthiopien gilt als Heimat des Kaffees.", "Im Nationalmuseum kann man „Lucy“ sehen, eine 3,2 Millionen Jahre alte Vorfahrin des Menschen."],
+  guardafui:["Kap Guardafui ist die äußerste Spitze des Horns von Afrika.", "Hier trifft der Golf von Aden auf den Indischen Ozean.", "Somalia hat die längste Küste des afrikanischen Festlands.", "In dieser Gegend wird seit Jahrtausenden Weihrauch geerntet.", "Auf dem Kap steht ein alter Leuchtturm für die Schiffe."],
+  mogadischu:["Mogadischu ist die Hauptstadt Somalias und liegt am Indischen Ozean.", "Schon vor über 1000 Jahren war Mogadischu ein wichtiger Handelshafen.", "Händler kamen aus Arabien, Persien, Indien und sogar aus China.", "Der Reisende Ibn Battuta besuchte die Stadt im Jahr 1331.", "Der Lido-Strand ist ein beliebter Treffpunkt am Wochenende."],
+  bahr:["Bahr el Ghazal heißt übersetzt „Gazellenfluss“.", "Im Südsudan liegt der Sudd, eines der größten Sumpfgebiete der Welt.", "Für viele Familien hier sind Rinder der wichtigste Besitz.", "Der Südsudan ist seit 2011 unabhängig und damit der jüngste Staat der Welt.", "Jedes Jahr wandern riesige Antilopenherden durch das Land."],
+  stanley:["Die Stanleyfälle heißen heute Boyoma-Fälle und liegen bei Kisangani.", "Sieben Stromschnellen ziehen sich hier über rund 100 Kilometer.", "Der Kongo ist der tiefste Fluss der Welt, stellenweise über 200 Meter.", "Die Fischer bauen Holzgerüste in die Stromschnellen und hängen große Reusen hinein.", "Rund um Kisangani wächst dichter Regenwald."],
+  kamerun:["Kamerun heißt auch „Afrika im Kleinen“: Es hat Wüste, Regenwald, Berge und Strände.", "Der Kamerunberg ist ein aktiver Vulkan und über 4000 Meter hoch.", "Am Fuß des Kamerunbergs liegt einer der regenreichsten Orte der Erde.", "In Kamerun werden über 200 Sprachen gesprochen.", "Die Hauptstadt Yaoundé ist auf sieben Hügeln gebaut."],
+  kongo:["Kinshasa und Brazzaville liegen sich am Kongo direkt gegenüber.", "Kinshasa ist die größte französischsprachige Stadt der Welt.", "Nach dem Amazonas führt der Kongo das meiste Wasser aller Flüsse.", "Der Kongo überquert den Äquator gleich zweimal.", "Auf dem Fluss sind Schiffe oft tagelang mit Menschen und Waren unterwegs."],
+  luanda:["Luanda ist die Hauptstadt Angolas und wurde 1576 von Portugiesen gegründet.", "Die Festung São Miguel wacht seit über 400 Jahren über die Bucht.", "In Angola spricht man Portugiesisch.", "Die Ilha de Luanda ist eine lange, schmale Halbinsel mit Stränden.", "Die Kalandula-Fälle in Angola sind über 100 Meter hoch."],
+  victoriasee:["Der Victoriasee ist der größte See Afrikas, fast so groß wie Bayern.", "Drei Länder liegen am See: Uganda, Kenia und Tansania.", "Bei Jinja fließt der Weiße Nil aus dem Victoriasee heraus.", "Im See liegen Hunderte Inseln.", "Der See wurde nach der britischen Königin Victoria benannt."],
+  mombasa:["Mombasa liegt auf einer Insel im Indischen Ozean.", "Das Fort Jesus wurde 1593 von den Portugiesen gebaut.", "Mombasa hat den größten Hafen Ostafrikas.", "In der Altstadt gibt es alte Häuser mit geschnitzten Holzbalkonen.", "Über einer Hauptstraße bilden riesige Stoßzähne aus Metall ein Tor."],
+  sansibar:["Sansibar heißt auch „Gewürzinsel“, wegen Nelken, Zimt und Muskat.", "Die Altstadt Stone Town gehört zum UNESCO-Welterbe.", "Die geschnitzten Holztüren von Stone Town sind oft Hunderte Jahre alt.", "Freddie Mercury, der Sänger der Band Queen, wurde auf Sansibar geboren.", "Mit Dhaus, Booten mit dreieckigem Segel, fährt man hier seit Jahrhunderten."],
+  katanga:["Katanga ist sehr reich an Kupfer und Kobalt.", "Ein großer Teil des Kobalts der Welt, etwa für Akkus, kommt aus dieser Gegend.", "Die größte Stadt Katangas ist Lubumbashi.", "Früher benutzten die Menschen hier Kreuze aus Kupfer als Geld.", "Im Upemba-Nationalpark gibt es Seen, Sümpfe und weite Savannen."],
+  mosambik:["Die Ilha de Moçambique gab dem ganzen Land seinen Namen.", "Die kleine Insel ist nur etwa 3 Kilometer lang.", "Vasco da Gama legte hier im Jahr 1498 an.", "Die Festung São Sebastião ist über 450 Jahre alt.", "Die ganze Insel gehört zum UNESCO-Welterbe."],
+  victoriafaelle:["Die Victoriafälle sind etwa 1,7 Kilometer breit und über 100 Meter hoch.", "Die Einheimischen nennen sie „Mosi-oa-Tunya“, donnernder Rauch.", "Die Gischt sieht man manchmal aus über 20 Kilometern Entfernung.", "Bei Vollmond kann man hier manchmal einen Mondregenbogen sehen.", "Die Fälle liegen am Sambesi, genau an der Grenze zwischen Sambia und Simbabwe."],
+  walfisch:["Walvis Bay ist der wichtigste Hafen Namibias.", "In der Lagune leben Tausende Flamingos.", "Direkt hinter der Stadt beginnen die riesigen Dünen der Namib.", "Die Namib gilt als älteste Wüste der Welt.", "Die Dünen bei Sossusvlei gehören zu den höchsten der Welt, über 300 Meter."],
+  kalahari:["Die Kalahari ist eine Halbwüste: Hier wachsen Gras, Büsche und Bäume.", "Der Sand ist oft rot, weil er Eisen enthält.", "Erdmännchen leben hier in Gruppen und halten abwechselnd Wache.", "Die San leben seit Zehntausenden Jahren in der Kalahari.", "Webervögel bauen riesige Gemeinschaftsnester mit Platz für Hunderte Vögel."],
+  transvaal:["Transvaal heißt „jenseits des Flusses Vaal“.", "1886 wurde hier Gold entdeckt, und Johannesburg wuchs in wenigen Jahren zur Großstadt.", "Der Blyde River Canyon ist einer der größten Canyons der Welt.", "Im Kruger-Nationalpark leben Elefanten, Löwen, Nashörner, Büffel und Leoparden.", "In Pretoria stehen die Union Buildings, der Sitz des Präsidenten."],
+  durban:["Durban hat einen der größten Häfen Afrikas.", "Dank einer warmen Meeresströmung kann man hier fast das ganze Jahr baden.", "In Durban leben besonders viele Menschen, deren Vorfahren aus Indien kamen.", "Der Bogen über dem Moses-Mabhida-Stadion ist 106 Meter hoch.", "Das Gericht „Bunny Chow“, Curry in einem ausgehöhlten Brot, stammt aus Durban."],
+  kapstadt:["Der Tafelberg ist oben flach wie ein Tisch, oft liegt eine Wolke wie eine Tischdecke darauf.", "Am Boulders Beach leben Pinguine direkt am Strand.", "Ganz in der Nähe liegt das berühmte Kap der Guten Hoffnung.", "Die Häuser im Viertel Bo-Kaap sind in leuchtenden Farben gestrichen.", "Kapstadt wurde 1652 als Versorgungsstation für Segelschiffe gegründet."],
+  sthelena:["St. Helena ist eine der abgelegensten bewohnten Inseln der Welt.", "Napoleon lebte hier ab 1815 in der Verbannung, bis zu seinem Tod.", "Die Treppe Jacob’s Ladder in Jamestown hat 699 Stufen.", "Auf der Insel lebt die Riesenschildkröte Jonathan, fast 200 Jahre alt.", "Lange kam man nur per Schiff hierher, erst seit 2017 gibt es Linienflüge."],
+  tamatave:["Toamasina, früher Tamatave, ist der wichtigste Hafen Madagaskars.", "Madagaskar ist die viertgrößte Insel der Welt.", "Lemuren gibt es in freier Natur nur auf Madagaskar.", "Der Pangalanes-Kanal verbindet entlang der Ostküste Lagunen über Hunderte Kilometer.", "Madagaskar ist der größte Vanille-Produzent der Welt."],
+  tulear:["Toliara, früher Tulear, liegt im trockenen Südwesten Madagaskars.", "Vor der Küste liegt eines der größten Korallenriffe der Welt.", "Baobabs können über 1000 Jahre alt werden und speichern Wasser im Stamm.", "Sechs der acht Baobab-Arten wachsen nur auf Madagaskar.", "Die Stadt liegt fast genau auf dem südlichen Wendekreis."],
 };
 
 const cities = {}; const nodes = []; const routeDraw = [];
@@ -1558,20 +1850,37 @@ let clipsOn = true;
 try { clipsOn = localStorage.getItem('sva-clips') !== '0'; } catch(e){}
 $('#clipBtn').setAttribute('aria-pressed', clipsOn);
 $('#clipBtn').addEventListener('click', () => { clipsOn = !clipsOn; $('#clipBtn').setAttribute('aria-pressed', clipsOn); try { localStorage.setItem('sva-clips', clipsOn ? '1' : '0'); } catch(e){} });
-const photoURL = id => `cities/${id}.jpg`;
-function preloadCity(id){ if (clipsOn && CITY_PHOTOS[id]) new Image().src = photoURL(id); }
+// Pro Stadt mehrere Fotos (cities/<id>.jpg, cities/<id>-2.jpg …) und Fakten; jede Ankunft zieht zufällig, ohne direkte Wiederholung
+const photoURL = (id, i) => i ? `cities/${id}-${i+1}.jpg` : `cities/${id}.jpg`;
+const lastPick = {}, nextPhoto = {};
+function pickOther(n, last){ if (n < 2) return 0; let i; do { i = Math.floor(Math.random()*n); } while (i === last); return i; }
+function preloadCity(id){
+  if (!clipsOn || !CITY_PHOTOS[id]) return;
+  nextPhoto[id] = pickOther(CITY_PHOTOS[id].length, lastPick['p'+id]);
+  new Image().src = photoURL(id, nextPhoto[id]);
+}
+async function loadPhoto(img, url){
+  img.src = url;
+  try { await Promise.race([img.decode(), sleep(1500).then(() => { throw 0; })]); return true; } catch(e){ return false; }
+}
 async function showCityClip(id, p){
-  const ph = CITY_PHOTOS[id]; if (!clipsOn || !ph) return;
+  const list = CITY_PHOTOS[id]; if (!clipsOn || !list) return;
   const C = $('#cityClip'), img = $('#ccImg');
-  img.src = photoURL(id);
-  try { await Promise.race([img.decode(), sleep(1500).then(() => { throw 0; })]); } catch(e){ return; }
+  let pi = nextPhoto[id] ?? pickOther(list.length, lastPick['p'+id]); delete nextPhoto[id];
+  // offline ohne Zwischenspeicher: auf das Hauptfoto zurückfallen
+  if (!await loadPhoto(img, photoURL(id, pi))){ if (!pi || !await loadPhoto(img, photoURL(id, 0))) return; pi = 0; }
+  lastPick['p'+id] = pi;
+  const ph = list[pi], facts = CITY_FACTS[id] || [];
+  const fi = pickOther(facts.length, lastPick['f'+id]); lastPick['f'+id] = fi;
+  const fact = facts[fi] || '';
   const r = a => ((Math.random()*2 - 1) * a).toFixed(1) + '%';
   [['--fx',2.5],['--fy',2],['--tx',3.5],['--ty',2.5]].forEach(([k,a]) => C.style.setProperty(k, r(a)));
   C.style.setProperty('--ox', (35 + Math.random()*30).toFixed(0) + '%'); C.style.setProperty('--oy', (35 + Math.random()*30).toFixed(0) + '%');
-  const dur = reduced ? 1600 : 2900; C.style.setProperty('--dur', dur + 'ms');
+  const dur = fact ? (reduced ? 3800 : 4600) : (reduced ? 1600 : 2900); C.style.setProperty('--dur', dur + 'ms');
+  $('#ccFact').innerHTML = fact ? `<i>Wusstest du?</i> ${esc(fact)}` : ''; $('#ccFact').hidden = !fact;
   $('#ccKicker').textContent = p.ai ? `${p.name} erreicht` : 'Willkommen in';
   $('#ccName').textContent = cities[id].name; $('#ccCap').textContent = ph[0];
-  C.setAttribute('aria-label', `${cities[id].name}: ${ph[0]}`);
+  C.setAttribute('aria-label', `${cities[id].name}: ${ph[0]}. ${fact}`);
   $('#ccCredit').innerHTML = `Foto: ${esc(ph[1])} · <a href="https://commons.wikimedia.org/wiki/File:${encodeURIComponent(ph[3].replace(/ /g,'_'))}" target="_blank" rel="noopener">${esc(ph[2])}, Wikimedia Commons</a>`;
   C.classList.remove('go','out'); C.hidden = false; void C.offsetWidth; C.classList.add('go');
   await new Promise(res => {

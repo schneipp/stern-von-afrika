@@ -34,7 +34,7 @@ Wer den Stern findet, muss ihn heim nach Kairo oder Tanger bringen. Sobald er ab
 - 🗺️ **Echte Reliefkarte von Afrika** auf Basis von Natural Earth, farblich angepasst, mit 48 Städten und den echten Küstenlinien
 - 🌟 **Animierter Vorspann:** Sternenhimmel, einfliegender Stern mit Lichtstrahlen und Logo; beim Start erklingt eine Fanfare. Ist noch ein Spiel gespeichert, geht es direkt mit „Weiterspielen“ zurück
 - 👆 **Aktionen direkt an der Figur:** Würfeln, Aufdecken, Fliegen und Co. erscheinen als Sprechblase an der Spielfigur auf der Karte, beim Zielwählen zeigt ein Hinweis oben, was zu tun ist
-- 🎬 **Stadtfilm bei Ankunft:** kommt eine Figur in einer Stadt an, fährt die Kamera knapp drei Sekunden über ein echtes Foto des Ortes (antippen überspringt, abschaltbar über den Kamera-Knopf oben)
+- 🎬 **Stadtfilm bei Ankunft:** kommt eine Figur in einer Stadt an, fährt die Kamera über eines von fünf echten Fotos des Ortes, dazu ein zufälliger „Wusstest du?“-Fakt (240 Fotos, 240 Fakten; antippen überspringt, abschaltbar über den Kamera-Knopf oben)
 - 🎥 **Kamera fährt mit:** zoomt nach dem Würfeln auf die Ziele, folgt der hüpfenden Figur und fährt beim Aufdecken nah ran. Selbst steuern geht mit Ziehen, Mausrad, zwei Fingern oder über die Minimap
 - 🎲 **3D-Würfel**, der aufs Brett fällt und ausrollt
 - 💎 **Große Funde:** jedes Plättchen dreht sich mitten im Bild um, mit Lichtstrahlen, Partikeln und hochzählendem Gewinn
