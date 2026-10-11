@@ -67,6 +67,49 @@ button:focus-visible,input:focus-visible,select:focus-visible,[tabindex]:focus-v
 #toast{position:absolute;left:50%;bottom:calc(22px + var(--sab));transform:translate(-50%,10px);z-index:4;background:rgba(7,19,29,.88);border:1px solid rgba(255,255,255,.15);backdrop-filter:blur(6px);padding:9px 16px;border-radius:999px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;max-width:calc(100% - 200px);text-align:center}
 #toast.show{opacity:1;transform:translate(-50%,0)}
 
+/* Aktionen direkt an der Figur: Sprechblase folgt der Kamera, Pfeil zeigt auf die Spielfigur */
+.mapacts{position:absolute;left:0;top:0;z-index:4;display:flex;flex-direction:column;align-items:center;gap:7px;padding:9px;border-radius:14px;
+  background:linear-gradient(180deg,rgba(20,44,61,.94),rgba(8,20,30,.94));border:1.5px solid color-mix(in srgb,var(--pc,var(--gold)) 75%,transparent);
+  box-shadow:0 12px 34px rgba(0,0,0,.55),0 0 22px color-mix(in srgb,var(--pc,var(--gold)) 30%,transparent),inset 0 1px 0 rgba(255,255,255,.1);
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);box-sizing:border-box;max-width:calc(100% - 24px);will-change:transform;opacity:0;pointer-events:none;transition:opacity .2s}
+.mapacts.show{opacity:1;pointer-events:auto}
+.mapacts.pop{animation:maPop .38s cubic-bezier(.2,1.5,.4,1)}
+@keyframes maPop{from{scale:.6}}
+.mapacts::before{content:"";position:absolute;left:var(--ax,50%);width:14px;height:14px;margin-left:-7px;background:inherit;border:inherit;border-right:0;border-bottom:0;transform:rotate(45deg)}
+.mapacts.below::before{top:-8.5px}
+.mapacts.above::before{bottom:-8.5px;transform:rotate(225deg)}
+.ma-msg{font-family:var(--label);font-weight:700;letter-spacing:.06em;font-size:12.5px;text-transform:uppercase;color:var(--muted);text-align:center;max-width:34ch}
+.ma-msg:empty{display:none}
+.ma-msg b{color:var(--paper)}
+#actions{display:flex;flex-wrap:wrap;justify-content:center;gap:7px}
+#actions:empty{display:none}
+@media (max-width: 480px), (max-height: 540px){ .mapacts{padding:7px;gap:5px} #actions{gap:6px} .mapacts .btn{min-height:40px;padding:8px 12px;font-size:14px} .ma-msg{font-size:11.5px} }
+.hintpill{position:absolute;left:calc(14px + var(--sal));right:calc(70px + var(--sar));top:calc(16px + var(--sat));margin:0 auto;width:fit-content;white-space:nowrap;z-index:4;display:flex;align-items:center;gap:10px;padding:9px 18px;border-radius:999px;background:rgba(7,19,29,.9);border:1.5px solid var(--gold);box-shadow:0 8px 26px rgba(0,0,0,.5),0 0 20px rgba(245,187,52,.25);font-weight:700;pointer-events:none;animation:hintIn .35s cubic-bezier(.2,1.5,.4,1)}
+.hintpill span{overflow:hidden;text-overflow:ellipsis}
+.hintpill i{flex:none;width:10px;height:10px;border-radius:50%;background:#ffd23a;box-shadow:0 0 0 0 rgba(255,210,58,.7);animation:hintDot 1.3s ease-out infinite}
+@keyframes hintIn{from{opacity:0;transform:translateY(-14px)}}
+@keyframes hintDot{to{box-shadow:0 0 0 12px rgba(255,210,58,0)}}
+
+/* Stadtfilm: kurze Kamerafahrt über ein Foto der Stadt */
+.cityclip{position:absolute;inset:0;z-index:6;overflow:hidden;background:#000;opacity:0;transition:opacity .35s;cursor:pointer}
+.cityclip.go{opacity:1}
+.cityclip.out{opacity:0;transition-duration:.45s}
+.cityclip img{position:absolute;inset:-2%;width:104%;height:104%;object-fit:cover;transform-origin:var(--ox,50%) var(--oy,50%);will-change:transform}
+.cityclip.go img{animation:kenburns var(--dur,2900ms) linear both}
+@keyframes kenburns{from{transform:scale(1.04) translate(var(--fx,0),var(--fy,0))}to{transform:scale(1.2) translate(var(--tx,0),var(--ty,0))}}
+.cityclip::before,.cityclip::after{content:"";position:absolute;left:0;right:0;height:9%;background:#000;z-index:1;transition:transform .5s cubic-bezier(.2,.8,.3,1)}
+.cityclip::before{top:0;transform:translateY(-100%)}
+.cityclip::after{bottom:0;transform:translateY(100%)}
+.cityclip.go::before,.cityclip.go::after{transform:none}
+.cc-shade{position:absolute;inset:0;background:linear-gradient(0deg,rgba(0,0,0,.72),transparent 48%),radial-gradient(120% 90% at 50% 50%,transparent 55%,rgba(0,0,0,.45))}
+.cc-text{position:absolute;left:calc(28px + var(--sal));right:28px;bottom:calc(9% + 22px);z-index:2}
+.cc-text span{display:block;font-family:var(--label);text-transform:uppercase;letter-spacing:.2em;font-size:12.5px;color:var(--gold-hi);opacity:0;transform:translateY(10px);transition:opacity .4s .25s,transform .5s .25s}
+.cc-text b{display:block;font-family:var(--display);font-weight:400;font-size:clamp(34px,6.5vw,68px);line-height:1;color:#fff;text-shadow:0 3px 0 rgba(0,0,0,.45),0 0 30px rgba(0,0,0,.5);opacity:0;transform:translateX(-24px);transition:opacity .45s .35s,transform .6s .35s cubic-bezier(.2,1,.3,1)}
+.cc-text small{display:block;margin-top:6px;font-size:15px;color:#efe4ca;opacity:0;transition:opacity .4s .6s}
+.cityclip.go .cc-text span,.cityclip.go .cc-text b,.cityclip.go .cc-text small{opacity:1;transform:none}
+.cc-credit{position:absolute;right:calc(10px + var(--sar));bottom:calc(10px + var(--sab));z-index:2;font-size:10.5px;color:rgba(255,255,255,.6);max-width:60%;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cc-credit a{color:inherit}
+
 /* 3D-Würfel */
 .dice-stage{position:absolute;left:50%;top:50%;width:120px;height:120px;margin:-60px 0 0 -60px;perspective:700px;z-index:5;pointer-events:none;opacity:0;transition:opacity .25s}
 .dice-stage.show{opacity:1}
@@ -123,6 +166,10 @@ button:focus-visible,input:focus-visible,select:focus-visible,[tabindex]:focus-v
 .btn.primary:hover:not(:disabled){filter:brightness(1.06)}
 .btn:disabled{opacity:.38;cursor:not-allowed}
 .btn small{font-weight:500;opacity:.75;margin-left:3px}
+.btn.has-ico{display:inline-flex;align-items:center;gap:8px;padding-left:10px}
+.btn .bico{width:26px;height:26px;flex:none;filter:drop-shadow(0 1px 1px rgba(0,0,0,.35))}
+.btn:not(:disabled):hover .bico{animation:icoWiggle .5s ease-in-out}
+@keyframes icoWiggle{30%{transform:rotate(-10deg) scale(1.1)}70%{transform:rotate(8deg) scale(1.1)}}
 
 .legend{display:grid;grid-template-columns:auto 1fr auto;gap:6px 10px;align-items:center;font-size:12.5px}
 .legend .cost{font-family:var(--label);font-weight:700;color:var(--gold);font-variant-numeric:tabular-nums;text-align:right}
@@ -281,6 +328,9 @@ button:focus-visible,input:focus-visible,select:focus-visible,[tabindex]:focus-v
   .brand{order:-2} .turnbox{order:-1}
 }
 @media (max-width: 480px){
+  .brand{gap:6px}
+  .brand .ghost{padding:10px 11px}
+  .brand .iconbtn{width:40px}
   .brand h1{font-size:0;flex:1}
   .prow{grid-template-columns:auto 1fr 1fr}
   .prow .chip{grid-row:span 2}
@@ -302,6 +352,9 @@ button:focus-visible,input:focus-visible,select:focus-visible,[tabindex]:focus-v
     </div>
     <div class="minimap" id="minimap" title="Übersichtskarte"><div class="mm-view" id="mmView"></div></div>
     <div class="banner" id="banner"><span class="bchip" id="bchip"></span><div><span>Am Zug</span><br><b id="bname"></b></div></div>
+    <div class="mapacts" id="mapActs" role="group" aria-label="Nächste Aktion"><div class="ma-msg" id="maMsg"></div><div id="actions"></div></div>
+    <div class="hintpill" id="hintPill" hidden><i></i><span id="hintText"></span></div>
+    <div class="cityclip" id="cityClip" hidden role="img"><img id="ccImg" alt=""><div class="cc-shade"></div><div class="cc-text"><span id="ccKicker">Willkommen in</span><b id="ccName"></b><small id="ccCap"></small></div><div class="cc-credit" id="ccCredit"></div></div>
     <div class="dice-stage" id="diceStage"><div class="dice-shadow"></div><div class="dice-drop"><div class="cube" id="cube"></div></div></div>
     <div id="toast" role="status" aria-live="polite"></div>
   </main>
@@ -313,6 +366,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,[tabindex]:focus-v
       <button class="ghost" type="button" data-proxy="rulesBtn">Regeln</button>
       <button class="iconbtn" id="installBtn" type="button" hidden title="App installieren" aria-label="App installieren"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5"/><path d="M5 20h14"/></svg></button>
       <button class="iconbtn" id="sfxBtn" type="button" aria-pressed="true" title="Soundeffekte" aria-label="Soundeffekte"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg></button>
+      <button class="iconbtn" id="clipBtn" type="button" aria-pressed="true" title="Stadtfilme bei Ankunft" aria-label="Stadtfilme"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="13" height="12" rx="2"/><path d="M16 10.5l5-3v9l-5-3z" fill="currentColor"/></svg></button>
       <button class="iconbtn" id="musBtn" type="button" aria-pressed="true" title="Musik" aria-label="Musik"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3" fill="currentColor"/><circle cx="17" cy="16" r="3" fill="currentColor"/></svg></button>
     </header>
     <div class="toolbar">
@@ -329,7 +383,6 @@ button:focus-visible,input:focus-visible,select:focus-visible,[tabindex]:focus-v
         <div class="die" id="die" aria-label="Würfel"></div>
         <div id="msg"></div>
       </div>
-      <div id="actions"></div>
     </section>
     <section class="section legend-sec">
       <p class="eyebrow">Reisekosten</p>
@@ -521,6 +574,58 @@ const TOKEN_INFO = {
   emerald:{name:'Smaragd', value:600, text:'£ 600', color:'#2bea86'},
   topaz:{name:'Topas', value:300, text:'£ 300', color:'#ffb02e'},
   blank:{name:'Leer', text:'Nur Sand und Staub', color:'#b9a886'},
+};
+
+// Stadtfotos (cities/<id>.jpg) von Wikimedia Commons: [Motiv, Urheber, Lizenz, Dateiname]
+const CITY_PHOTOS = {
+  addis:['Addis Abeba bei Nacht','Abshewaga','CC BY-SA 4.0','Addis_in_night.jpg'],
+  agadez:['Die Große Moschee aus Lehm','Vincent van Zeijst','CC BY-SA 4.0','Niger, Agadez (28), grand mosque, old city.jpg'],
+  algier:['Die weiße Stadt an der Bucht','Manini row','CC BY-SA 4.0',"La_baie_d'Alger_(cropped).jpg"],
+  assuan:['Felukken auf dem Nil','Vyacheslav Argenberg','CC BY 4.0','Panoramic_view_of_Aswan,_Egypt.jpg'],
+  bahr:['Viehlager der Mundari am Weißen Nil','Diego Delso','CC BY-SA 4.0','Campamento de ganado de la tribu Mundari, Terekeka, Sudán del Sur, 2024-01-28, DD 36.jpg'],
+  bengasi:['Uferpromenade am Mittelmeer','Maher A. A. Abdussalam','Public domain','Al_Daawa_alIslamiyah2.JPG'],
+  dakar:['Place de l’Indépendance','mostroneddo','CC BY 2.0','Dakar-Indépendance.jpg'],
+  darfur:['Kraterseen im Jebel-Marra-Gebirge','J Williams','CC BY-SA 3.0','Sudan_Jebel_Marra_Deriba_Lakes_edited.jpg'],
+  durban:['Hafenstadt am Indischen Ozean','Dennis Sylvester Hurd','CC BY 2.0','Durban_from_the_Balcony_(Dennis_Sylvester_Hurd)_1.jpg'],
+  freetown:['Hügel, Buchten und Flussmündung','David Hond','CC BY 2.0','Freetown-aerialview.jpg'],
+  goldkueste:['Cape Coast Castle am Atlantik','Rjruiziii','CC BY-SA 3.0','Cape_Coast_Castle,_Cape_Coast,_Ghana.JPG'],
+  guardafui:['Fischerdorf Bargal am Horn von Afrika','Rahim Alpa','Public domain','Somalia, Puntland, Bari, Bargal (01).jpg'],
+  kairo:['Der Nil mitten in der Stadt','Jorge Láscar','CC BY 2.0','Cairo_Opera_House,_Al_Hurriyah_Park_and_the_Nile_river_(14797782354).jpg'],
+  kalahari:['Rote Dünen','Frank Vassen','CC BY 2.0','Kalahari Dunes, Namibia (3997934029).jpg'],
+  kamerun:['Der Kamerunberg, ein aktiver Vulkan','Yona Tientcheu','CC BY-SA 4.0','Mount_Cameroon_view_from_Buea_(Soppo).jpg'],
+  kanaren:['Der Teide auf Teneriffa','Ingo Mehling','CC BY-SA 4.0','Teide Canadas.jpg'],
+  kano:['Die alte Stadtmauer aus Lehm','Anasskoko','CC BY-SA 4.0','Ancient Walls of Kano Emirate 02.jpg'],
+  kapstadt:['Camps Bay unter den Zwölf Aposteln','Der Berzerker','CC BY-SA 2.0','Camps_bay_(53460319478)_(cropped).jpg'],
+  kapverde:['Bergdorf Fontainhas auf Santo Antão','Zinneke','CC BY-SA 3.0','Fontainhas, Santo Antao, Cabo Verde 2017-04 --2.jpg'],
+  katanga:['Kathedrale von Lubumbashi','Nick Hobgood','CC BY 2.0','Lubumbashi_Cathedral.jpg'],
+  khartum:['Wo Blauer und Weißer Nil sich treffen','Evon2023','CC BY-SA 4.0','©Nile-Project_-Sari_Omer_0025.jpg'],
+  kongo:['Kinshasa am Kongo-Strom','Francis Shok Mweze','CC BY-SA 4.0','La_Gombe,_Kinshasa,_RDC_(cropped).jpg'],
+  kufra:['Palmen, Dünen, Wasser: eine Oase der Sahara','Luca Galuzzi','CC BY-SA 2.5','Libya 5391 Ubari Lakes Luca Galuzzi 2007.jpg'],
+  luanda:['Die Bucht von Luanda','Iamdelcioborges','CC BY 4.0','Luanda_2025_focused_(cropped).jpg'],
+  marrakesch:['Menara-Gärten vor dem Atlas','Acp','CC BY-SA 3.0','Pavillon_Menaragärten.jpg'],
+  massaua:['Der Hafen am Roten Meer','Reinhard Dietrich','CC0','Massawa_harbour.JPG'],
+  mogadischu:['Lido-Strand am Indischen Ozean','AMISOM','CC0','Lido_beach_from_the_sea_in_Mogadishu.jpg'],
+  mombasa:['Die Insel Mombasa von oben','Leo Hempstone','CC0','Mombasa_Island.jpg'],
+  mosambik:['Festung und Dhau vor der Ilha de Moçambique','Stig Nygaard','CC BY 2.0','Ilha_de_Mocambique.jpg'],
+  sansibar:['Sultanspalast in Stone Town','Mbz1','CC BY-SA 3.0','Zanzibar_sultan_palace.jpg'],
+  siwa:['Sonnenaufgang in der Oase','Adelbayoumi','CC BY-SA 4.0','يوم_جديد.jpg'],
+  sklavenkueste:['Ganvié, das Dorf auf Stelzen','jbdodane','CC BY 2.0','Ganvié_fishing_village_on_stilts_in_Benin_(10282059623)_(2).jpg'],
+  stanley:['Stromschnellen bei Kisangani','Ad Meskens','CC BY-SA 3.0','Zaire_kisangani_stroom_11_copy.jpg'],
+  sthelena:['Jamestown zwischen steilen Felsen','Andrew Neaum','CC BY-SA 3.0','St-Helena-Jamestown.jpg'],
+  suakin:['Moschee in der alten Hafenstadt','Bertramz','CC BY 3.0','Suakin,el-Geyf_mosque.jpg'],
+  tamanrasset:['Assekrem im Hoggar-Gebirge','Rachid Hamatou','CC BY-SA 4.0','Assekrem Peaks at Sunset — Hoggar Mountains, Tamanrasset 1.jpg'],
+  tamatave:['Palmenallee am Hafen','Hanspeter Limacher','CC BY 3.0','Tamatave_-_panoramio.jpg'],
+  tanger:['Strand und Stadt an der Meerenge','Ifni95','CC BY-SA 4.0','Tanger_cor.jpg'],
+  tibesti:['Vulkanberge mitten in der Sahara','Michael Kerling','Public domain','Tibesti_east_of_bardai.jpg'],
+  timbuktu:['Eselkarawane vor der Lehmmoschee','Emilio Labrador','CC BY 2.0','Donkeys,_Timbuktu.jpg'],
+  transvaal:['Johannesburg, die Stadt des Goldes','Mark Hillary','CC BY 2.0','Johannesburg_skyline_2017.jpg'],
+  tripolis:['Tripolis bei Nacht','Sanadalahlafi','CC BY-SA 4.0','Tripoli_at_night.jpg'],
+  tschadsee:['Fischer im Schilf','Coolthoom1','CC BY-SA 4.0','Waving fisherman on Lake Chad (detilt).jpg'],
+  tulear:['Palmenstrand bei Ifaty','Bernard Gagnon','CC BY-SA 3.0','Ifaty beach Madagascar.jpg'],
+  tunis:['Minarett der Zitouna-Moschee','T A','CC BY-SA 2.0','Minaret_et_patio_de_la_mosquée_Zitouna_au_centre_de_la_Médina_de_Tunis.jpg'],
+  victoriafaelle:['Der donnernde Rauch','Diego Delso','CC BY-SA 4.0','Cataratas_Victoria,_Zambia-Zimbabue,_2018-07-27,_DD_04.jpg'],
+  victoriasee:['Boote am Ufer des größten Sees Afrikas','Owobusingye','CC BY 4.0','Boats and canoes at Lake Victoria, Uganda.jpg'],
+  walfisch:['Flamingos in der Lagune','Marlène Bougard','FAL','Flamingos in Walvis Bay, Namibia.jpg'],
 };
 
 const cities = {}; const nodes = []; const routeDraw = [];
@@ -759,6 +864,7 @@ function applyCam(){
   const v = $('#mmView');
   v.style.left = ((cam.cx-cam.w/2)/MW*100)+'%'; v.style.top = ((cam.cy-h/2)/MH*100)+'%';
   v.style.width = (cam.w/MW*100)+'%'; v.style.height = (h/MH*100)+'%';
+  placeActs();
 }
 const coarse = matchMedia('(pointer: coarse)').matches;
 function hitR(){ return Math.max(17, (coarse ? 26 : 18) * worldPerPx()).toFixed(1); }
@@ -1260,37 +1366,80 @@ function previewPath(o){
   $('#lyPath').innerHTML = `<polyline points="${pts}" fill="none" stroke="#000" stroke-opacity=".35" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/><polyline points="${pts}" fill="none" stroke="#ffd23a" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="1 9"/>`;
 }
 function renderLog(){ $('#logList').innerHTML = state.log.map(l => `<li style="${l.color?`--c:${l.color}`:''}">${l.text}</li>`).join(''); }
-function btn(label, fn, cls='', disabled=false){ return {label, fn, cls, disabled}; }
+function btn(label, fn, cls='', disabled=false, ico=''){ return {label, fn, cls, disabled, ico}; }
+// Bildzeichen für die Aktionsknöpfe, damit auch Kinder ohne Lesen erkennen, was ein Knopf macht
+const pip = (x,y) => `<circle cx="${x}" cy="${y}" r="1.9" fill="#24170b"/>`;
+const BTN_ICONS = {
+  dice:`<rect x="2.5" y="2.5" width="19" height="19" rx="4.5" fill="#fffaf0" stroke="#5a3d22" stroke-width="1.4"/>${pip(7.5,7.5)}${pip(16.5,7.5)}${pip(12,12)}${pip(7.5,16.5)}${pip(16.5,16.5)}`,
+  reveal:`<circle cx="12" cy="12" r="10" fill="#b5301f" stroke="#f2b632" stroke-width="2"/><path d="M9.2 9.3a2.9 2.9 0 1 1 4.1 2.7c-.9.4-1.3 1-1.3 1.9v.5" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><circle cx="12" cy="17.6" r="1.35" fill="#fff"/>`,
+  luck:`<g fill="#2fbf5b" stroke="#145c2a" stroke-width="1"><circle cx="8.6" cy="8.6" r="4.3"/><circle cx="15.4" cy="8.6" r="4.3"/><circle cx="8.6" cy="15.4" r="4.3"/><circle cx="15.4" cy="15.4" r="4.3"/></g><circle cx="12" cy="12" r="2" fill="#7be08f"/><path d="M13.5 15.5q2.5 3.5 2 7" fill="none" stroke="#145c2a" stroke-width="1.8" stroke-linecap="round"/>`,
+  walk:`<g fill="#f6ead0"><ellipse cx="7.5" cy="16" rx="2.6" ry="3.6" transform="rotate(-12 7.5 16)"/><circle cx="5.2" cy="10.6" r="1"/><circle cx="7.2" cy="10" r="1"/><circle cx="9.2" cy="10.4" r="1"/><ellipse cx="15.5" cy="10" rx="2.6" ry="3.6" transform="rotate(12 15.5 10)"/><circle cx="13.6" cy="4.6" r="1"/><circle cx="15.6" cy="4.1" r="1"/><circle cx="17.6" cy="4.6" r="1"/></g><path d="M18 17h4m-2-2l2 2-2 2" fill="none" stroke="#ffd23a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>`,
+  plane:`<path d="M21.5 3.2c-.9-.9-2.6-.6-3.6.4l-3.4 3.4-8.9-2.6-1.9 1.9 7.2 4.4-3.2 3.3-2.8-.4-1.6 1.6 3.4 1.9 1.9 3.4 1.6-1.6-.4-2.8 3.3-3.2 4.4 7.2 1.9-1.9-2.6-8.9 3.4-3.4c1-1 1.3-2.7.4-3.6z" fill="#ff6b57" stroke="#6d1205" stroke-width="1" stroke-linejoin="round"/>`,
+  next:`<circle cx="12" cy="12" r="10" fill="#3d8bff" stroke="#123a75" stroke-width="1.2"/><path d="M8 7.5l5 4.5-5 4.5z" fill="#fff"/><rect x="14.5" y="7.5" width="2.4" height="9" rx="1" fill="#fff"/>`,
+  cancel:`<circle cx="12" cy="12" r="10" fill="#6b7d8a" stroke="#2a3640" stroke-width="1.2"/><path d="M8.5 8.5l7 7m0-7l-7 7" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/>`,
+};
 function renderActions(){
-  const p = cur(), box = $('#actions'), msg = $('#msg');
-  box.innerHTML = '';
+  const p = cur(), box = $('#actions'), msg = $('#msg'), dock = $('#mapActs'), mam = $('#maMsg');
+  box.innerHTML = ''; mam.innerHTML = '';
+  let hint = '';
   $('#turnHead').innerHTML = state.phase==='play' ? `Am Zug: <span style="color:${p.color}">${esc(p.name)}</span>` : 'Spiel beendet';
-  if (state.phase !== 'play'){ msg.innerHTML = state.winner ? `<b>${esc(state.winner)}</b> hat gewonnen.` : 'Noch keine Expedition unterwegs.'; return; }
-  if (p.ai){ msg.innerHTML = `${esc(p.name)} plant die Route …`; return; }
+  const done = (show) => {
+    const vis = show && state.phase==='play' && !p.ai && !busy && box.children.length > 0;
+    if (vis && !dock.classList.contains('show')){ dock.classList.remove('pop'); void dock.offsetWidth; dock.classList.add('pop'); }
+    dock.classList.toggle('show', vis);
+    if (p) dock.style.setProperty('--pc', p.color);
+    const pill = $('#hintPill'); pill.hidden = !(hint && state.phase==='play' && !p.ai && !busy); $('#hintText').innerHTML = hint;
+    placeActs();
+  };
+  if (state.phase !== 'play'){ msg.innerHTML = state.winner ? `<b>${esc(state.winner)}</b> hat gewonnen.` : 'Noch keine Expedition unterwegs.'; return done(false); }
+  if (p.ai){ msg.innerHTML = `${esc(p.name)} plant die Route …`; return done(false); }
   const list = [], c = cityAt(p.node);
   if (state.step === 'start'){
     if (hidden(c)){
       msg.innerHTML = `Du stehst in <b>${cities[c].name}</b> vor einem verdeckten Plättchen.`;
-      list.push(btn('Aufdecken <small>£ 100</small>', payOpen, 'primary', p.money < 100));
-      list.push(btn('Glück versuchen <small>4–6</small>', tryLuck, p.money < 100 ? 'primary' : ''));
-      list.push(btn('Weiterreisen', rollMove));
+      mam.innerHTML = `Verdecktes Plättchen in <b>${cities[c].name}</b>`;
+      list.push(btn('Aufdecken <small>£ 100</small>', payOpen, 'primary', p.money < 100, 'reveal'));
+      list.push(btn('Glück versuchen <small>4–6</small>', tryLuck, p.money < 100 ? 'primary' : '', false, 'luck'));
+      list.push(btn('Weiterreisen', rollMove, '', false, 'walk'));
     } else {
       msg.innerHTML = canWin(p) ? `Bring ${p.star?'den Stern':'dein Hufeisen'} nach <b>Kairo</b> oder <b>Tanger</b>!` : 'Würfle und reise durch Afrika.';
-      list.push(btn('Würfeln', rollMove, 'primary'));
+      if (canWin(p)) mam.innerHTML = 'Ab nach <b>Kairo</b> oder <b>Tanger</b>!';
+      list.push(btn('Würfeln', rollMove, 'primary', false, 'dice'));
     }
-    if (cities[c]?.airport) list.push(btn('Fliegen <small>£ 300</small>', startFly, '', !flightsFrom(p).length));
+    if (cities[c]?.airport) list.push(btn('Fliegen <small>£ 300</small>', startFly, '', !flightsFrom(p).length, 'plane'));
   } else if (state.step === 'rolled'){
     msg.innerHTML = `Du hast eine <b>${state.die}</b> gewürfelt. Tippe auf ein leuchtendes Ziel.`;
+    hint = `<b>${state.die}</b> gewürfelt · Ziel antippen`;
   } else if (state.step === 'fly'){
     msg.innerHTML = 'Wähle ein Flugziel.';
-    list.push(btn('Abbrechen', () => { state.step='start'; state.options=[]; render(); autoCam(() => focusPawn()); }));
+    mam.innerHTML = 'Wähle ein Flugziel';
+    hint = 'Flugziel antippen';
+    list.push(btn('Abbrechen', () => { state.step='start'; state.options=[]; render(); autoCam(() => focusPawn()); }, '', false, 'cancel'));
   } else if (state.step === 'arrived'){
     msg.innerHTML = `Angekommen in <b>${cities[c].name}</b>. Plättchen jetzt aufdecken?`;
-    list.push(btn('Aufdecken <small>£ 100</small>', payOpen, 'primary', p.money < 100));
-    list.push(btn('Zug beenden', () => endTurn(), p.money < 100 ? 'primary' : ''));
+    mam.innerHTML = `<b>${cities[c].name}</b>: Plättchen aufdecken?`;
+    list.push(btn('Aufdecken <small>£ 100</small>', payOpen, 'primary', p.money < 100, 'reveal'));
+    list.push(btn('Zug beenden', () => endTurn(), p.money < 100 ? 'primary' : '', false, 'next'));
   }
-  list.forEach(b => { const e = document.createElement('button'); e.type='button'; e.className = 'btn ' + b.cls; e.innerHTML = b.label; e.disabled = b.disabled || busy;
+  list.forEach(b => { const e = document.createElement('button'); e.type='button'; e.className = 'btn ' + b.cls + (b.ico ? ' has-ico' : ''); e.innerHTML = (b.ico ? `<svg class="bico" viewBox="0 0 24 24" aria-hidden="true">${BTN_ICONS[b.ico]}</svg>` : '') + `<span>${b.label}</span>`; e.disabled = b.disabled || busy;
     e.addEventListener('click', () => { Snd.play('click'); b.fn(); }); box.appendChild(e); });
+  done(true);
+}
+// Sprechblase mit den Aktionen an die aktuelle Figur heften (unter ihr, bei Platzmangel darüber)
+function placeActs(){
+  const d = $('#mapActs');
+  if (!d.classList.contains('show') || !state || !pawnPos[state.cur]) return;
+  const pp = pawnPos[state.cur], b = $('#board').getBoundingClientRect(), r = svg.getBoundingClientRect(), a = aspect();
+  const px = r.left - b.left + (pp.x - (cam.cx - cam.w/2)) / cam.w * r.width;
+  const py = r.top - b.top + (pp.y - (cam.cy - cam.w*a/2)) / (cam.w*a) * r.height;
+  const k = r.width / cam.w * pawnScale(), w = d.offsetWidth, h = d.offsetHeight, m = 12;
+  const yBelow = py + 6*k + 14, yAbove = py - 24*k - 14 - h;
+  const below = yBelow + h <= b.height - m || yAbove < m;
+  const x = Math.max(m, Math.min(b.width - w - m, px - w/2));
+  const y = Math.max(m, Math.min(b.height - h - m, below ? yBelow : yAbove));
+  d.classList.toggle('below', below); d.classList.toggle('above', !below);
+  d.style.setProperty('--ax', Math.max(18, Math.min(w - 18, px - x)) + 'px');
+  d.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`;
 }
 function render(){ renderPlayers(); renderTokens(); placeAllPawns(); renderTargets(); renderActions(); renderLog(); save(); }
 
@@ -1349,6 +1498,39 @@ async function showReveal(type, opts){
   await sleep(300); R.hidden = true;
 }
 
+// ================= Stadtfilm =================
+// Kurzer Ken-Burns-Flug über ein Foto der Stadt, sobald eine Figur dort ankommt. Antippen überspringt.
+let clipsOn = true;
+try { clipsOn = localStorage.getItem('sva-clips') !== '0'; } catch(e){}
+$('#clipBtn').setAttribute('aria-pressed', clipsOn);
+$('#clipBtn').addEventListener('click', () => { clipsOn = !clipsOn; $('#clipBtn').setAttribute('aria-pressed', clipsOn); try { localStorage.setItem('sva-clips', clipsOn ? '1' : '0'); } catch(e){} });
+const photoURL = id => `cities/${id}.jpg`;
+function preloadCity(id){ if (clipsOn && CITY_PHOTOS[id]) new Image().src = photoURL(id); }
+async function showCityClip(id, p){
+  const ph = CITY_PHOTOS[id]; if (!clipsOn || !ph) return;
+  const C = $('#cityClip'), img = $('#ccImg');
+  img.src = photoURL(id);
+  try { await Promise.race([img.decode(), sleep(1500).then(() => { throw 0; })]); } catch(e){ return; }
+  const r = a => ((Math.random()*2 - 1) * a).toFixed(1) + '%';
+  [['--fx',2.5],['--fy',2],['--tx',3.5],['--ty',2.5]].forEach(([k,a]) => C.style.setProperty(k, r(a)));
+  C.style.setProperty('--ox', (35 + Math.random()*30).toFixed(0) + '%'); C.style.setProperty('--oy', (35 + Math.random()*30).toFixed(0) + '%');
+  const dur = reduced ? 1600 : 2900; C.style.setProperty('--dur', dur + 'ms');
+  $('#ccKicker').textContent = p.ai ? `${p.name} erreicht` : 'Willkommen in';
+  $('#ccName').textContent = cities[id].name; $('#ccCap').textContent = ph[0];
+  C.setAttribute('aria-label', `${cities[id].name}: ${ph[0]}`);
+  $('#ccCredit').innerHTML = `Foto: ${esc(ph[1])} · <a href="https://commons.wikimedia.org/wiki/File:${encodeURIComponent(ph[3].replace(/ /g,'_'))}" target="_blank" rel="noopener">${esc(ph[2])}, Wikimedia Commons</a>`;
+  C.classList.remove('go','out'); C.hidden = false; void C.offsetWidth; C.classList.add('go');
+  await new Promise(res => {
+    let done = false; const t0 = performance.now();
+    const fin = () => { if (!done){ done = true; C.removeEventListener('click', clk); document.removeEventListener('keydown', key, true); res(); } };
+    const clk = e => { if (e?.target?.closest?.('a')) return; if (performance.now() - t0 > 300) fin(); };
+    const key = e => { if ([' ','Enter','Escape'].includes(e.key)){ e.preventDefault(); e.stopPropagation(); clk(); } };
+    C.addEventListener('click', clk); document.addEventListener('keydown', key, true);
+    setTimeout(fin, dur - 350);
+  });
+  C.classList.add('out'); await sleep(450); C.hidden = true; C.classList.remove('go','out');
+}
+
 // ================= Spielablauf =================
 function beginTurn(){
   if (state.phase !== 'play') return;
@@ -1383,6 +1565,7 @@ async function chooseOption(idx){
   if (busy) return;
   const o = state.options[idx]; if (!o) return;
   const p = cur(), i = state.cur;
+  const dest = cityAt(o.node); if (dest) preloadCity(dest);
   busy = true; state.step = 'moving'; state.options = []; renderTargets(); renderActions();
   if (o.fly){
     p.money -= 300; renderPlayers(); floatText(p.node, '−£300', '#ff8a7a');
@@ -1409,10 +1592,16 @@ async function chooseOption(idx){
   busy = false;
   arrive();
 }
-function arrive(){
-  const p = cur(), c = cityAt(p.node);
+async function arrive(){
+  const p = cur(), c = cityAt(p.node), st = state;
   if (c && cities[c].start && canWin(p)) return win(p);
-  if (c) Snd.play('arrive');
+  if (c){
+    Snd.play('arrive');
+    busy = true; renderActions();
+    await showCityClip(c, p);
+    busy = false;
+    if (state !== st || state.phase !== 'play') return;
+  }
   if (hidden(c)){
     addLog(`${esc(p.name)} erreicht ${cities[c].name}.`, p.color);
     state.step = 'arrived'; render();

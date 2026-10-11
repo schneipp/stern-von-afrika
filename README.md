@@ -32,6 +32,8 @@ Wer den Stern findet, muss ihn heim nach Kairo oder Tanger bringen. Sobald er ab
 ## Das steckt drin
 
 - 🗺️ **Echte Reliefkarte von Afrika** auf Basis von Natural Earth, farblich angepasst, mit 48 Städten und den echten Küstenlinien
+- 👆 **Aktionen direkt an der Figur:** Würfeln, Aufdecken, Fliegen und Co. erscheinen als Sprechblase an der Spielfigur auf der Karte, beim Zielwählen zeigt ein Hinweis oben, was zu tun ist
+- 🎬 **Stadtfilm bei Ankunft:** kommt eine Figur in einer Stadt an, fährt die Kamera knapp drei Sekunden über ein echtes Foto des Ortes (antippen überspringt, abschaltbar über den Kamera-Knopf oben)
 - 🎥 **Kamera fährt mit:** zoomt nach dem Würfeln auf die Ziele, folgt der hüpfenden Figur und fährt beim Aufdecken nah ran. Selbst steuern geht mit Ziehen, Mausrad, zwei Fingern oder über die Minimap
 - 🎲 **3D-Würfel**, der aufs Brett fällt und ausrollt
 - 💎 **Große Funde:** jedes Plättchen dreht sich mitten im Bild um, mit Lichtstrahlen, Partikeln und hochzählendem Gewinn
@@ -94,4 +96,4 @@ Die Seite lässt sich auch direkt per Doppelklick auf `index.html` öffnen. Nur 
 
 Eine Fan-Umsetzung von *Afrikan tähti* (Kari Mannerla, 1951). Städte, Wege und Plättchenverteilung sind an das Original angelehnt, aber frei gestaltet. Kein offizielles Produkt.
 
-Kartendaten: [Natural Earth](https://www.naturalearthdata.com/), gemeinfrei. Schriften: Alfa Slab One, Archivo und Archivo Narrow über Google Fonts.
+Kartendaten: [Natural Earth](https://www.naturalearthdata.com/), gemeinfrei. Stadtfotos: [Wikimedia Commons](https://commons.wikimedia.org/), Urheber und Lizenz (CC BY, CC BY-SA, CC0, FAL, gemeinfrei) werden im Spiel bei jedem Foto angezeigt und sind in `index.html` (`CITY_PHOTOS`) hinterlegt. Schriften: Alfa Slab One, Archivo und Archivo Narrow über Google Fonts.

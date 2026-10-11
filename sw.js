@@ -1,10 +1,13 @@
 // Offline-Cache für den Stern von Afrika.
 // Seite: erst Netz, dann Cache (Updates kommen sofort an). Bilder/Icons: Cache zuerst. Schriften: aus dem Cache, im Hintergrund auffrischen.
-const VERSION = 'sva-3';
+const VERSION = 'sva-4';
 const CORE = [
   './', './index.html', './stern-von-afrika-relief.jpg', './manifest.webmanifest',
   './icons/icon.svg', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png', './icons/favicon-32.png',
 ];
+// Stadtfotos für die Ankunftsfilme: werden nach der Installation im Hintergrund geladen, damit sie offline da sind.
+const CITY_IDS = 'addis agadez algier assuan bahr bengasi dakar darfur durban freetown goldkueste guardafui kairo kalahari kamerun kanaren kano kapstadt kapverde katanga khartum kongo kufra luanda marrakesch massaua mogadischu mombasa mosambik sansibar siwa sklavenkueste stanley sthelena suakin tamanrasset tamatave tanger tibesti timbuktu transvaal tripolis tschadsee tulear tunis victoriafaelle victoriasee walfisch'.split(' ');
+const PHOTOS = CITY_IDS.map(id => `./cities/${id}.jpg`);
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(VERSION).then(c => c.addAll(CORE)).then(() => self.skipWaiting()));
@@ -13,7 +16,8 @@ self.addEventListener('install', e => {
 self.addEventListener('activate', e => {
   e.waitUntil(caches.keys()
     .then(keys => Promise.all(keys.filter(k => k !== VERSION).map(k => caches.delete(k))))
-    .then(() => self.clients.claim()));
+    .then(() => self.clients.claim())
+    .then(() => { caches.open(VERSION).then(c => Promise.all(PHOTOS.map(u => c.match(u).then(hit => hit || c.add(u).catch(() => {}))))); }));
 });
 
 self.addEventListener('fetch', e => {
