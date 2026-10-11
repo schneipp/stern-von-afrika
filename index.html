@@ -110,6 +110,39 @@ button:focus-visible,input:focus-visible,select:focus-visible,[tabindex]:focus-v
 .cc-credit{position:absolute;right:calc(10px + var(--sar));bottom:calc(10px + var(--sab));z-index:2;font-size:10.5px;color:rgba(255,255,255,.6);max-width:60%;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cc-credit a{color:inherit}
 
+/* Vorspann: Stern fliegt ein, Logo schlägt auf, darunter fährt die Karte */
+.intro{position:fixed;inset:0;z-index:35;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center;overflow:hidden;
+  padding:calc(20px + var(--sat)) calc(20px + var(--sar)) calc(20px + var(--sab)) calc(20px + var(--sal));
+  background:radial-gradient(circle at 50% 40%,rgba(10,30,45,.5),rgba(3,9,14,.78) 45%,rgba(3,9,14,.96) 85%);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);animation:inBg 1s ease-out both;transition:opacity .6s,transform .7s cubic-bezier(.5,0,.7,.4)}
+@keyframes inBg{from{background-color:#030a10}}
+.intro.out{opacity:0;transform:scale(1.12);pointer-events:none}
+.in-sky{position:absolute;inset:0;pointer-events:none}
+.in-sky i{position:absolute;width:3px;height:3px;border-radius:50%;background:#fff6c8;box-shadow:0 0 6px #ffd23a;opacity:0;animation:twk var(--d,3s) var(--w,0s) ease-in-out infinite}
+@keyframes twk{0%,100%{opacity:0;transform:scale(.4)}50%{opacity:.9;transform:scale(1)}}
+.in-hero{position:relative;width:min(230px,42vw,30vh);aspect-ratio:1;margin-bottom:-4px}
+.in-rays{position:absolute;left:50%;top:50%;width:1400px;height:1400px;margin:-700px 0 0 -700px;border-radius:50%;pointer-events:none;
+  background:repeating-conic-gradient(from 0deg,rgba(255,214,90,.2) 0deg 6deg,transparent 6deg 16deg);-webkit-mask:radial-gradient(circle,#000 0,transparent 55%);mask:radial-gradient(circle,#000 0,transparent 55%);
+  opacity:0;animation:inRays 1.2s .5s cubic-bezier(.2,1,.3,1) forwards,spin 30s linear infinite}
+@keyframes inRays{from{opacity:0;scale:.2}to{opacity:1;scale:1}}
+.in-glow{position:absolute;inset:-40%;border-radius:50%;background:radial-gradient(circle,rgba(255,226,130,.75),rgba(245,187,52,.25) 40%,transparent 68%);opacity:0;animation:inFade .8s .55s forwards,breathe 2.6s 1.4s ease-in-out infinite}
+@keyframes inFade{to{opacity:1}}
+.in-star{position:absolute;inset:0;width:100%;height:100%;filter:drop-shadow(0 0 24px rgba(255,214,90,.8)) drop-shadow(0 8px 0 #4a2a05);opacity:0;animation:inStar 1.1s .35s cubic-bezier(.2,1.4,.4,1) forwards}
+@keyframes inStar{0%{opacity:0;transform:scale(.05) rotate(-200deg)}60%{opacity:1}100%{opacity:1;transform:none}}
+.in-star .shine{animation:shine 3.4s 1.8s ease-in-out infinite}
+@keyframes shine{0%,70%,100%{opacity:0}80%{opacity:.85}}
+.intro .logo{position:relative;font-size:clamp(46px,9.5vw,104px);margin:0;opacity:0;animation:slam .6s 1.15s cubic-bezier(.2,1.5,.4,1) both}
+.in-tag{position:relative;margin:4px 0 0;font-family:var(--label);text-transform:uppercase;letter-spacing:.2em;font-size:clamp(12px,1.6vw,15px);color:#efe4ca;text-shadow:0 2px 8px #000;opacity:0;animation:inUp .6s 1.7s ease-out forwards}
+@keyframes inUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.in-btns{position:relative;display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:22px;opacity:0;animation:inPop .55s 2.05s cubic-bezier(.2,1.5,.4,1) forwards}
+@keyframes inPop{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:none}}
+.in-btns .btn{font-size:19px;padding:15px 30px;min-height:58px}
+.in-btns .btn.primary{animation:inPulse 2s 3s ease-in-out infinite}
+@keyframes inPulse{50%{box-shadow:inset 0 1px 0 rgba(255,255,255,.6),0 3px 0 #7a4a06,0 0 34px rgba(255,214,90,.65)}}
+.in-btns .btn .bico{width:30px;height:30px}
+.in-sound{position:relative;margin-top:14px;font-size:12.5px;color:var(--muted);opacity:0;animation:inFade .6s 2.6s forwards;display:flex;gap:7px;align-items:center}
+.intro.fast *{animation-delay:0s!important}
+@media (max-height: 540px){ .in-hero{width:min(130px,26vh)} .in-btns{margin-top:12px} .in-sound{display:none} }
+
 /* 3D-Würfel */
 .dice-stage{position:absolute;left:50%;top:50%;width:120px;height:120px;margin:-60px 0 0 -60px;perspective:700px;z-index:5;pointer-events:none;opacity:0;transition:opacity .25s}
 .dice-stage.show{opacity:1}
@@ -463,6 +496,22 @@ button:focus-visible,input:focus-visible,select:focus-visible,[tabindex]:focus-v
       <div class="sheet-foot"><button class="btn primary" id="againBtn" type="button">Neue Expedition</button><button class="btn" id="viewBoard" type="button">Alle Plättchen zeigen</button></div>
     </div>
   </div>
+</div>
+
+<div class="intro" id="intro" hidden role="dialog" aria-labelledby="introTitle">
+  <div class="in-sky" id="inSky"></div>
+  <div class="in-hero">
+    <div class="in-rays"></div><div class="in-glow"></div>
+    <svg class="in-star" viewBox="-12 -12 24 24" aria-hidden="true"><defs><linearGradient id="isg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fffbe6"/><stop offset=".55" stop-color="#f5bb34"/><stop offset="1" stop-color="#b86c08"/></linearGradient><linearGradient id="ish" x1="0" y1="0" x2="1" y2="1"><stop offset=".35" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".9"/><stop offset=".65" stop-color="#fff" stop-opacity="0"/></linearGradient></defs>
+      <polygon id="introStar" fill="url(#isg)" stroke="#7a4a06" stroke-width=".55" stroke-linejoin="round"/><polygon id="introFacets" fill="none" stroke="#fff4c4" stroke-opacity=".55" stroke-width=".3"/><polygon class="shine" id="introShine" fill="url(#ish)"/></svg>
+  </div>
+  <h1 class="logo" id="introTitle"><small>DER</small>Stern von Afrika</h1>
+  <p class="in-tag">Edelsteine, Räuber und der größte Diamant der Welt</p>
+  <div class="in-btns">
+    <button class="btn primary has-ico" id="introResume" type="button" hidden></button>
+    <button class="btn primary has-ico" id="introPlay" type="button"></button>
+  </div>
+  <p class="in-sound"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/></svg>Ton an für Musik und Fanfaren</p>
 </div>
 
 <div class="reveal" id="reveal" hidden>
@@ -1012,6 +1061,11 @@ const Snd = (() => {
       tone(65.4, f0 + .5, 1.8, {gain:.3, a:.01, to:60});
       for (let i=0;i<14;i++) bell(PENTA[(i*3) % PENTA.length], f0 + .5 + i*.08 + Math.random()*.03, 1.3, .06);
       noise(f0 + .5, 2.2, {ft:'highpass', f:6500, gain:.06, a:.3, rev:.6}); },
+    intro(){ const t = T();
+      [392,523.25,659.25,783.99].forEach((f,i) => brass(f, t + i*.12, .16, .06));
+      [523.25,659.25,783.99,1046.5].forEach(f => brass(f, t + .52, 1.6, .045));
+      tone(65.4, t + .52, 1.5, {gain:.26, a:.01, to:60});
+      for (let i=0;i<12;i++) bell(PENTA[(i*2) % PENTA.length], t + .55 + i*.07, 1.1, .05); },
     win(){ const t = T();
       const seq = [[523.25,.0],[523.25,.16],[523.25,.32],[659.25,.48],[587.33,.9],[659.25,1.05],[783.99,1.2]];
       seq.forEach(([f,d]) => brass(f, t+d, d>1.1 ? 1.8 : .14, .06));
@@ -1736,20 +1790,20 @@ $('#countSeg').addEventListener('click', e => { const n = +e.target.dataset.n; i
 let driftT = 0;
 function drift(){
   clearTimeout(driftT);
-  if (state && state.phase === 'play') return;
+  if (state && state.phase === 'play' && $('#intro').hidden) return;
   const ids = Object.keys(cities), c = cities[ids[Math.floor(Math.random()*ids.length)]];
   camSet(c.x, c.y, 300 + Math.random()*250, .35);
   driftT = setTimeout(drift, 7000);
 }
 function showSetup(){ renderSetup(); $('#cancelSetup').hidden = !(state && state.phase==='play'); $('#setup').hidden = false; }
 $('#startBtn').addEventListener('click', () => {
-  Snd.init(); readSetup(); clearTimeout(driftT);
+  Snd.init(); readSetup(); clearTimeout(driftT); aiPending = false;
   $('#setup').hidden = true; $('#win').hidden = true;
   Snd.play('turn'); Snd.startMusic(); keepAwake();
   FX.burst(innerWidth/2, innerHeight/2, 'spark', 40, {speed:9, size:8, g:.02, colors:['#fff6c8','#ffd23a','#fff']});
   newGame(setupCfg.slice(0,setupCount));
 });
-$('#cancelSetup').addEventListener('click', () => $('#setup').hidden = true);
+$('#cancelSetup').addEventListener('click', () => { $('#setup').hidden = true; if (aiPending){ clearTimeout(driftT); focusPawn(420); } kickAI(); });
 $('#newBtn').addEventListener('click', showSetup);
 $('#againBtn').addEventListener('click', () => { $('#win').hidden = true; showSetup(); });
 $('#viewBoard').addEventListener('click', () => { $('#win').hidden = true; Object.values(state.tokens).forEach(t=>t.revealed=true); render(); camSet(MW/2, MH/2, 9999, 2); });
@@ -1758,6 +1812,7 @@ $('#closeRules').addEventListener('click', () => $('#rules').hidden = true);
 $('#tokLegend').innerHTML = [...Object.keys(TOKEN_SET),'blank'].map(t => `<div>${icon(t,24)}<span><b>${TOKEN_INFO[t].name}</b> ×${TOKEN_SET[t]||'Rest'}<br><small>${TOKEN_INFO[t].text}</small></span></div>`).join('');
 document.querySelectorAll('.overlay').forEach(o => o.addEventListener('click', e => { if (e.target === o && o.id === 'rules') o.hidden = true; }));
 document.addEventListener('keydown', e => {
+  if (!$('#intro').hidden){ if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); $('#intro').classList.contains('fast') || $('#intro').classList.add('fast'); (!$('#introResume').hidden ? $('#introResume') : $('#introPlay')).click(); } return; }
   if (e.key === 'Escape'){ $('#rules').hidden = true; if (state && state.phase==='play') $('#setup').hidden = true; }
   if ((e.key === ' ' || e.key === 'Enter') && (e.target === document.body || e.target.closest?.('.cam-ctl'))){ const b = $('#actions .btn.primary:not(:disabled)'); if (b){ e.preventDefault(); b.click(); } }
 });
@@ -1777,24 +1832,58 @@ if ('serviceWorker' in navigator && location.protocol === 'https:' && window.top
 }
 
 // ================= Start =================
-function resume(){
+let aiPending = false;
+function resume(startAI = true){
   if (['moving','rolled','fly'].includes(state.step)){ state.step = 'start'; state.options = []; }
   shownMoney = state.players.map(p => p.money);
   buildPawns(); drawDie(state.die); render();
-  if (state.phase === 'play'){
-    focusPawn(420);
-    if (cur().ai){ state.turnId++; if (state.step === 'arrived') aiArrived(state.turnId); else aiTurn(state.turnId); }
+  if (state.phase === 'play'){ aiPending = true; if (startAI) { focusPawn(420); kickAI(); } }
+}
+// Computer am Zug erst losschicken, wenn das Spiel wirklich sichtbar ist (nicht hinter Vorspann oder Setup)
+function kickAI(){
+  if (!aiPending || state.phase !== 'play') return;
+  aiPending = false;
+  if (cur().ai){ state.turnId++; if (state.step === 'arrived') aiArrived(state.turnId); else aiTurn(state.turnId); }
+}
+
+// ================= Vorspann =================
+const ICO = k => `<svg class="bico" viewBox="0 0 24 24" aria-hidden="true">${BTN_ICONS[k]}</svg>`;
+function showIntro(saved){
+  const I = $('#intro');
+  $('#introStar').setAttribute('points', starPts(11, 4.6));
+  $('#introShine').setAttribute('points', starPts(11, 4.6));
+  $('#introFacets').setAttribute('points', starPts(6.2, 2.6));
+  $('#inSky').innerHTML = Array.from({length: 46}, () => `<i style="left:${(Math.random()*100).toFixed(1)}%;top:${(Math.random()*100).toFixed(1)}%;--d:${(2+Math.random()*3).toFixed(1)}s;--w:${(Math.random()*3).toFixed(1)}s"></i>`).join('');
+  $('#introPlay').innerHTML = ICO(saved ? 'walk' : 'dice') + `<span>${saved ? 'Neue Expedition' : 'Spielen'}</span>`;
+  $('#introPlay').classList.toggle('primary', !saved);
+  $('#introResume').hidden = !saved;
+  if (saved) $('#introResume').innerHTML = ICO('next') + '<span>Weiterspielen</span>';
+  I.classList.remove('out','fast'); I.hidden = false;
+  drift();
+  if (!reduced){
+    setTimeout(() => { if (!I.hidden && !I.classList.contains('out')){ const r = $('.in-hero').getBoundingClientRect(); FX.burst(r.left + r.width/2, r.top + r.height/2, 'spark', 46, {speed:9, size:8, g:.02, colors:['#fff6c8','#ffd23a','#ffffff']}); } }, 1100);
   }
 }
+function leaveIntro(then){
+  const I = $('#intro'); if (I.classList.contains('out')) return;
+  Snd.init(); Snd.play('intro'); Snd.startMusic(); keepAwake();
+  const r = $('.in-hero').getBoundingClientRect();
+  FX.burst(r.left + r.width/2, r.top + r.height/2, 'confetti', 90, {speed:13, life:2.8, size:8});
+  I.classList.add('out');
+  setTimeout(() => { I.hidden = true; then(); }, reduced ? 50 : 650);
+}
+$('#intro').addEventListener('click', e => { if (!e.target.closest('button')) $('#intro').classList.add('fast'); });
+$('#introPlay').addEventListener('click', () => leaveIntro(showSetup));
+$('#introResume').addEventListener('click', () => leaveIntro(() => { clearTimeout(driftT); focusPawn(420); kickAI(); }));
 function boot(data){
   build(); buildCube(); drawDie(null); applyCam();
   const s = (data && data.state) || loadSaved();
-  if (s){ state = s; resume(); return; }
+  if (s){ state = s; resume(!!(data && data.state) ); if (!(data && data.state)) showIntro(true); return; }
   state = {players:[], cur:0, tokens:{}, starFound:false, step:'start', options:[], log:[{text:'Wähle Mitreisende und starte die Expedition.'}], phase:'idle', turnId:0};
   Object.values(cities).filter(c=>!c.start).forEach(c => state.tokens[c.id] = {type:'blank', revealed:false});
   renderTokens(); renderLog();
   $('#turnHead').textContent = 'Bereit'; $('#msg').textContent = 'Noch keine Expedition unterwegs.';
-  showSetup(); drift();
+  showIntro(false);
 }
 window.claude?.hot?.snapshot?.(() => ({ state: state && state.phase === 'play' && !busy ? state : null }));
 window.claude?.hot?.ready ? window.claude.hot.ready(boot) : boot(window.claude?.hot?.data ?? {});
