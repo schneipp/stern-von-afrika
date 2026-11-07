@@ -378,6 +378,170 @@ button:focus-visible,input:focus-visible,select:focus-visible,[tabindex]:focus-v
   .prow input{grid-column:2 / -1}
   .sheet-body,.sheet-head{padding-left:18px;padding-right:18px}
 }
+
+/* ---------- Mehrspieler: Menü, Lobby (im Stil alter Strategiespiel-Lobbys), Videos ---------- */
+.ghost.has-ico{display:inline-flex;align-items:center;gap:6px;padding-left:7px}
+.ghost .bico{width:18px;height:18px}
+.brand .ghost.has-ico{display:none}
+@media (max-width: 760px), (orientation: portrait) and (max-width: 1100px){ .brand .ghost.has-ico{display:inline-flex} }
+.tog{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:rgba(0,0,0,.25);border-radius:9px;padding:5px 11px 5px 6px;font-weight:700;color:var(--paper);min-height:40px}
+.tog .bico{width:26px;height:26px;flex:none}
+.tog:hover:not(:disabled){border-color:var(--gold)}
+.tog:disabled{cursor:default;opacity:1;background:transparent}
+.win-wait{margin:0;text-align:center;color:var(--muted);font-size:13.5px}
+.mp-name{display:grid;gap:0}
+.mp-name input,.mp-code{font:inherit;font-size:17px;padding:11px 13px;border:1px solid var(--line);border-radius:9px;background:rgba(0,0,0,.25);color:var(--paper);min-width:0}
+.mp-cards{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.mp-card{display:flex;flex-direction:column;align-items:center;gap:10px;padding:16px 14px;border-radius:12px;background:rgba(0,0,0,.22);border:1px solid var(--line);text-align:center}
+.mp-card p{margin:0;color:var(--muted);font-size:13.5px;flex:1}
+.mp-card .btn{width:100%;justify-content:center}
+.mp-big svg{width:64px;height:64px;filter:drop-shadow(0 4px 8px rgba(0,0,0,.4))}
+.mp-code{width:100%;text-align:center;font-family:var(--label);font-weight:700;letter-spacing:.35em;text-transform:uppercase;font-size:22px;padding:8px}
+.mp-err{margin:0;padding:9px 12px;border-radius:9px;background:rgba(207,59,44,.18);border:1px solid rgba(207,59,44,.5);color:#ffcbc2;text-align:center}
+.mp-busy{opacity:.6;pointer-events:none}
+
+.lobby{position:fixed;inset:0;z-index:31;overflow:auto;-webkit-overflow-scrolling:touch;
+  padding:calc(14px + var(--sat)) calc(14px + var(--sar)) calc(14px + var(--sab)) calc(14px + var(--sal));
+  background:repeating-linear-gradient(0deg,rgba(255,255,255,.018) 0 1px,transparent 1px 3px),radial-gradient(circle at 50% 30%,rgba(10,30,45,.72),rgba(3,9,14,.95) 80%);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
+.lb-wrap{max-width:1180px;min-height:100%;margin:0 auto;display:grid;gap:12px;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);grid-template-rows:auto minmax(0,auto) minmax(220px,1fr) auto;
+  grid-template-areas:"head head" "slots vids" "chat vids" "foot foot"}
+.lb-head{grid-area:head;display:flex;align-items:center;gap:14px;padding:10px 16px;border-radius:12px;background:linear-gradient(180deg,#183a50,#0c1d2a);border:1px solid rgba(245,187,52,.35);box-shadow:0 10px 30px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.08)}
+.lb-head .brand-star{flex:none}
+.lb-title{flex:1;min-width:0;display:grid;line-height:1.05}
+.lb-title small{font-family:var(--label);text-transform:uppercase;letter-spacing:.2em;font-size:11.5px;color:var(--gold-hi)}
+.lb-title b{font-family:var(--display);font-weight:400;font-size:26px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lb-code{display:grid;text-align:center;padding:4px 14px;border-radius:9px;background:rgba(0,0,0,.4);border:1px dashed rgba(245,187,52,.6)}
+.lb-code span{font-family:var(--label);text-transform:uppercase;letter-spacing:.16em;font-size:10.5px;color:var(--muted)}
+.lb-code b{font-family:var(--label);font-size:26px;letter-spacing:.3em;margin-right:-.3em;color:var(--gold-hi);font-variant-numeric:tabular-nums;user-select:all;-webkit-user-select:all}
+.lb-panel{position:relative;display:flex;flex-direction:column;min-height:0;padding:12px;border-radius:12px;background:linear-gradient(180deg,rgba(17,40,56,.94),rgba(9,22,32,.94));border:1px solid rgba(255,255,255,.1);box-shadow:0 10px 30px rgba(0,0,0,.4)}
+.lb-panel::before,.lb-panel::after{content:"";position:absolute;width:14px;height:14px;border:2px solid var(--gold);opacity:.7;pointer-events:none}
+.lb-panel::before{left:-1px;top:-1px;border-right:0;border-bottom:0;border-top-left-radius:12px}
+.lb-panel::after{right:-1px;bottom:-1px;border-left:0;border-top:0;border-bottom-right-radius:12px}
+.lb-panel h3{margin:0 0 10px;font-family:var(--label);text-transform:uppercase;letter-spacing:.18em;font-size:12px;color:var(--gold-hi);display:flex;align-items:center;gap:8px}
+.lb-panel h3::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,rgba(245,187,52,.45),transparent)}
+.lb-slots{grid-area:slots}.lb-vids{grid-area:vids}.lb-chat{grid-area:chat}
+#lbSlots{display:grid;gap:6px}
+.lb-slot{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto 34px;gap:8px;align-items:center;padding:6px 8px;border-radius:10px;background:rgba(0,0,0,.28);border:1px solid transparent;border-left:4px solid var(--c)}
+.lb-slot.me{border-color:rgba(245,187,52,.5);border-left-color:var(--c);background:rgba(245,187,52,.08)}
+.lb-slot.k-open,.lb-slot.k-closed{border-left-color:rgba(255,255,255,.15)}
+.lb-slot.k-closed{opacity:.55}
+.lb-slot.k-open .chip,.lb-slot.k-closed .chip{background:transparent;box-shadow:inset 0 0 0 2px rgba(255,255,255,.25)}
+.lb-name{min-width:0;font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lb-name small{display:block;font-family:var(--label);font-weight:500;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.lb-name input{width:100%;font:inherit;font-size:16px;padding:7px 9px;border:1px solid var(--line);border-radius:8px;background:rgba(0,0,0,.3);color:var(--paper)}
+.lb-slot .k-open-txt{color:var(--muted);font-weight:500;font-style:italic}
+.lb-ready{display:grid;place-items:center;position:relative}
+.lb-ready .bico{width:28px;height:28px}
+.lb-ready .bico.wait{animation:spinSlow 2.4s ease-in-out infinite}
+@keyframes spinSlow{50%{transform:rotate(180deg)}100%{transform:rotate(180deg)}}
+.lb-kick{position:absolute;right:-8px;top:-8px;width:22px;height:22px;padding:0;border:0;background:transparent;display:grid;place-items:center}
+.lb-kick .bico{width:20px;height:20px}
+.lb-vgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;align-content:start;flex:1}
+.lb-avctl{display:flex;gap:8px;justify-content:center;margin-top:10px;flex-wrap:wrap}
+.lb-avctl .btn{display:inline-flex;align-items:center;gap:8px;padding-left:10px}
+.lb-avctl .btn[aria-pressed="false"]{background:rgba(207,59,44,.25);box-shadow:inset 0 0 0 1px rgba(207,59,44,.6),0 3px 0 rgba(0,0,0,.35)}
+#lbChat{flex:1;min-height:110px;max-height:260px;overflow:auto;margin:0 0 8px;padding:8px 10px;list-style:none;border-radius:8px;background:rgba(0,0,0,.35);font-size:14px;display:flex;flex-direction:column;gap:3px;user-select:text;-webkit-user-select:text}
+#lbChat li b{color:var(--c,var(--gold-hi))}
+#lbChat li.sys{color:var(--muted);font-style:italic;font-size:13px}
+#lbChatForm{display:flex;gap:8px}
+#lbChatForm input{flex:1;min-width:0;font:inherit;font-size:16px;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:rgba(0,0,0,.3);color:var(--paper)}
+#lbChatForm .btn{padding:6px 12px}
+.lb-foot{grid-area:foot;position:sticky;bottom:0;z-index:2;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);box-shadow:0 -8px 24px rgba(0,0,0,.45);display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 14px;border-radius:12px;background:rgba(7,19,29,.85);border:1px solid rgba(255,255,255,.1)}
+.lb-foot p{flex:1;margin:0;min-width:200px;font-family:var(--label);letter-spacing:.06em;font-size:14px;color:var(--muted)}
+.lb-foot p b{color:var(--gold-hi)}
+.lb-foot .btn{font-size:16px;padding-top:12px;padding-bottom:12px}
+#lbReady[aria-pressed="true"]{background:linear-gradient(180deg,#7be08f,#37c46a 55%,#239a4e);box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 3px 0 #145c2a;color:#062b12}
+
+/* Videokacheln: gleiche Elemente wandern zwischen Lobby und Spielbrett */
+.vtile{position:relative;aspect-ratio:4/3;border-radius:10px;overflow:hidden;background:radial-gradient(circle at 50% 40%,#1d3c52,#0a1822);box-shadow:0 0 0 2px var(--c),0 6px 18px rgba(0,0,0,.45);transition:box-shadow .2s}
+.vtile video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#000}
+.vtile.self video{transform:scaleX(-1)}
+.vtile .vt-av{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--display);font-size:clamp(22px,4vw,40px);color:var(--c);text-shadow:0 2px 0 rgba(0,0,0,.5)}
+.vtile.has-video:not(.cam-off) .vt-av{display:none}
+.vtile.cam-off video,.vtile:not(.has-video) video{opacity:0}
+.vtile .vt-name{position:absolute;left:5px;bottom:5px;max-width:calc(100% - 34px);padding:2px 8px;border-radius:999px;background:rgba(7,19,29,.82);font-family:var(--label);font-weight:700;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border:1px solid var(--c)}
+.vtile .vt-mic{position:absolute;right:5px;bottom:5px;width:22px;height:22px;border-radius:50%;background:rgba(207,59,44,.9);display:none;place-items:center}
+.vtile .vt-mic .bico{width:16px;height:16px;filter:none}
+.vtile.mic-off .vt-mic{display:grid}
+.vtile.speaking{box-shadow:0 0 0 3px #7be08f,0 0 18px rgba(123,224,143,.7),0 6px 18px rgba(0,0,0,.45)}
+.vtile.turn::after{content:"";position:absolute;inset:0;border-radius:10px;box-shadow:inset 0 0 0 3px var(--gold);pointer-events:none;animation:turnGlow 1.4s ease-in-out infinite}
+@keyframes turnGlow{50%{box-shadow:inset 0 0 0 3px var(--gold-hi),inset 0 0 22px rgba(255,214,90,.6)}}
+.vtile .vt-wait{position:absolute;top:5px;left:5px;font-size:11px;padding:1px 7px;border-radius:999px;background:rgba(0,0,0,.6);color:var(--muted)}
+
+.vidbar{position:absolute;left:calc(14px + var(--sal));top:calc(14px + var(--sat));z-index:3;display:flex;flex-direction:column;gap:8px;max-height:calc(100% - 200px);pointer-events:none}
+.vb-tiles{display:flex;flex-direction:column;gap:8px;overflow:auto;padding:3px;pointer-events:auto}
+.vidbar .vtile{width:132px;flex:none}
+.vidbar .vtile .vt-av{font-size:30px}
+.vidbar.folded .vb-tiles{display:none}
+.vb-ctl{display:flex;gap:6px;pointer-events:auto}
+.avbtn{width:38px;height:38px;border-radius:50%;border:1px solid rgba(255,255,255,.18);background:rgba(7,19,29,.78);backdrop-filter:blur(6px);display:grid;place-items:center;padding:0}
+.avbtn .bico{width:22px;height:22px}
+.avbtn[aria-pressed="false"]{background:rgba(207,59,44,.75);border-color:rgba(255,160,150,.6)}
+#vbFold[aria-pressed="false"]{background:rgba(7,19,29,.78)}
+
+/* Tablet hochkant: Reisende über die ganze Breite, darunter Kameras und Funk nebeneinander */
+@media (max-width: 1100px) and (orientation: portrait), (max-width: 900px){
+  .lb-wrap{grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:auto auto minmax(260px,1fr) auto;grid-template-areas:"head head" "slots slots" "vids chat" "foot foot"}
+  .lb-vgrid{grid-template-columns:repeat(auto-fill,minmax(130px,1fr))}
+  #lbChat{max-height:none}
+}
+@media (max-width: 680px){
+  .lb-wrap{grid-template-columns:1fr;grid-template-rows:none;grid-template-areas:"head" "slots" "vids" "chat" "foot"}
+  .lb-vgrid{grid-template-columns:repeat(auto-fill,minmax(120px,1fr))}
+}
+/* Tablet: großzügige Tippflächen in der Lobby */
+@media (pointer: coarse) and (min-width: 681px){
+  .lb-slot{padding:8px 10px;gap:10px}
+  .lb-name{font-size:17px}
+  .tog{min-height:50px;padding:6px 14px 6px 8px;font-size:15.5px}
+  .tog .bico{width:30px;height:30px}
+  .lb-ready .bico{width:34px;height:34px}
+  .lb-kick{width:30px;height:30px;right:-12px;top:-12px}
+  .lb-kick .bico{width:26px;height:26px}
+  .lb-foot .btn{min-height:56px;font-size:17px;padding-left:14px;padding-right:20px}
+  .lb-foot .btn .bico{width:30px;height:30px}
+  .lb-avctl .btn{min-height:50px}
+  #lbChatForm input{min-height:48px}
+}
+@media (max-width: 560px){
+  .lb-head{flex-wrap:wrap;gap:10px}
+  .lb-title{flex-basis:calc(100% - 52px)}
+  .lb-code{flex:1}
+  .lb-slot{grid-template-columns:auto minmax(0,1fr) auto 30px;row-gap:6px}
+  .lb-slot .tog[data-tog="kind"]{grid-column:2 / span 1;grid-row:2}
+  .lb-slot .tog[data-tog="start"]{grid-column:3 / span 2;grid-row:2}
+  .lb-slot .lb-ready{grid-column:3 / span 2;grid-row:1;justify-self:end}
+  .tog span{font-size:13px}
+  .mp-cards{grid-template-columns:1fr}
+  .lb-foot{justify-content:center}
+  .lb-foot p{flex-basis:100%;text-align:center}
+  .brand .ghost span{display:none}
+}
+@media (max-width: 760px), (orientation: portrait) and (max-width: 1100px), (orientation: landscape) and (max-height: 540px){
+  .vidbar .vtile{width:92px}
+}
+/* Tablet quer: alles auf eine Bildschirmhöhe bringen */
+@media (orientation: landscape) and (max-height: 900px) and (min-width: 901px){
+  .lb-wrap{gap:10px;grid-template-rows:auto minmax(0,auto) minmax(150px,1fr) auto}
+  .lb-head{padding:6px 14px}
+  .lb-panel{padding:10px}
+  #lbSlots{gap:5px}
+  .lb-slot{padding:4px 8px}
+  .lb-slot .tog{min-height:44px;padding-top:3px;padding-bottom:3px}
+  #lbChat{min-height:60px}
+}
+/* Tablet (hoch und quer): Videos etwas größer, Knöpfe fingerfreundlich */
+@media (pointer: coarse) and (min-width: 700px) and (min-height: 600px){
+  .vidbar .vtile{width:128px}
+  .vidbar .vtile .vt-name{font-size:12px}
+  .avbtn{width:50px;height:50px}
+  .avbtn .bico{width:26px;height:26px}
+}
+@media (max-width: 760px), (orientation: portrait) and (max-width: 1100px), (orientation: landscape) and (max-height: 540px){
+  .vidbar .vtile .vt-name{font-size:10.5px;padding:1px 6px}
+  .vidbar{max-height:calc(100% - 140px)}
+}
+@media (pointer: coarse){ .avbtn{width:46px;height:46px} .tog{min-height:46px} }
 </style>
 
 <div id="app">
@@ -399,21 +563,29 @@ button:focus-visible,input:focus-visible,select:focus-visible,[tabindex]:focus-v
     <div class="cityclip" id="cityClip" hidden role="img"><img id="ccImg" alt=""><div class="cc-shade"></div><div class="cc-text"><span id="ccKicker">Willkommen in</span><b id="ccName"></b><small id="ccCap"></small><p class="cc-fact" id="ccFact"></p></div><div class="cc-credit" id="ccCredit"></div></div>
     <div class="dice-stage" id="diceStage"><div class="dice-shadow"></div><div class="dice-drop"><div class="cube" id="cube"></div></div></div>
     <div id="toast" role="status" aria-live="polite"></div>
+    <div class="vidbar" id="vidbar" hidden>
+      <div class="vb-tiles" id="vbTiles"></div>
+      <div class="vb-ctl">
+        <button type="button" class="avbtn js-mic" aria-pressed="true" title="Mikrofon an/aus" aria-label="Mikrofon"></button>
+        <button type="button" class="avbtn js-cam" aria-pressed="true" title="Kamera an/aus" aria-label="Kamera"></button>
+        <button type="button" class="avbtn" id="vbFold" aria-pressed="true" title="Videos ein- und ausklappen" aria-label="Videos ein- und ausklappen"></button>
+      </div>
+    </div>
   </main>
   <aside class="panel">
     <header class="brand">
       <svg class="brand-star" width="34" height="34" viewBox="-12 -12 24 24" aria-hidden="true"><polygon id="brandStar" fill="url(#bsg)" stroke="#7a4a06" stroke-width=".8"/><defs><linearGradient id="bsg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff3c4"/><stop offset=".6" stop-color="#f5bb34"/><stop offset="1" stop-color="#b86c08"/></linearGradient></defs></svg>
       <h1>Stern von Afrika</h1>
-      <button class="ghost" type="button" data-proxy="newBtn">Neu</button>
-      <button class="ghost" type="button" data-proxy="rulesBtn">Regeln</button>
+      <button class="ghost" type="button" data-proxy="newBtn" data-ico="star">Neu</button>
+      <button class="ghost" type="button" data-proxy="rulesBtn" data-ico="book">Regeln</button>
       <button class="iconbtn" id="installBtn" type="button" hidden title="App installieren" aria-label="App installieren"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5"/><path d="M5 20h14"/></svg></button>
       <button class="iconbtn" id="sfxBtn" type="button" aria-pressed="true" title="Soundeffekte" aria-label="Soundeffekte"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg></button>
       <button class="iconbtn" id="clipBtn" type="button" aria-pressed="true" title="Stadtfilme bei Ankunft" aria-label="Stadtfilme"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="13" height="12" rx="2"/><path d="M16 10.5l5-3v9l-5-3z" fill="currentColor"/></svg></button>
       <button class="iconbtn" id="musBtn" type="button" aria-pressed="true" title="Musik" aria-label="Musik"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3" fill="currentColor"/><circle cx="17" cy="16" r="3" fill="currentColor"/></svg></button>
     </header>
     <div class="toolbar">
-      <button class="ghost" id="newBtn" type="button">Neues Spiel</button>
-      <button class="ghost" id="rulesBtn" type="button">Regeln</button>
+      <button class="ghost" id="newBtn" type="button" data-ico="star">Neues Spiel</button>
+      <button class="ghost" id="rulesBtn" type="button" data-ico="book">Regeln</button>
     </div>
     <section class="section">
       <p class="eyebrow">Reisende</p>
@@ -459,8 +631,9 @@ button:focus-visible,input:focus-visible,select:focus-visible,[tabindex]:focus-v
       </div>
       <div id="setupRows" style="display:grid;gap:8px"></div>
       <div class="sheet-foot">
-        <button class="btn primary" id="startBtn" type="button">Expedition starten</button>
-        <button class="btn" id="cancelSetup" type="button" hidden>Zurück zum Spiel</button>
+        <button class="btn primary" id="startBtn" type="button" data-ico="star">Expedition starten</button>
+        <button class="btn" id="cancelSetup" type="button" hidden data-ico="next">Zurück zum Spiel</button>
+        <button class="btn" id="setupBack" type="button" data-ico="back">Zurück</button>
       </div>
       <p class="install-hint" id="iosHint" hidden><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M8 7l4-4 4 4"/><path d="M5 11v9h14v-9"/></svg><span>Als App installieren: Teilen antippen, dann „Zum Home-Bildschirm“.</span></p>
     </div>
@@ -488,7 +661,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,[tabindex]:focus-v
         <h3>Steuerung</h3>
         <p>Die Kamera folgt automatisch dem Zug. Mit Ziehen, Mausrad oder zwei Fingern kannst du selbst über die Karte fliegen; der Fadenkreuz-Knopf schaltet das Mitfahren wieder ein. Leertaste oder Enter löst die Hauptaktion aus.</p>
       </div>
-      <div class="sheet-foot"><button class="btn primary" id="closeRules" type="button">Verstanden</button></div>
+      <div class="sheet-foot"><button class="btn primary" id="closeRules" type="button" data-ico="ready">Verstanden</button></div>
     </div>
   </div>
 </div>
@@ -502,8 +675,66 @@ button:focus-visible,input:focus-visible,select:focus-visible,[tabindex]:focus-v
     </div>
     <div class="sheet-body">
       <div class="ranking" id="ranking"></div>
-      <div class="sheet-foot"><button class="btn primary" id="againBtn" type="button">Neue Expedition</button><button class="btn" id="viewBoard" type="button">Alle Plättchen zeigen</button></div>
+      <div class="sheet-foot"><button class="btn primary" id="againBtn" type="button" data-ico="star">Neue Expedition</button><button class="btn" id="viewBoard" type="button" data-ico="eye">Alle Plättchen zeigen</button></div>
+      <p class="win-wait" id="winWait" hidden>Der Gastgeber bringt euch gleich zurück in die Lobby.</p>
     </div>
+  </div>
+</div>
+
+<div class="overlay" id="mpMenu" hidden>
+  <div class="sheet" role="dialog" aria-labelledby="mpTitle">
+    <div class="sheet-head">
+      <h2 class="logo" id="mpTitle" style="font-size:40px">Mehrspieler</h2>
+      <p>Zusammen über das Internet spielen, mit Kamera und Mikrofon. Eine Person eröffnet das Spiel und schickt den anderen den Code.</p>
+    </div>
+    <div class="sheet-body">
+      <label class="mp-name"><span class="eyebrow">Dein Name</span><input id="mpName" maxlength="16" autocomplete="nickname" placeholder="Wie heißt du?"></label>
+      <div class="mp-cards">
+        <div class="mp-card">
+          <div class="mp-big" aria-hidden="true" data-big="flag"></div>
+          <p>Neues Spiel aufmachen und Freunde einladen</p>
+          <button class="btn primary" id="mpHost" type="button" data-ico="flag">Spiel eröffnen</button>
+        </div>
+        <div class="mp-card">
+          <div class="mp-big" aria-hidden="true" data-big="join"></div>
+          <input id="mpCode" class="mp-code" maxlength="5" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="CODE" aria-label="Spiel-Code">
+          <button class="btn" id="mpJoin" type="button" data-ico="join">Beitreten</button>
+        </div>
+      </div>
+      <p class="mp-err" id="mpErr" role="alert" hidden></p>
+      <div class="sheet-foot"><button class="btn" id="mpBack" type="button" data-ico="back">Zurück</button></div>
+    </div>
+  </div>
+</div>
+
+<div class="lobby" id="lobby" hidden role="dialog" aria-labelledby="lbTitle">
+  <div class="lb-wrap">
+    <header class="lb-head">
+      <svg class="brand-star" width="38" height="38" viewBox="-12 -12 24 24" aria-hidden="true"><polygon class="lb-star" fill="#f5bb34" stroke="#7a4a06" stroke-width=".8"/></svg>
+      <div class="lb-title"><small>Expeditions-Lobby</small><b id="lbTitle">Stern von Afrika</b></div>
+      <div class="lb-code" title="Diesen Code brauchen die anderen zum Beitreten"><span>Spiel-Code</span><b id="lbCode">·····</b></div>
+      <button class="btn" id="lbCopy" type="button" data-ico="link">Einladen</button>
+    </header>
+    <section class="lb-panel lb-slots"><h3>Reisende</h3><div id="lbSlots"></div></section>
+    <section class="lb-panel lb-vids">
+      <h3>Kameras</h3>
+      <div class="lb-vgrid" id="lbVids"></div>
+      <div class="lb-avctl">
+        <button type="button" class="btn js-mic" aria-pressed="true">Mikrofon</button>
+        <button type="button" class="btn js-cam" aria-pressed="true">Kamera</button>
+      </div>
+    </section>
+    <section class="lb-panel lb-chat">
+      <h3>Funkverkehr</h3>
+      <ol id="lbChat" aria-live="polite"></ol>
+      <form id="lbChatForm" autocomplete="off"><input id="lbMsg" maxlength="200" placeholder="Nachricht an alle …" aria-label="Nachricht"><button class="btn" type="submit" data-ico="send" aria-label="Senden"></button></form>
+    </section>
+    <footer class="lb-foot">
+      <p id="lbStatus" role="status"></p>
+      <button class="btn" id="lbLeave" type="button" data-ico="leave">Verlassen</button>
+      <button class="btn primary" id="lbReady" type="button" data-ico="ready">Bereit</button>
+      <button class="btn primary" id="lbStart" type="button" data-ico="star">Expedition starten</button>
+    </footer>
   </div>
 </div>
 
@@ -519,6 +750,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,[tabindex]:focus-v
   <div class="in-btns">
     <button class="btn primary has-ico" id="introResume" type="button" hidden></button>
     <button class="btn primary has-ico" id="introPlay" type="button"></button>
+    <button class="btn primary has-ico" id="introOnline" type="button"></button>
   </div>
   <p class="in-sound"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/></svg>Ton an für Musik und Fanfaren</p>
 </div>
@@ -1604,6 +1836,10 @@ const cur = () => state.players[state.cur];
 const cityAt = node => nodes[node].city;
 const hidden = cid => !!(cid && state.tokens[cid] && !state.tokens[cid].revealed);
 const canWin = p => p.star || (state.starFound && p.horseshoes > 0);
+// Wer darf an diesem Gerät für die Figur tippen? Lokal: alle Menschen. Online: nur die eigene Figur.
+const mine = p => !!p && !p.ai && (!Net.on || p.owner === Net.myId);
+// Computerzüge rechnet lokal das Gerät selbst, online nur der Gastgeber
+const runsAI = p => !!p && p.ai && (!Net.on || Net.isHost);
 const SAVE_KEY = 'stern-von-afrika-v2';
 
 function newGame(cfg){
@@ -1614,17 +1850,28 @@ function newGame(cfg){
   for (let i=pool.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [pool[i],pool[j]]=[pool[j],pool[i]]; }
   const tokens = {}; ids.forEach((id,i) => tokens[id] = {type:pool[i], revealed:false});
   state = {
-    players: cfg.map((c,i) => ({name:c.name||DEFAULT_NAMES[i], color:COLORS[i], ai:c.ai, money:300, node:cities[c.start].node, star:false, horseshoes:0})),
+    players: cfg.map((c,i) => ({name:c.name||DEFAULT_NAMES[i], color:c.color||COLORS[i], ai:c.ai, owner:c.owner, money:300, node:cities[c.start].node, star:false, horseshoes:0})),
     cur:0, tokens, starFound:false, step:'start', die:null, options:[], log:[], winner:null, turnId:0, phase:'play',
   };
   shownMoney = state.players.map(p => p.money);
   addLog(`Die Expedition beginnt. ${state.players.length} Reisende, je £ 300 im Gepäck.`);
-  buildPawns(); renderTokens();
+  launchGame();
+}
+// Startet ein fertig ausgeteiltes Spiel (lokal nach newGame, online auch mit dem Zustand vom Gastgeber)
+function launchGame(){
+  clearTimeout(driftT); aiPending = false;
+  ['#setup','#win','#lobby','#mpMenu'].forEach(s => $(s).hidden = true);
+  Snd.init(); Snd.play('turn'); Snd.startMusic(); keepAwake();
+  FX.burst(innerWidth/2, innerHeight/2, 'spark', 40, {speed:9, size:8, g:.02, colors:['#fff6c8','#ffd23a','#fff']});
+  shownMoney = state.players.map(p => p.money);
+  $('#players').innerHTML = '';
+  buildPawns(); renderTokens(); drawDie(null);
   setFollow(true);
   camSet(MW/2, MH/2, 9999, 3);
+  if (Net.on) mpGameStarted();
   setTimeout(beginTurn, reduced ? 0 : 700);
 }
-function save(){ try { if (state && state.phase !== 'idle') localStorage.setItem(SAVE_KEY, JSON.stringify(state)); } catch(e){} }
+function save(){ try { if (state && state.phase !== 'idle' && !Net.on) localStorage.setItem(SAVE_KEY, JSON.stringify(state)); } catch(e){} }
 function loadSaved(){ try { const s = JSON.parse(localStorage.getItem(SAVE_KEY)); if (s && s.phase==='play' && s.players) return s; } catch(e){} return null; }
 function addLog(text, color){ state.log.unshift({text,color}); state.log.length = Math.min(state.log.length, 40); }
 
@@ -1788,8 +2035,8 @@ function buildCube(){
   const tf = ['rotateY(0deg)','rotateX(90deg)','rotateY(90deg)','rotateY(-90deg)','rotateX(-90deg)','rotateY(180deg)'];
   $('#cube').innerHTML = [1,2,3,4,5,6].map((v,i) => `<div class="face f${v}" style="transform:${tf[i]} translateZ(60px)">${pipHTML(v)}</div>`).join('');
 }
-async function rollDie(){
-  const v = 1 + Math.floor(Math.random()*6);
+async function rollDie(forced){
+  const v = forced || 1 + Math.floor(Math.random()*6);
   const st = $('#diceStage'), cube = $('#cube');
   Snd.play('dice');
   const [fx, fy] = FACE_ROT[v];
@@ -1816,7 +2063,7 @@ function renderPlayers(){
   state.players.forEach((p,i) => {
     const card = box.children[i];
     card.classList.toggle('active', i===state.cur && state.phase==='play');
-    card.querySelector('.pname').innerHTML = esc(p.name) + (p.ai ? '<small>KI</small>' : '');
+    card.querySelector('.pname').innerHTML = esc(p.name) + (p.ai ? '<small>KI</small>' : Net.on && mine(p) ? '<small>Du</small>' : '');
     card.querySelector('.ploc').innerHTML = esc(locLabel(p)) + (p.star ? icon('star',17) : '') + Array.from({length:p.horseshoes},()=>icon('horseshoe',15)).join('');
     const m = card.querySelector('.pmoney');
     if (shownMoney[i] !== p.money){
@@ -1827,6 +2074,7 @@ function renderPlayers(){
       (function tick(now){ const t = Math.min(1, (now-t0)/800), e = 1-Math.pow(1-t,3); m.textContent = '£ ' + Math.round(from + diff*e); if (t < 1) requestAnimationFrame(tick); })(t0);
     } else m.textContent = '£ ' + p.money;
   });
+  if (Net.on) Media.markTurn(state.phase === 'play' && !cur().ai ? cur().owner : null);
 }
 function renderTokens(){
   let h = '';
@@ -1840,7 +2088,7 @@ function renderTokens(){
 function renderTargets(){
   const ly = $('#lyTargets'); ly.innerHTML = ''; $('#lyPath').innerHTML = '';
   const p = cur();
-  if (state.phase!=='play' || p.ai || !['rolled','fly'].includes(state.step)) return;
+  if (state.phase!=='play' || !mine(p) || !['rolled','fly'].includes(state.step)) return;
   state.options.forEach((o,idx) => {
     const n = nodes[o.node];
     const g = document.createElementNS(NS,'g'); g.setAttribute('class','hit'); g.setAttribute('tabindex','0'); g.setAttribute('role','button');
@@ -1855,8 +2103,8 @@ function renderTargets(){
     g.addEventListener('pointerdown', () => previewPath(o));
     g.addEventListener('focus', () => previewPath(o));
     g.addEventListener('mouseleave', () => $('#lyPath').innerHTML = '');
-    g.addEventListener('click', () => { if (!dragMoved) chooseOption(idx); });
-    g.addEventListener('keydown', e => { if (e.key==='Enter'||e.key===' '){ e.preventDefault(); chooseOption(idx); } });
+    g.addEventListener('click', () => { if (!dragMoved) act('choose', {i:idx}); });
+    g.addEventListener('keydown', e => { if (e.key==='Enter'||e.key===' '){ e.preventDefault(); act('choose', {i:idx}); } });
     ly.appendChild(g);
   });
 }
@@ -1884,29 +2132,29 @@ function renderActions(){
   let hint = '';
   $('#turnHead').innerHTML = state.phase==='play' ? `Am Zug: <span style="color:${p.color}">${esc(p.name)}</span>` : 'Spiel beendet';
   const done = (show) => {
-    const vis = show && state.phase==='play' && !p.ai && !busy && box.children.length > 0;
+    const vis = show && state.phase==='play' && mine(p) && !busy && box.children.length > 0;
     if (vis && !dock.classList.contains('show')){ dock.classList.remove('pop'); void dock.offsetWidth; dock.classList.add('pop'); }
     dock.classList.toggle('show', vis);
     if (p) dock.style.setProperty('--pc', p.color);
-    const pill = $('#hintPill'); pill.hidden = !(hint && state.phase==='play' && !p.ai && !busy); $('#hintText').innerHTML = hint;
+    const pill = $('#hintPill'); pill.hidden = !(hint && state.phase==='play' && mine(p) && !busy); $('#hintText').innerHTML = hint;
     placeActs();
   };
   if (state.phase !== 'play'){ msg.innerHTML = state.winner ? `<b>${esc(state.winner)}</b> hat gewonnen.` : 'Noch keine Expedition unterwegs.'; return done(false); }
-  if (p.ai){ msg.innerHTML = `${esc(p.name)} plant die Route …`; return done(false); }
+  if (!mine(p)){ msg.innerHTML = p.ai ? `${esc(p.name)} plant die Route …` : `<b style="color:${p.color}">${esc(p.name)}</b> ist am Zug …`; return done(false); }
   const list = [], c = cityAt(p.node);
   if (state.step === 'start'){
     if (hidden(c)){
       msg.innerHTML = `Du stehst in <b>${cities[c].name}</b> vor einem verdeckten Plättchen.`;
       mam.innerHTML = `Verdecktes Plättchen in <b>${cities[c].name}</b>`;
-      list.push(btn('Aufdecken <small>£ 100</small>', payOpen, 'primary', p.money < 100, 'reveal'));
-      list.push(btn('Glück versuchen <small>4–6</small>', tryLuck, p.money < 100 ? 'primary' : '', false, 'luck'));
-      list.push(btn('Weiterreisen', rollMove, '', false, 'walk'));
+      list.push(btn('Aufdecken <small>£ 100</small>', () => act('pay'), 'primary', p.money < 100, 'reveal'));
+      list.push(btn('Glück versuchen <small>4–6</small>', () => act('luck'), p.money < 100 ? 'primary' : '', false, 'luck'));
+      list.push(btn('Weiterreisen', () => act('roll'), '', false, 'walk'));
     } else {
       msg.innerHTML = canWin(p) ? `Bring ${p.star?'den Stern':'dein Hufeisen'} nach <b>Kairo</b> oder <b>Tanger</b>!` : 'Würfle und reise durch Afrika.';
       if (canWin(p)) mam.innerHTML = 'Ab nach <b>Kairo</b> oder <b>Tanger</b>!';
-      list.push(btn('Würfeln', rollMove, 'primary', false, 'dice'));
+      list.push(btn('Würfeln', () => act('roll'), 'primary', false, 'dice'));
     }
-    if (cities[c]?.airport) list.push(btn('Fliegen <small>£ 300</small>', startFly, '', !flightsFrom(p).length, 'plane'));
+    if (cities[c]?.airport) list.push(btn('Fliegen <small>£ 300</small>', () => act('fly'), '', !flightsFrom(p).length, 'plane'));
   } else if (state.step === 'rolled'){
     msg.innerHTML = `Du hast eine <b>${state.die}</b> gewürfelt. Tippe auf ein leuchtendes Ziel.`;
     hint = `<b>${state.die}</b> gewürfelt · Ziel antippen`;
@@ -1914,12 +2162,12 @@ function renderActions(){
     msg.innerHTML = 'Wähle ein Flugziel.';
     mam.innerHTML = 'Wähle ein Flugziel';
     hint = 'Flugziel antippen';
-    list.push(btn('Abbrechen', () => { state.step='start'; state.options=[]; render(); autoCam(() => focusPawn()); }, '', false, 'cancel'));
+    list.push(btn('Abbrechen', () => act('unfly'), '', false, 'cancel'));
   } else if (state.step === 'arrived'){
     msg.innerHTML = `Angekommen in <b>${cities[c].name}</b>. Plättchen jetzt aufdecken?`;
     mam.innerHTML = `<b>${cities[c].name}</b>: Plättchen aufdecken?`;
-    list.push(btn('Aufdecken <small>£ 100</small>', payOpen, 'primary', p.money < 100, 'reveal'));
-    list.push(btn('Zug beenden', () => endTurn(), p.money < 100 ? 'primary' : '', false, 'next'));
+    list.push(btn('Aufdecken <small>£ 100</small>', () => act('pay'), 'primary', p.money < 100, 'reveal'));
+    list.push(btn('Zug beenden', () => act('end'), p.money < 100 ? 'primary' : '', false, 'next'));
   }
   list.forEach(b => { const e = document.createElement('button'); e.type='button'; e.className = 'btn ' + b.cls + (b.ico ? ' has-ico' : ''); e.innerHTML = (b.ico ? `<svg class="bico" viewBox="0 0 24 24" aria-hidden="true">${BTN_ICONS[b.ico]}</svg>` : '') + `<span>${b.label}</span>`; e.disabled = b.disabled || busy;
     e.addEventListener('click', () => { Snd.play('click'); b.fn(); }); box.appendChild(e); });
@@ -2032,7 +2280,7 @@ async function showCityClip(id, p){
   C.style.setProperty('--ox', (35 + Math.random()*30).toFixed(0) + '%'); C.style.setProperty('--oy', (35 + Math.random()*30).toFixed(0) + '%');
   const dur = fact ? (reduced ? 3800 : 4600) : (reduced ? 1600 : 2900); C.style.setProperty('--dur', dur + 'ms');
   $('#ccFact').innerHTML = fact ? `<i>Wusstest du?</i> ${esc(fact)}` : ''; $('#ccFact').hidden = !fact;
-  $('#ccKicker').textContent = p.ai ? `${p.name} erreicht` : 'Willkommen in';
+  $('#ccKicker').textContent = !mine(p) ? `${p.name} erreicht` : 'Willkommen in';
   $('#ccName').textContent = cities[id].name; $('#ccCap').textContent = ph[0];
   C.setAttribute('aria-label', `${cities[id].name}: ${ph[0]}. ${fact}`);
   $('#ccCredit').innerHTML = `Foto: ${esc(ph[1])} · <a href="https://commons.wikimedia.org/wiki/File:${encodeURIComponent(ph[3].replace(/ /g,'_'))}" target="_blank" rel="noopener">${esc(ph[2])}, Wikimedia Commons</a>`;
@@ -2057,7 +2305,8 @@ function beginTurn(){
   if (cities[cityAt(p.node)]?.start && canWin(p)) return win(p);
   render(); banner(p); Snd.play('turn');
   autoCam(() => focusPawn(400));
-  if (p.ai) aiTurn(state.turnId);
+  if (Net.on && Net.isHost) Net.sync();
+  if (runsAI(p)) aiTurn(state.turnId);
 }
 async function endTurn(delay=350){
   busy = true; renderActions();
@@ -2067,14 +2316,15 @@ async function endTurn(delay=350){
   state.cur = (state.cur + 1) % state.players.length;
   beginTurn();
 }
-async function rollMove(){
+async function rollMove(forced){
   if (busy) return; busy = true; renderActions();
-  const p = cur(), v = await rollDie();
+  const p = cur(), v = await rollDie(forced);
   state.options = reach(p, v); state.step = 'rolled'; busy = false;
   if (!state.options.length){ addLog(`${esc(p.name)} würfelt ${v}, findet aber keinen Weg.`, p.color); render(); return endTurn(700); }
   render();
   autoCam(() => { const pts = [[nodes[p.node].x, nodes[p.node].y]]; state.options.forEach(o => (o.path||[o.node]).forEach(n => pts.push([nodes[n].x, nodes[n].y]))); camFit(pts, 60, 260); });
 }
+function cancelFly(){ state.step = 'start'; state.options = []; render(); autoCam(() => focusPawn()); }
 function startFly(){
   const p = cur(); state.options = flightsFrom(p); state.step = 'fly'; render();
   autoCam(() => camFit([[nodes[p.node].x, nodes[p.node].y], ...state.options.map(o => [nodes[o.node].x, nodes[o.node].y])], 60, 300));
@@ -2124,7 +2374,7 @@ async function arrive(){
     addLog(`${esc(p.name)} erreicht ${cities[c].name}.`, p.color);
     state.step = 'arrived'; render();
     autoCam(() => camSet(cities[c].x, cities[c].y, 300, 2.5));
-    if (p.ai) aiArrived(state.turnId);
+    if (runsAI(p)) aiArrived(state.turnId);
     return;
   }
   if (c) addLog(`${esc(p.name)} reist nach ${cities[c].name}.`, p.color);
@@ -2164,9 +2414,9 @@ async function payOpen(){
   await sleep(350);
   await reveal(p); busy = false; render(); endTurn(300);
 }
-async function tryLuck(){
+async function tryLuck(forced){
   if (busy) return; busy = true; renderActions();
-  const p = cur(), v = await rollDie();
+  const p = cur(), v = await rollDie(forced);
   if (v >= 4){ toast(`${esc(p.name)} würfelt ${v}. Das Plättchen wird umgedreht!`, 1500); await sleep(600); await reveal(p); }
   else { addLog(`${esc(p.name)} würfelt ${v}. Kein Glück in ${cities[cityAt(p.node)].name}.`, p.color); toast(`${v}: leider kein Glück`, 1500); }
   busy = false; render(); endTurn(700);
@@ -2177,7 +2427,11 @@ function win(p){
   addLog(`<b style="color:var(--gold)">${esc(p.name)} erreicht ${home} und gewinnt!</b>`, p.color);
   render();
   camSet(nodes[p.node].x, nodes[p.node].y, 260, 2);
-  Snd.duck(true); Snd.play(p.ai && state.players.some(q => !q.ai) ? 'lose' : 'win');
+  const iWin = Net.on ? mine(p) : !(p.ai && state.players.some(q => !q.ai));
+  Snd.duck(true); Snd.play(iWin ? 'win' : 'lose');
+  $('#againBtn').hidden = Net.on && !Net.isHost;
+  $('#winWait').hidden = !(Net.on && !Net.isHost);
+  $('#againBtn').querySelector('span').textContent = Net.on ? 'Zurück zur Lobby' : 'Neue Expedition';
   $('#winTitle').textContent = `${p.name} gewinnt!`;
   $('#winText').textContent = p.star ? `Der Stern von Afrika ist sicher in ${home} angekommen.` : `Mit dem Hufeisen als Glücksbringer zuerst in ${home}, während der Stern noch unterwegs war.`;
   $('#winIcon').innerHTML = art(p.star ? 'star' : 'horseshoe');
@@ -2194,6 +2448,24 @@ function win(p){
   }, reduced ? 0 : 1100);
 }
 
+// ================= Aktionen =================
+// Jeder Spielzug läuft über act(): lokal sofort ausführen, online zusätzlich an alle schicken.
+// Würfelergebnisse würfelt das handelnde Gerät aus und schickt sie mit, damit alle dasselbe sehen.
+const ACTIONS = {
+  roll: m => rollMove(m.v), luck: m => tryLuck(m.v), fly: () => startFly(), unfly: () => cancelFly(),
+  choose: m => chooseOption(m.i), pay: () => payOpen(), end: () => endTurn(),
+};
+const ACT_STEPS = {roll:['start'], luck:['start'], fly:['start'], unfly:['fly'], choose:['rolled','fly'], pay:['start','arrived'], end:['arrived']};
+function act(a, x = {}){
+  const p = cur();
+  if (busy || state.phase !== 'play' || !ACT_STEPS[a].includes(state.step)) return;
+  if (!(p.ai ? runsAI(p) : mine(p))) return;
+  const m = {t:'act', a, ...x, tn: state.turnId, c: state.cur};
+  if (a === 'roll' || a === 'luck') m.v = 1 + Math.floor(Math.random()*6);
+  if (Net.on) Net.sendAct(m);
+  return ACTIONS[a](m);
+}
+
 // ================= Computer-Gegner =================
 let aiHiddenDist = [];
 function aiMetric(p, node){ if (canWin(p)) return distHome[node]; if (hidden(cityAt(node))) return 0; return aiHiddenDist[node]; }
@@ -2201,18 +2473,18 @@ async function aiTurn(id){
   await sleep(1300); if (id !== state.turnId || state.phase!=='play') return;
   const p = cur(), c = cityAt(p.node);
   aiHiddenDist = bfs(Object.keys(state.tokens).filter(hidden).map(k => cities[k].node));
-  if (hidden(c) && !canWin(p)) return p.money >= 100 ? payOpen() : tryLuck();
+  if (hidden(c) && !canWin(p)) return act(p.money >= 100 ? 'pay' : 'luck');
   const flights = flightsFrom(p);
   if (flights.length){
     const here = canWin(p) ? distHome[p.node] : aiHiddenDist[p.node];
     let best = null;
     flights.forEach(f => { const m = aiMetric(p, f.node); if (!best || m < best.m) best = {...f, m}; });
     if (best && best.m + 9 < here && (canWin(p) || p.money >= 600)){
-      state.options = flights; state.step = 'fly';
-      return chooseOption(flights.findIndex(f => f.node === best.node));
+      act('fly');
+      return act('choose', {i: state.options.findIndex(f => f.node === best.node)});
     }
   }
-  await rollMove(); if (id !== state.turnId || state.step !== 'rolled') return;
+  await act('roll'); if (id !== state.turnId || state.step !== 'rolled') return;
   await sleep(900);
   let bestI = 0, bestS = -Infinity;
   state.options.forEach((o,i) => {
@@ -2225,12 +2497,12 @@ async function aiTurn(id){
   previewPath(state.options[bestI]);
   await sleep(450);
   $('#lyPath').innerHTML = '';
-  chooseOption(bestI);
+  act('choose', {i: bestI});
 }
 async function aiArrived(id){
   await sleep(1000); if (id !== state.turnId || state.step !== 'arrived') return;
   const p = cur();
-  if (!canWin(p) && p.money >= 200) payOpen(); else endTurn();
+  act(!canWin(p) && p.money >= 200 ? 'pay' : 'end');
 }
 
 // ================= Setup & Bedienung =================
@@ -2245,11 +2517,22 @@ function renderSetup(){
     <div class="prow">
       <span class="chip" style="--c:${COLORS[i]}"></span>
       <input id="pn${i}" value="${esc(c.name)}" maxlength="16" aria-label="Name Reisende ${i+1}">
-      <select id="pt${i}" aria-label="Art"><option value="h" ${!c.ai?'selected':''}>Mensch</option><option value="c" ${c.ai?'selected':''}>Computer</option></select>
-      <select id="ps${i}" aria-label="Start"><option value="kairo" ${c.start==='kairo'?'selected':''}>ab Kairo</option><option value="tanger" ${c.start==='tanger'?'selected':''}>ab Tanger</option></select>
+      ${togBtn('ai', i, c.ai ? 'robot' : 'person', c.ai ? 'Computer' : 'Mensch', 'Wer spielt? Antippen zum Wechseln')}
+      ${togBtn('start', i, c.start === 'kairo' ? 'pyramid' : 'gate', c.start === 'kairo' ? 'Kairo' : 'Tanger', 'Startstadt, antippen zum Wechseln')}
     </div>`).join('');
 }
-function readSetup(){ setupCfg.slice(0,setupCount).forEach((c,i) => { c.name = $('#pn'+i).value.trim() || DEFAULT_NAMES[i]; c.ai = $('#pt'+i).value==='c'; c.start = $('#ps'+i).value; }); }
+// Umschaltknopf mit Bildzeichen (statt Auswahlliste), damit auch Kinder ohne Lesen wählen können
+function togBtn(kind, i, ico, label, title, disabled = false){
+  return `<button type="button" class="tog has-ico" data-tog="${kind}" data-i="${i}" title="${title}" aria-label="${title}: ${label}" ${disabled ? 'disabled' : ''}>${ICO(ico)}<span>${label}</span></button>`;
+}
+function readSetup(){ setupCfg.slice(0,setupCount).forEach((c,i) => { c.name = $('#pn'+i).value.trim() || DEFAULT_NAMES[i]; }); }
+$('#setupRows').addEventListener('click', e => {
+  const b = e.target.closest('[data-tog]'); if (!b) return;
+  Snd.init(); Snd.play('click'); readSetup();
+  const c = setupCfg[+b.dataset.i];
+  if (b.dataset.tog === 'ai') c.ai = !c.ai; else c.start = c.start === 'kairo' ? 'tanger' : 'kairo';
+  renderSetup();
+});
 $('#countSeg').addEventListener('click', e => { const n = +e.target.dataset.n; if (!n) return; Snd.init(); Snd.play('click'); readSetup(); setupCount = n; renderSetup(); });
 let driftT = 0;
 function drift(){
@@ -2259,24 +2542,18 @@ function drift(){
   camSet(c.x, c.y, 300 + Math.random()*250, .35);
   driftT = setTimeout(drift, 7000);
 }
-function showSetup(){ renderSetup(); $('#cancelSetup').hidden = !(state && state.phase==='play'); $('#setup').hidden = false; }
-$('#startBtn').addEventListener('click', () => {
-  Snd.init(); readSetup(); clearTimeout(driftT); aiPending = false;
-  $('#setup').hidden = true; $('#win').hidden = true;
-  Snd.play('turn'); Snd.startMusic(); keepAwake();
-  FX.burst(innerWidth/2, innerHeight/2, 'spark', 40, {speed:9, size:8, g:.02, colors:['#fff6c8','#ffd23a','#fff']});
-  newGame(setupCfg.slice(0,setupCount));
-});
+function showSetup(){ renderSetup(); const running = !!(state && state.phase==='play'); $('#cancelSetup').hidden = !running; $('#setupBack').hidden = running; $('#setup').hidden = false; drift(); }
+$('#startBtn').addEventListener('click', () => { readSetup(); newGame(setupCfg.slice(0,setupCount)); });
 $('#cancelSetup').addEventListener('click', () => { $('#setup').hidden = true; if (aiPending){ clearTimeout(driftT); focusPawn(420); } kickAI(); });
-$('#newBtn').addEventListener('click', showSetup);
-$('#againBtn').addEventListener('click', () => { $('#win').hidden = true; showSetup(); });
+$('#newBtn').addEventListener('click', () => Net.on ? askLeave() : showSetup());
+$('#againBtn').addEventListener('click', () => { $('#win').hidden = true; Net.on ? Net.backToLobby() : showSetup(); });
 $('#viewBoard').addEventListener('click', () => { $('#win').hidden = true; Object.values(state.tokens).forEach(t=>t.revealed=true); render(); camSet(MW/2, MH/2, 9999, 2); });
 $('#rulesBtn').addEventListener('click', () => $('#rules').hidden = false);
 $('#closeRules').addEventListener('click', () => $('#rules').hidden = true);
 $('#tokLegend').innerHTML = [...Object.keys(TOKEN_SET),'blank'].map(t => `<div>${icon(t,24)}<span><b>${TOKEN_INFO[t].name}</b> ×${TOKEN_SET[t]||'Rest'}<br><small>${TOKEN_INFO[t].text}</small></span></div>`).join('');
 document.querySelectorAll('.overlay').forEach(o => o.addEventListener('click', e => { if (e.target === o && o.id === 'rules') o.hidden = true; }));
 document.addEventListener('keydown', e => {
-  if (!$('#intro').hidden){ if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); $('#intro').classList.contains('fast') || $('#intro').classList.add('fast'); (!$('#introResume').hidden ? $('#introResume') : $('#introPlay')).click(); } return; }
+  if (!$('#intro').hidden){ if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); $('#intro').classList.contains('fast') || $('#intro').classList.add('fast'); (new URLSearchParams(location.search).get('raum') ? $('#introOnline') : !$('#introResume').hidden ? $('#introResume') : $('#introPlay')).click(); } return; }
   if (e.key === 'Escape'){ $('#rules').hidden = true; if (state && state.phase==='play') $('#setup').hidden = true; }
   if ((e.key === ' ' || e.key === 'Enter') && (e.target === document.body || e.target.closest?.('.cam-ctl'))){ const b = $('#actions .btn.primary:not(:disabled)'); if (b){ e.preventDefault(); b.click(); } }
 });
@@ -2295,6 +2572,703 @@ if ('serviceWorker' in navigator && location.protocol === 'https:' && window.top
   window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
 }
 
+// ================= Bildzeichen für Menü, Lobby und Video =================
+Object.assign(BTN_ICONS, {
+  people:`<g stroke="#140c05" stroke-width="1.1"><circle cx="7.5" cy="7" r="3.4" fill="#ff4b3a"/><path d="M2.5 20.5c.4-4.8 2.3-7.7 5-7.7s4.6 2.9 5 7.7z" fill="#ff4b3a"/><circle cx="16.5" cy="7" r="3.4" fill="#3d8bff"/><path d="M11.5 20.5c.4-4.8 2.3-7.7 5-7.7s4.6 2.9 5 7.7z" fill="#3d8bff"/></g>`,
+  globe:`<circle cx="12" cy="12" r="9.8" fill="#3d8bff" stroke="#123a75" stroke-width="1.2"/><path d="M6.2 5.6c1.7.2 3.4 1 3.8 2.6.4 1.5-1.4 2-1.2 3.4.2 1.5 2 2 1.8 3.6-.1 1.2-1.2 2.3-2.4 3.2-1.6-1.3-3-3.5-3.3-6-.3-2.5.3-5 1.3-6.8zM14.5 3c-.3 1.6.8 2.6 2.2 3 1.6.5 2.4 1.7 1.8 3.2-.6 1.6-2.6 1.4-3 3.1-.4 1.6 1.3 2.6 1.2 4.3 0 1.3-.9 2.6-1.8 3.4 3.6-.9 6.6-4.4 6.8-8.5.1-4.1-3-7.8-7.2-8.5z" fill="#4fd17a" stroke="#145c2a" stroke-width=".8"/>`,
+  flag:`<path d="M5.5 22V3" stroke="#5a3d22" stroke-width="2.2" stroke-linecap="round"/><path d="M6.5 4h13l-3.2 4.2 3.2 4.3h-13z" fill="#ff4b3a" stroke="#6d1205" stroke-width="1.1" stroke-linejoin="round"/><circle cx="5.5" cy="3" r="1.8" fill="#ffd23a" stroke="#7a4a06" stroke-width=".8"/>`,
+  join:`<rect x="11" y="2.5" width="10.5" height="19" rx="1.6" fill="#a8692e" stroke="#3a2410" stroke-width="1.2"/><circle cx="13.6" cy="12" r="1.1" fill="#ffd23a"/><path d="M2 12h7.5m-3.2-3.6L9.9 12l-3.6 3.6" fill="none" stroke="#37c46a" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>`,
+  leave:`<rect x="2.5" y="2.5" width="10.5" height="19" rx="1.6" fill="#a8692e" stroke="#3a2410" stroke-width="1.2"/><circle cx="10.4" cy="12" r="1.1" fill="#ffd23a"/><path d="M14 12h7.5m-3.2-3.6L21.9 12l-3.6 3.6" fill="none" stroke="#ff4b3a" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>`,
+  back:`<circle cx="12" cy="12" r="10" fill="#6b7d8a" stroke="#2a3640" stroke-width="1.2"/><path d="M13.8 7.2L9 12l4.8 4.8" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>`,
+  ready:`<circle cx="12" cy="12" r="10" fill="#37c46a" stroke="#145c2a" stroke-width="1.2"/><path d="M7 12.5l3.2 3.2L17 9" fill="none" stroke="#fff" stroke-width="2.7" stroke-linecap="round" stroke-linejoin="round"/>`,
+  wait:`<path d="M6 3h12M6 21h12" stroke="#5a3d22" stroke-width="2" stroke-linecap="round"/><path d="M7 3c0 5 5 6 5 9s-5 4-5 9h10c0-5-5-6-5-9s5-4 5-9z" fill="#f6ead0" stroke="#5a3d22" stroke-width="1.2" stroke-linejoin="round"/><path d="M9 19.4c1-1.9 2-2.4 3-2.4s2 .5 3 2.4zM9.5 6.5h5c-.6 1.6-1.6 2.5-2.5 3-.9-.5-1.9-1.4-2.5-3z" fill="#ffd23a"/>`,
+  star:`<polygon points="12,1.8 14.9,8.5 22.2,9.2 16.7,14 18.3,21.2 12,17.4 5.7,21.2 7.3,14 1.8,9.2 9.1,8.5" fill="#ffd23a" stroke="#7a4a06" stroke-width="1.2" stroke-linejoin="round"/><path d="M12 5.5l1.6 3.9" stroke="#fff6c8" stroke-width="1.4" stroke-linecap="round"/>`,
+  mic:`<rect x="8.5" y="2.5" width="7" height="12" rx="3.5" fill="#f6ead0" stroke="#5a3d22" stroke-width="1.2"/><path d="M10 6.5h4M10 9h4" stroke="#b49a6c" stroke-width="1"/><path d="M5.5 11.2a6.5 6.5 0 0 0 13 0M12 17.8V21M8.5 21.2h7" fill="none" stroke="#f6ead0" stroke-width="2" stroke-linecap="round"/>`,
+  micOff:`<rect x="8.5" y="2.5" width="7" height="12" rx="3.5" fill="#f6ead0" stroke="#5a3d22" stroke-width="1.2"/><path d="M5.5 11.2a6.5 6.5 0 0 0 13 0M12 17.8V21M8.5 21.2h7" fill="none" stroke="#f6ead0" stroke-width="2" stroke-linecap="round"/><path d="M3.5 3.5l17 17" stroke="#08121c" stroke-width="4.6" stroke-linecap="round"/><path d="M3.5 3.5l17 17" stroke="#ff4b3a" stroke-width="2.6" stroke-linecap="round"/>`,
+  cam:`<rect x="2" y="6.5" width="13.5" height="11" rx="2.6" fill="#3d8bff" stroke="#123a75" stroke-width="1.2"/><path d="M15.5 10.4l6.2-3.6v10.4l-6.2-3.6z" fill="#3d8bff" stroke="#123a75" stroke-width="1.2" stroke-linejoin="round"/><circle cx="8.7" cy="12" r="2.7" fill="#fff" stroke="#123a75"/><circle cx="8.7" cy="12" r="1.1" fill="#123a75"/>`,
+  camOff:`<rect x="2" y="6.5" width="13.5" height="11" rx="2.6" fill="#3d8bff" stroke="#123a75" stroke-width="1.2"/><path d="M15.5 10.4l6.2-3.6v10.4l-6.2-3.6z" fill="#3d8bff" stroke="#123a75" stroke-width="1.2" stroke-linejoin="round"/><circle cx="8.7" cy="12" r="2.7" fill="#fff" stroke="#123a75"/><path d="M3.5 3.5l17 17" stroke="#08121c" stroke-width="4.6" stroke-linecap="round"/><path d="M3.5 3.5l17 17" stroke="#ff4b3a" stroke-width="2.6" stroke-linecap="round"/>`,
+  link:`<path d="M10.2 13.8a4.5 4.5 0 0 0 6.4 0l3.2-3.2a4.5 4.5 0 0 0-6.4-6.4l-1.1 1.1M13.8 10.2a4.5 4.5 0 0 0-6.4 0l-3.2 3.2a4.5 4.5 0 0 0 6.4 6.4l1.1-1.1" fill="none" stroke="#ffd23a" stroke-width="2.6" stroke-linecap="round"/>`,
+  send:`<path d="M2.5 11.2L21.5 3l-6.3 18.5-3.6-7.7z" fill="#3d8bff" stroke="#123a75" stroke-width="1.2" stroke-linejoin="round"/><path d="M11.6 13.8L21.5 3" stroke="#123a75" stroke-width="1.2"/>`,
+  person:`<circle cx="12" cy="7.3" r="4.2" fill="#f4c99a" stroke="#5a3d22" stroke-width="1.2"/><path d="M4.2 21.2c0-4.8 3.5-7.7 7.8-7.7s7.8 2.9 7.8 7.7z" fill="#3d8bff" stroke="#123a75" stroke-width="1.2"/>`,
+  robot:`<path d="M12 7V4.2" stroke="#2a3640" stroke-width="1.5"/><circle cx="12" cy="3.4" r="1.7" fill="#ff4b3a" stroke="#6d1205" stroke-width=".8"/><rect x="2.4" y="10.5" width="2.8" height="4.5" rx="1.1" fill="#6b7d8a"/><rect x="18.8" y="10.5" width="2.8" height="4.5" rx="1.1" fill="#6b7d8a"/><rect x="5" y="7" width="14" height="12" rx="3.2" fill="#b8c9d6" stroke="#2a3640" stroke-width="1.2"/><circle cx="9.4" cy="12" r="2" fill="#37e0ff" stroke="#123a75" stroke-width=".8"/><circle cx="14.6" cy="12" r="2" fill="#37e0ff" stroke="#123a75" stroke-width=".8"/><path d="M9.3 16h5.4" stroke="#2a3640" stroke-width="1.5" stroke-linecap="round"/>`,
+  open:`<circle cx="12" cy="12" r="9.5" fill="none" stroke="#97adbb" stroke-width="1.7" stroke-dasharray="3.2 2.4"/><path d="M12 7.5v9M7.5 12h9" stroke="#97adbb" stroke-width="2.4" stroke-linecap="round"/>`,
+  lock:`<path d="M8 10.5V8a4 4 0 0 1 8 0v2.5" fill="none" stroke="#2a3640" stroke-width="2.2"/><rect x="5" y="10.5" width="14" height="10.5" rx="2.2" fill="#c9a24a" stroke="#5a3d22" stroke-width="1.2"/><circle cx="12" cy="15.2" r="1.7" fill="#5a3d22"/><path d="M12 15.8v2.4" stroke="#5a3d22" stroke-width="1.5" stroke-linecap="round"/>`,
+  pyramid:`<circle cx="18.5" cy="5.5" r="3" fill="#ffd23a" stroke="#c97d10" stroke-width=".8"/><path d="M1.5 20.5L10 6.5l8.5 14z" fill="#f0c56a" stroke="#7a4a06" stroke-width="1.2" stroke-linejoin="round"/><path d="M10 6.5l8.5 14h-5.2z" fill="#c48a2c"/><path d="M13.8 20.5l5-7.2 4 7.2z" fill="#e0ac4e" stroke="#7a4a06" stroke-width="1" stroke-linejoin="round"/>`,
+  gate:`<path d="M3 21V9.5h18V21z" fill="#f2e2c0" stroke="#7a5a2a" stroke-width="1.2"/><path d="M7.4 21v-6.6a4.6 4.6 0 0 1 9.2 0V21z" fill="#2f6fd6" stroke="#123a75" stroke-width="1.2"/><path d="M2.5 9.5l2.2-3.3h14.6l2.2 3.3z" fill="#2fbf5b" stroke="#145c2a" stroke-width="1.2" stroke-linejoin="round"/><path d="M5 12.5h1.5M17.5 12.5H19" stroke="#7a5a2a" stroke-width="1.3"/>`,
+  book:`<path d="M2.5 5.2c3.2-1.6 6.3-1.6 9.5 0v15c-3.2-1.6-6.3-1.6-9.5 0z" fill="#f6ead0" stroke="#5a3d22" stroke-width="1.2" stroke-linejoin="round"/><path d="M12 5.2c3.2-1.6 6.3-1.6 9.5 0v15c-3.2-1.6-6.3-1.6-9.5 0z" fill="#e3cf9f" stroke="#5a3d22" stroke-width="1.2" stroke-linejoin="round"/><path d="M5 9h4.5M5 12h4.5M14.5 9H19M14.5 12H19" stroke="#b49a6c" stroke-width="1.1" stroke-linecap="round"/>`,
+  eye:`<path d="M1.8 12s3.7-6.6 10.2-6.6S22.2 12 22.2 12s-3.7 6.6-10.2 6.6S1.8 12 1.8 12z" fill="#f6ead0" stroke="#5a3d22" stroke-width="1.2"/><circle cx="12" cy="12" r="3.8" fill="#37c46a" stroke="#145c2a" stroke-width="1"/><circle cx="12" cy="12" r="1.6" fill="#08121c"/>`,
+  fold:`<rect x="3" y="4" width="18" height="16" rx="3" fill="#18374b" stroke="#97adbb" stroke-width="1.4"/><rect x="5.5" y="6.5" width="6" height="4.5" rx="1" fill="#3d8bff"/><rect x="5.5" y="13" width="6" height="4.5" rx="1" fill="#ff4b3a"/><path d="M14.5 9.5l3 2.5-3 2.5" fill="none" stroke="#ffd23a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`,
+});
+const ICO = k => `<svg class="bico" viewBox="0 0 24 24" aria-hidden="true">${BTN_ICONS[k]}</svg>`;
+// Knöpfe im HTML mit data-ico bekommen ihr Bildzeichen vorangestellt
+document.querySelectorAll('[data-ico]').forEach(b => {
+  const t = b.textContent.trim();
+  b.innerHTML = ICO(b.dataset.ico) + (t ? `<span>${esc(t)}</span>` : '');
+  b.classList.add('has-ico');
+});
+document.querySelectorAll('[data-big]').forEach(d => d.innerHTML = `<svg viewBox="0 0 24 24">${BTN_ICONS[d.dataset.big]}</svg>`);
+function setBtn(b, ico, label){ b.innerHTML = ICO(ico) + (label ? `<span>${label}</span>` : ''); }
+
+// ================= Mehrspieler: Verbindung =================
+// Keine eigene Server-Software: Die Geräte verbinden sich direkt per WebRTC. Zum Finden dient der
+// öffentliche PeerJS-Vermittlungsdienst. Der Gastgeber ist die Schiedsstelle: Alle Nachrichten laufen über
+// ihn, er führt die Computergegner und schickt zu jedem Zugbeginn den Spielstand zum Abgleich.
+const PEERJS_URL = 'https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js';
+const ROOM_PREFIX = 'stern-von-afrika-';
+const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+const SLOT_COUNT = 5;
+const AI_NAMES = ['Lotta', 'Emil', 'Ida', 'Paul', 'Mia'];
+let peerLoad = null;
+function loadPeerJS(){
+  if (window.Peer) return Promise.resolve();
+  return peerLoad ||= new Promise((res, rej) => {
+    const s = document.createElement('script'); s.src = PEERJS_URL; s.crossOrigin = 'anonymous';
+    s.onload = res; s.onerror = () => { peerLoad = null; s.remove(); rej(new Error('Keine Internetverbindung? Der Mehrspieler-Dienst ließ sich nicht laden.')); };
+    document.head.appendChild(s);
+  });
+}
+function openPeer(id){
+  return new Promise((res, rej) => {
+    const peer = id ? new Peer(id, {debug:0}) : new Peer({debug:0});
+    const t = setTimeout(() => fail({type:'timeout'}), 15000);
+    function fail(e){ clearTimeout(t); peer.off('open', ok); peer.destroy(); rej(e); }
+    function ok(){ clearTimeout(t); peer.off('error', fail); res(peer); }
+    peer.once('open', ok); peer.once('error', fail);
+  });
+}
+const cleanName = s => String(s || '').replace(/[\u0000-\u001f<>]/g, '').trim().slice(0, 16);
+
+const Net = {
+  on:false, isHost:false, inGame:false, myId:null, code:null, peer:null,
+  conns:new Map(),      // Gastgeber: alle Mitspieler; Mitspieler: nur der Gastgeber
+  lobby:null,           // {slots:[…]} – beim Gastgeber das Original, sonst die letzte Kopie
+  queue:[], pendingSync:null, idleSince:0, closing:false,
+
+  async host(name){
+    await loadPeerJS();
+    let peer = null, code;
+    for (let i = 0; i < 5 && !peer; i++){
+      code = Array.from({length:5}, () => CODE_CHARS[Math.floor(Math.random()*CODE_CHARS.length)]).join('');
+      try { peer = await openPeer(ROOM_PREFIX + code); } catch(e){ if (e.type !== 'unavailable-id') throw netErr(e); }
+    }
+    if (!peer) throw new Error('Kein freier Spiel-Code gefunden, bitte nochmal versuchen.');
+    this.begin(peer, true, code);
+    this.lobby = {slots: Array.from({length:SLOT_COUNT}, (_, i) => i === 0
+      ? {kind:'human', peer:peer.id, name, start:'kairo', ready:true, cam:Media.camOn && Media.hasCam, mic:Media.micOn && Media.hasMic}
+      : {kind: i < 3 ? 'open' : 'closed'})};
+    peer.on('connection', conn => {
+      conn.seen = Date.now();
+      conn.on('data', m => this.hostRecv(conn, m));
+      conn.on('close', () => this.hostDrop(conn.peer));
+      conn.on('error', () => {});
+      this.conns.set(conn.peer, conn);
+    });
+    chatLine({sys:true, text:`Spiel eröffnet. Schick den anderen den Code ${code}.`});
+    this.lobbyChanged();
+  },
+  async join(code, name){
+    await loadPeerJS();
+    let peer;
+    try { peer = await openPeer(); } catch(e){ throw netErr(e); }
+    this.begin(peer, false, code);
+    const conn = peer.connect(ROOM_PREFIX + code, {reliable:true, serialization:'json'});
+    await new Promise((res, rej) => {
+      const t = setTimeout(() => rej(new Error('Der Gastgeber antwortet nicht. Stimmt der Code?')), 15000);
+      conn.on('open', () => { clearTimeout(t); res(); });
+      peer.on('error', e => { if (e.type === 'peer-unavailable'){ clearTimeout(t); rej(new Error(`Kein Spiel mit dem Code ${code} gefunden.`)); } });
+    }).catch(e => { this.shutdown(); throw e; });
+    conn.seen = Date.now();
+    this.conns.set(conn.peer, conn);
+    conn.on('data', m => this.clientRecv(conn, m));
+    conn.on('close', () => this.hostLost());
+    conn.on('error', () => {});
+    conn.send({t:'hello', name, cam:Media.camOn && Media.hasCam, mic:Media.micOn && Media.hasMic});
+  },
+  begin(peer, isHost, code){
+    Object.assign(this, {peer, isHost, code, on:true, inGame:false, myId:peer.id, closing:false, queue:[], pendingSync:null});
+    peer.on('call', call => Media.answer(call));
+    peer.on('disconnected', () => { if (!this.closing) try { peer.reconnect(); } catch(e){} });
+    peer.on('error', e => { if (e.type === 'peer-unavailable') Media.peerGone(e.message); });
+    clearInterval(this.hb);
+    this.hb = setInterval(() => this.heartbeat(), 3000);
+  },
+  heartbeat(){
+    const now = Date.now();
+    this.conns.forEach((c, id) => {
+      if (c.open) c.send({t:'ping'});
+      // großzügig, weil Hintergrund-Tabs ihre Zeitgeber drosseln
+      if (now - c.seen > 45000){ if (this.isHost){ c.close(); this.hostDrop(id); } else this.hostLost(); }
+    });
+  },
+  send(conn, m){ if (conn && conn.open) try { conn.send(m); } catch(e){} },
+  broadcast(m, except){ this.conns.forEach((c, id) => { if (id !== except && c.joined) this.send(c, m); }); },
+  toHost(m){ this.conns.forEach(c => this.send(c, m)); },
+
+  // ----- Gastgeber -----
+  hostRecv(conn, m){
+    conn.seen = Date.now();
+    const slots = this.lobby.slots, si = slots.findIndex(s => s.kind === 'human' && s.peer === conn.peer);
+    switch (m.t){
+      case 'hello': {
+        if (si >= 0) return;
+        if (this.inGame) return this.send(conn, {t:'deny', why:'Diese Expedition ist schon unterwegs. Wartet, bis die Runde vorbei ist.'});
+        const i = slots.findIndex(s => s.kind === 'open');
+        if (i < 0) return this.send(conn, {t:'deny', why:'Die Lobby ist schon voll.'});
+        const name = cleanName(m.name) || DEFAULT_NAMES[i];
+        slots[i] = {kind:'human', peer:conn.peer, name, start: i % 2 ? 'tanger' : 'kairo', ready:false, cam:m.cam !== false, mic:m.mic !== false};
+        conn.joined = true;
+        this.send(conn, {t:'chatlog', lines:lobbyChat.slice(-40)});
+        this.sysChat(`${name} ist dabei.`);
+        this.lobbyChanged();
+        Snd.play('arrive');
+        return;
+      }
+      case 'me': if (si >= 0) this.applyMe(si, m); return;
+      case 'chat': if (si >= 0) this.chat(si, m.text); return;
+      case 'act': {
+        if (!this.inGame || si < 0 || state.players[m.c]?.owner !== conn.peer) return;
+        this.broadcast(m, conn.peer);
+        this.receiveAct(m);
+        return;
+      }
+      case 'syncreq': if (this.inGame) this.send(conn, {t:'sync', state, force:true}); return;
+    }
+  },
+  applyMe(si, m){
+    const s = this.lobby.slots[si];
+    if ('name' in m) s.name = cleanName(m.name) || s.name;
+    if (m.start === 'kairo' || m.start === 'tanger') s.start = m.start;
+    if ('ready' in m && si > 0) s.ready = !!m.ready;
+    if ('cam' in m) s.cam = !!m.cam;
+    if ('mic' in m) s.mic = !!m.mic;
+    this.lobbyChanged();
+  },
+  chat(si, text){
+    text = String(text || '').trim().slice(0, 200); if (!text) return;
+    const s = this.lobby.slots[si], line = {name:s.name, color:COLORS[si], text};
+    this.broadcast({t:'chat', line}); chatLine(line);
+  },
+  sysChat(text){ const line = {sys:true, text}; this.broadcast({t:'chat', line}); chatLine(line); },
+  lobbyChanged(){
+    this.broadcast({t:'lobby', lobby:this.lobby});
+    lobbyUpdated();
+  },
+  hostDrop(id){
+    if (!this.conns.has(id)) return;
+    this.conns.delete(id); Media.drop(id);
+    const slots = this.lobby.slots, i = slots.findIndex(s => s.kind === 'human' && s.peer === id);
+    if (i < 0) return;
+    const name = slots[i].name;
+    if (!this.inGame){ slots[i] = {kind:'open'}; this.sysChat(`${name} hat die Lobby verlassen.`); this.lobbyChanged(); return; }
+    slots[i] = {kind:'ai', name, start:slots[i].start, gone:true};
+    this.lobbyChanged();
+    const pi = state.players.findIndex(p => p.owner === id);
+    if (pi < 0) return;
+    state.players[pi].ai = true; state.players[pi].owner = this.myId;
+    toast(`${esc(name)} ist nicht mehr da. Der Computer reist für ${esc(name)} weiter.`, 4000);
+    addLog(`${esc(name)} hat die Verbindung verloren, der Computer übernimmt.`, state.players[pi].color);
+    const go = () => {
+      if (!this.on) return;
+      if (busy) return setTimeout(go, 300);
+      if (state.phase === 'play' && state.cur === pi){
+        if (['rolled','fly'].includes(state.step)){ state.step = 'start'; state.options = []; }
+        state.turnId++; render(); this.sync(true);
+        if (state.step === 'arrived') aiArrived(state.turnId); else if (state.step === 'start') aiTurn(state.turnId);
+      } else { render(); this.sync(true); }
+    };
+    go();
+  },
+  sync(force = false){ this.broadcast({t:'sync', state, force}); },
+  startGame(){
+    const cfg = this.lobby.slots.map((s, i) => ({...s, color:COLORS[i]}))
+      .filter(s => s.kind === 'human' || s.kind === 'ai')
+      .map(s => ({name:s.name, ai:s.kind === 'ai', start:s.start, color:s.color, owner: s.kind === 'ai' ? this.myId : s.peer}));
+    if (cfg.length < 2) return;
+    this.inGame = true;
+    newGame(cfg);                                   // baut den Zustand und startet lokal
+    this.broadcast({t:'start', state});             // gleicher Zustand für alle (Zug 0, vor dem ersten beginTurn)
+  },
+  backToLobby(){
+    if (!this.isHost) return;
+    const slots = this.lobby.slots;
+    slots.forEach((s, i) => { if (s.gone) slots[i] = {kind:'open'}; else if (s.kind === 'human' && i > 0) s.ready = false; });
+    this.inGame = false; this.queue = [];
+    this.broadcast({t:'tolobby'});
+    this.lobbyChanged();
+    showLobby();
+  },
+  sendAct(m){ if (this.isHost) this.broadcast(m); else this.toHost(m); },
+  receiveAct(m){ this.queue.push(m); },
+
+  // ----- Mitspieler -----
+  clientRecv(conn, m){
+    conn.seen = Date.now();
+    switch (m.t){
+      case 'deny': this.shutdown(); hideLobby(); showMpMenu(m.why); return;
+      case 'lobby': this.lobby = m.lobby; lobbyUpdated(); return;
+      case 'chat': chatLine(m.line); return;
+      case 'chatlog': $('#lbChat').innerHTML = ''; m.lines.forEach(chatLine); return;
+      case 'start': this.inGame = true; this.queue = []; this.pendingSync = null; this.idleSince = Date.now(); state = m.state; launchGame(); return;
+      case 'act': if (this.inGame) this.receiveAct(m); return;
+      case 'sync': if (this.inGame) this.pendingSync = m; return;
+      case 'tolobby': this.inGame = false; this.queue = []; $('#win').hidden = true; showLobby(); return;
+    }
+  },
+  hostLost(){
+    if (!this.on || this.closing) return;
+    const wasGame = this.inGame && state.phase === 'play';
+    this.shutdown();
+    if (!wasGame){
+      hideLobby(); $('#win').hidden = true;
+      if (state.phase === 'over') return showIntro(!!loadSaved());
+      return showMpMenu('Die Verbindung zum Gastgeber ist abgebrochen.');
+    }
+    // Spiel nicht wegwerfen: lokal weiterspielen, die anderen übernimmt der Computer
+    const me = state.players.findIndex(p => p.owner === this.lastId);
+    state.players.forEach((p, i) => { if (i !== me) p.ai = true; });
+    mpGameEnded();
+    toast('Verbindung zum Gastgeber verloren. Du spielst allein weiter, die anderen übernimmt der Computer.', 5500);
+    const go = () => {
+      if (busy) return setTimeout(go, 300);
+      if (cur().ai && ['rolled','fly'].includes(state.step)){ state.step = 'start'; state.options = []; }
+      render(); aiPending = true; kickAI();
+    };
+    go();
+  },
+  shutdown(){
+    this.closing = true; this.lastId = this.myId;
+    clearInterval(this.hb);
+    this.conns.forEach(c => { try { c.close(); } catch(e){} });
+    this.conns.clear();
+    Media.stop();
+    try { this.peer?.destroy(); } catch(e){}
+    Object.assign(this, {on:false, isHost:false, inGame:false, peer:null, queue:[], pendingSync:null});
+  },
+};
+function netErr(e){
+  const map = {'browser-incompatible':'Dieser Browser kann leider keine direkten Verbindungen.', network:'Keine Verbindung zum Vermittlungsdienst. Bist du online?',
+    'server-error':'Der Vermittlungsdienst ist gerade nicht erreichbar.', 'socket-error':'Keine Verbindung zum Vermittlungsdienst. Bist du online?', timeout:'Der Vermittlungsdienst antwortet nicht. Bist du online?'};
+  return new Error(map[e?.type] || e?.message || 'Verbindung fehlgeschlagen.');
+}
+
+// Fremde Züge der Reihe nach abspielen: erst wenn die eigene Animation fertig ist und der Zug dazu passt.
+// Zu jedem Zugbeginn schickt der Gastgeber den Spielstand; weicht er ab (oder hängt ein Gerät), wird er übernommen.
+function fingerprint(s){ return JSON.stringify([s.cur, s.starFound, s.phase, s.players.map(p => [p.node, p.money, p.star, p.horseshoes, p.ai]), s.tokens]); }
+function adoptState(s){
+  state = s;
+  shownMoney = state.players.map(p => p.money);
+  $('#players').innerHTML = '';
+  if (['moving'].includes(state.step)) state.step = 'start';
+  buildPawns(); drawDie(state.die); render();
+  autoCam(() => focusPawn(400));
+}
+function pump(){
+  if (!Net.on || !Net.inGame || !state) return;
+  if (busy){ Net.idleSince = Date.now(); return; }
+  const ps = Net.pendingSync;
+  if (ps && !Net.isHost){
+    const s = ps.state, idle = Date.now() - Net.idleSince > 4000;
+    if (ps.force || (s.turnId > state.turnId && idle)){
+      Net.pendingSync = null; Net.queue = Net.queue.filter(m => m.tn >= s.turnId);
+      adoptState(s); return;
+    }
+    if (s.turnId === state.turnId && state.step === 'start'){
+      Net.pendingSync = null;
+      if (fingerprint(s) !== fingerprint(state)) adoptState(s);
+      return;
+    }
+    if (s.turnId < state.turnId) Net.pendingSync = null;
+  }
+  const m = Net.queue[0];
+  if (!m) return;
+  if (m.tn < state.turnId){ Net.queue.shift(); return; }
+  if (m.tn > state.turnId || !ACT_STEPS[m.a]?.includes(state.step)){
+    // hängt hier etwas zu lange, den aktuellen Stand beim Gastgeber anfordern
+    if (!Net.isHost && Date.now() - Net.idleSince > 9000){ Net.idleSince = Date.now(); Net.toHost({t:'syncreq'}); }
+    return;
+  }
+  Net.queue.shift(); Net.idleSince = Date.now();
+  ACTIONS[m.a](m);
+}
+setInterval(pump, 120);
+
+// ================= Mehrspieler: Kamera und Mikrofon =================
+// Jede Person ist mit jeder direkt verbunden (bei höchstens 5 Leuten reicht das). Ohne Kamera oder ohne
+// Erlaubnis wird ein stilles schwarzes Ersatzbild gesendet, damit die Verbindung trotzdem steht.
+const Media = (() => {
+  let local = null, out = null, ac = null, meterT = 0;
+  const calls = new Map(), tiles = new Map(), meters = new Map();
+  const api = {camOn:true, micOn:true, hasCam:false, hasMic:false};
+  try { const v = JSON.parse(localStorage.getItem('sva-av')); if (v){ api.camOn = v.cam !== false; api.micOn = v.mic !== false; } } catch(e){}
+
+  let starting = null, gen = 0;
+  function start(){ return starting ||= doStart().finally(() => { starting = null; }); }
+  async function doStart(){
+    if (local || !navigator.mediaDevices?.getUserMedia) return refreshButtons();
+    const g = gen;
+    const video = {width:{ideal:320}, height:{ideal:240}, frameRate:{ideal:20, max:24}, facingMode:'user'};
+    const audio = {echoCancellation:true, noiseSuppression:true, autoGainControl:true};
+    for (const c of [{video, audio}, {audio}, {video}]){
+      try { local = await navigator.mediaDevices.getUserMedia(c); break; } catch(e){}
+    }
+    if (g !== gen){ local?.getTracks().forEach(t => t.stop()); local = null; return; }   // inzwischen verlassen
+    api.hasCam = !!local?.getVideoTracks().length; api.hasMic = !!local?.getAudioTracks().length;
+    applyEnabled(); buildOut(); replaceTracks();
+    if (Net.myId){ removeTile(Net.myId); ensureTile(Net.myId); }
+    refreshButtons();
+    sendMe({cam:api.camOn && api.hasCam, mic:api.micOn && api.hasMic});
+  }
+  function audioCtx(){ return ac ||= new (window.AudioContext || window.webkitAudioContext)(); }
+  // Ausgehender Strom: echte Spuren, fehlende durch stille Ersatzspuren aufgefüllt
+  function buildOut(){
+    const tracks = [];
+    let a = local?.getAudioTracks()[0];
+    if (!a){ try { a = audioCtx().createMediaStreamDestination().stream.getAudioTracks()[0]; } catch(e){} }
+    let v = local?.getVideoTracks()[0];
+    if (!v){ try { const c = document.createElement('canvas'); c.width = 160; c.height = 120; c.getContext('2d').fillRect(0, 0, 160, 120); v = c.captureStream(1).getVideoTracks()[0]; } catch(e){} }
+    if (a) tracks.push(a); if (v) tracks.push(v);
+    out = new MediaStream(tracks);
+  }
+  function applyEnabled(){
+    local?.getVideoTracks().forEach(t => t.enabled = api.camOn);
+    local?.getAudioTracks().forEach(t => t.enabled = api.micOn);
+    try { localStorage.setItem('sva-av', JSON.stringify({cam:api.camOn, mic:api.micOn})); } catch(e){}
+  }
+  function refreshButtons(){
+    document.querySelectorAll('.js-mic').forEach(b => { const on = api.micOn && api.hasMic; b.setAttribute('aria-pressed', on); setBtn(b, on ? 'mic' : 'micOff', b.classList.contains('btn') ? (api.hasMic ? (on ? 'Mikrofon an' : 'Mikrofon aus') : 'Kein Mikrofon') : ''); });
+    document.querySelectorAll('.js-cam').forEach(b => { const on = api.camOn && api.hasCam; b.setAttribute('aria-pressed', on); setBtn(b, on ? 'cam' : 'camOff', b.classList.contains('btn') ? (api.hasCam ? (on ? 'Kamera an' : 'Kamera aus') : 'Keine Kamera') : ''); });
+    if (Net.myId) updateTile(Net.myId);
+  }
+  async function toggle(kind){
+    if (!local){ await start(); if (!local) return toastAny('Kamera und Mikrofon sind nicht erlaubt. Bitte im Browser freigeben.'); replaceTracks(); }
+    if (kind === 'cam'){ if (!api.hasCam) return toastAny('Keine Kamera gefunden.'); api.camOn = !api.camOn; }
+    else { if (!api.hasMic) return toastAny('Kein Mikrofon gefunden.'); api.micOn = !api.micOn; }
+    applyEnabled(); refreshButtons();
+    sendMe({cam:api.camOn && api.hasCam, mic:api.micOn && api.hasMic});
+  }
+  function replaceTracks(){
+    calls.forEach(({call}) => {
+      const pc = call.peerConnection; if (!pc) return;
+      pc.getSenders().forEach(s => { const t = out.getTracks().find(t => t.kind === s.track?.kind); if (t && s.track !== t) s.replaceTrack(t).catch(() => {}); });
+    });
+  }
+  // ----- Verbindungen -----
+  function wanted(){
+    const s = Net.lobby?.slots || [];
+    return s.filter(x => x.kind === 'human' && x.peer && x.peer !== Net.myId).map(x => x.peer);
+  }
+  function sync(){
+    if (!Net.on || !Net.peer) return;
+    if (!out) buildOut();
+    const want = new Set(wanted());
+    calls.forEach((c, id) => { if (!want.has(id)) drop(id); });
+    want.forEach(id => { ensureTile(id); if (!calls.has(id) && Net.myId < id) dial(id); });
+    tiles.forEach((t, id) => { if (id !== Net.myId && !want.has(id)) removeTile(id); });
+    ensureTile(Net.myId);
+    tiles.forEach((t, id) => updateTile(id));
+  }
+  function dial(id){
+    try { const call = Net.peer.call(id, out); if (call) wire(call); } catch(e){}
+  }
+  function answer(call){
+    if (!out) buildOut();
+    call.answer(out); wire(call);
+  }
+  function wire(call){
+    const id = call.peer, old = calls.get(id);
+    if (old && old.call !== call) try { old.call.close(); } catch(e){}
+    calls.set(id, {call});
+    call.on('stream', s => attach(id, s));
+    call.on('close', () => {
+      if (calls.get(id)?.call !== call) return;
+      calls.delete(id);
+      const t = tiles.get(id); if (t) t.classList.remove('has-video');
+      // kurz danach neu anrufen, falls die Person noch dabei ist
+      setTimeout(() => { if (Net.on && !calls.has(id) && wanted().includes(id) && Net.myId < id) dial(id); }, 2500);
+    });
+    call.on('error', () => {});
+  }
+  function attach(id, stream){
+    const t = ensureTile(id), v = t.querySelector('video');
+    if (v.srcObject !== stream){ v.srcObject = stream; v.play().catch(() => {}); }
+    t.classList.add('has-video');
+    meter(id, stream);
+  }
+  function drop(id){
+    const c = calls.get(id); calls.delete(id);
+    if (c) try { c.call.close(); } catch(e){}
+    removeTile(id);
+  }
+  function peerGone(msg){ calls.forEach((c, id) => { if (msg && msg.includes(id)) drop(id); }); }
+  // ----- Kacheln -----
+  function slotOf(id){ const s = Net.lobby?.slots || []; const i = s.findIndex(x => x.kind === 'human' && x.peer === id); return [i, s[i]]; }
+  function ensureTile(id){
+    let t = tiles.get(id); if (t) return t;
+    t = document.createElement('div'); t.className = 'vtile' + (id === Net.myId ? ' self' : ''); t.dataset.id = id;
+    t.innerHTML = `<video autoplay playsinline ${id === Net.myId ? 'muted' : ''}></video><div class="vt-av"></div><span class="vt-name"></span><span class="vt-mic">${ICO('micOff')}</span>`;
+    tiles.set(id, t);
+    if (id === Net.myId && local){ const v = t.querySelector('video'); v.srcObject = local; v.muted = true; v.play().catch(() => {}); t.classList.toggle('has-video', api.hasCam); meter(id, local); }
+    (mountEl || $('#lbVids')).appendChild(t);
+    updateTile(id);
+    return t;
+  }
+  function updateTile(id){
+    const t = tiles.get(id); if (!t) return;
+    const [i, s] = slotOf(id), me = id === Net.myId;
+    const name = s?.name || (me ? 'Du' : '…');
+    t.style.setProperty('--c', i >= 0 ? COLORS[i] : '#97adbb');
+    t.querySelector('.vt-name').textContent = me ? `${name} (du)` : name;
+    t.querySelector('.vt-av').textContent = name.charAt(0).toUpperCase();
+    const cam = me ? api.camOn && api.hasCam : s?.cam !== false, mic = me ? api.micOn && api.hasMic : s?.mic !== false;
+    t.classList.toggle('cam-off', !cam); t.classList.toggle('mic-off', !mic);
+    if (me) t.classList.toggle('has-video', !!local && api.hasCam);
+    if (i >= 0) t.style.order = i;
+  }
+  function removeTile(id){ const t = tiles.get(id); if (t){ t.remove(); tiles.delete(id); } const m = meters.get(id); if (m){ try { m.src.disconnect(); } catch(e){} meters.delete(id); } }
+  let mountEl = null;
+  function mount(el){ mountEl = el; [...tiles.values()].sort((a, b) => (+a.style.order || 0) - (+b.style.order || 0)).forEach(t => el.appendChild(t)); tiles.forEach(t => t.querySelector('video').play().catch(() => {})); }
+  // Sprechanzeige: grüner Rahmen um die Kachel, wer gerade redet
+  function meter(id, stream){
+    if (!stream.getAudioTracks().length) return;
+    try {
+      const old = meters.get(id); if (old){ if (old.stream === stream) return; try { old.src.disconnect(); } catch(e){} }
+      const ctx = audioCtx(), src = ctx.createMediaStreamSource(stream), an = ctx.createAnalyser();
+      an.fftSize = 512; src.connect(an);
+      meters.set(id, {src, an, stream, buf:new Uint8Array(an.fftSize), lvl:0});
+      if (!meterT) meterT = setInterval(tickMeters, 120);
+    } catch(e){}
+  }
+  function tickMeters(){
+    if (ac?.state === 'suspended') ac.resume().catch(() => {});
+    meters.forEach((m, id) => {
+      m.an.getByteTimeDomainData(m.buf);
+      let sum = 0; for (let i = 0; i < m.buf.length; i += 4){ const d = (m.buf[i] - 128) / 128; sum += d*d; }
+      const rms = Math.sqrt(sum / (m.buf.length / 4));
+      m.lvl = Math.max(rms, m.lvl * .7);
+      const me = id === Net.myId, t = tiles.get(id);
+      t?.classList.toggle('speaking', m.lvl > .045 && !(me && !api.micOn));
+    });
+  }
+  function markTurn(id){ tiles.forEach((t, k) => t.classList.toggle('turn', k === id)); }
+  function resumeAll(){ tiles.forEach(t => { const v = t.querySelector('video'); if (v.srcObject && v.paused) v.play().catch(() => {}); }); if (ac?.state === 'suspended') ac.resume().catch(() => {}); }
+  function stop(){
+    calls.forEach(({call}) => { try { call.close(); } catch(e){} }); calls.clear();
+    [...tiles.keys()].forEach(removeTile);
+    local?.getTracks().forEach(t => t.stop()); local = null; out = null; gen++;
+    clearInterval(meterT); meterT = 0; api.hasCam = api.hasMic = false;
+  }
+  return Object.assign(api, {start, sync, answer, drop, peerGone, toggle, mount, markTurn, resumeAll, stop, refreshButtons, ensureTile});
+})();
+function toastAny(t){ if (!$('#lobby').hidden) lobbyStatus(esc(t), true); else toast(esc(t), 3000); }
+document.querySelectorAll('.js-mic').forEach(b => b.addEventListener('click', () => { Snd.play('click'); Media.toggle('mic'); }));
+document.querySelectorAll('.js-cam').forEach(b => b.addEventListener('click', () => { Snd.play('click'); Media.toggle('cam'); }));
+document.addEventListener('pointerdown', () => { if (Net.on) Media.resumeAll(); }, true);
+setBtn($('#vbFold'), 'fold');
+Media.refreshButtons();
+$('#vbFold').addEventListener('click', () => { const f = $('#vidbar').classList.toggle('folded'); $('#vbFold').setAttribute('aria-pressed', !f); });
+
+// ================= Mehrspieler: Menü und Lobby =================
+let lobbyChat = [];
+function sendMe(m){
+  if (!Net.on) return;
+  if (Net.isHost){ const i = Net.lobby.slots.findIndex(s => s.peer === Net.myId); if (i >= 0) Net.applyMe(i, m); }
+  else Net.toHost({t:'me', ...m});
+}
+function myName(){ try { return localStorage.getItem('sva-name') || ''; } catch(e){ return ''; } }
+function showMpMenu(err = ''){
+  $('#mpName').value = $('#mpName').value || myName();
+  const q = new URLSearchParams(location.search).get('raum');
+  if (q && !$('#mpCode').value) $('#mpCode').value = q.toUpperCase().slice(0, 5);
+  $('#mpErr').hidden = !err; $('#mpErr').textContent = err;
+  $('#mpMenu .sheet-body').classList.remove('mp-busy');
+  $('#mpMenu').hidden = false;
+  drift();
+}
+function mpName(){
+  const n = cleanName($('#mpName').value);
+  if (!n){ $('#mpErr').hidden = false; $('#mpErr').textContent = 'Wie heißt du? Schreib deinen Namen oben hinein.'; $('#mpName').focus(); return null; }
+  try { localStorage.setItem('sva-name', n); } catch(e){}
+  return n;
+}
+async function mpGo(fn){
+  const body = $('#mpMenu .sheet-body');
+  body.classList.add('mp-busy'); $('#mpErr').hidden = true;
+  try {
+    Media.start();                // Freigabe läuft parallel, Bild und Ton kommen nach, sobald erlaubt
+    await fn();
+    $('#mpMenu').hidden = true; showLobby();
+  } catch(e){
+    Net.shutdown();
+    $('#mpErr').hidden = false; $('#mpErr').textContent = e.message || String(e);
+  }
+  body.classList.remove('mp-busy');
+}
+$('#mpHost').addEventListener('click', () => { Snd.init(); Snd.play('click'); const n = mpName(); if (n) mpGo(() => Net.host(n)); });
+$('#mpJoin').addEventListener('click', () => {
+  Snd.init(); Snd.play('click');
+  const n = mpName(); if (!n) return;
+  const code = $('#mpCode').value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if (code.length !== 5){ $('#mpErr').hidden = false; $('#mpErr').textContent = 'Der Code hat fünf Zeichen, zum Beispiel K7QX2.'; $('#mpCode').focus(); return; }
+  mpGo(() => Net.join(code, n));
+});
+$('#mpCode').addEventListener('input', e => { e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''); });
+$('#mpCode').addEventListener('keydown', e => { if (e.key === 'Enter') $('#mpJoin').click(); });
+$('#mpBack').addEventListener('click', () => { $('#mpMenu').hidden = true; showIntro(!!loadSaved()); });
+
+function showLobby(){
+  mpGameEnded(true);
+  $('#lbCode').textContent = Net.code || '·····';
+  $('.lb-star').setAttribute('points', starPts(11, 4.6));
+  Media.mount($('#lbVids'));
+  $('#lobby').hidden = false;
+  lobbyUpdated();
+  drift();
+}
+function hideLobby(){ $('#lobby').hidden = true; }
+function lobbyUpdated(){
+  Media.sync();
+  if (Net.inGame && state?.players){
+    // Namen und Kamera-Status auch im laufenden Spiel aktuell halten
+    Media.markTurn(state.phase === 'play' && !cur().ai ? cur().owner : null);
+  }
+  if (!$('#lobby').hidden) renderLobby();
+}
+const KIND_INFO = {human:['person','Mensch'], ai:['robot','Computer'], open:['open','Offen'], closed:['lock','Zu']};
+function renderLobby(){
+  const L = Net.lobby; if (!L) return;
+  const host = Net.isHost, slots = L.slots;
+  const focus = document.activeElement?.id === 'lbMyName' ? [document.activeElement.selectionStart, document.activeElement.selectionEnd] : null;
+  $('#lbSlots').innerHTML = slots.map((s, i) => {
+    const me = s.kind === 'human' && s.peer === Net.myId, isHostSlot = i === 0;
+    const [kIco, kLbl] = isHostSlot ? ['flag', 'Gastgeber'] : KIND_INFO[s.kind];
+    const filled = s.kind === 'human' || s.kind === 'ai';
+    const nameHTML = me ? `<input id="lbMyName" value="${esc(s.name)}" maxlength="16" aria-label="Dein Name">`
+      : s.kind === 'open' ? `<span class="k-open-txt">Wartet auf Mitspieler …</span>`
+      : s.kind === 'closed' ? `<span class="k-open-txt">Platz geschlossen</span>`
+      : s.kind === 'ai' ? `${esc(s.name || AI_NAMES[i-1] || 'Computer')}<small>Computer</small>` : esc(s.name);
+    const canKind = host && !isHostSlot && s.kind !== 'human';
+    const canStart = me || (host && s.kind === 'ai');
+    const ready = s.kind === 'human' ? (s.ready || isHostSlot ? `<span title="Bereit">${ICO('ready')}</span>` : `<span title="Noch nicht bereit"><svg class="bico wait" viewBox="0 0 24 24">${BTN_ICONS.wait}</svg></span>`) : '';
+    const kick = host && s.kind === 'human' && !me ? `<button type="button" class="lb-kick" data-kick="${i}" title="${esc(s.name)} entfernen" aria-label="${esc(s.name)} entfernen">${ICO('cancel')}</button>` : '';
+    return `<div class="lb-slot k-${s.kind} ${me ? 'me' : ''}" style="--c:${COLORS[i]}">
+      <span class="chip"></span>
+      <div class="lb-name">${nameHTML}</div>
+      ${togBtn('kind', i, kIco, kLbl, canKind ? 'Platz: Offen, Computer oder zu' : 'Wer spielt hier?', !canKind)}
+      ${filled ? togBtn('start', i, s.start === 'kairo' ? 'pyramid' : 'gate', s.start === 'kairo' ? 'Kairo' : 'Tanger', 'Startstadt', !canStart) : '<span></span>'}
+      <span class="lb-ready">${ready}${kick}</span>
+    </div>`;
+  }).join('');
+  if (focus){ const inp = $('#lbMyName'); inp.focus(); try { inp.setSelectionRange(focus[0], focus[1]); } catch(e){} }
+  const mine_ = slots.find(s => s.kind === 'human' && s.peer === Net.myId);
+  const players = slots.filter(s => s.kind === 'human' || s.kind === 'ai').length;
+  const waiting = slots.filter((s, i) => s.kind === 'human' && i > 0 && !s.ready);
+  $('#lbStart').hidden = !host; $('#lbReady').hidden = host;
+  $('#lbStart').disabled = players < 2 || waiting.length > 0;
+  $('#lbReady').setAttribute('aria-pressed', !!mine_?.ready);
+  setBtn($('#lbReady'), mine_?.ready ? 'ready' : 'wait', mine_?.ready ? 'Bereit!' : 'Bereit?');
+  if (host){
+    lobbyStatus(players < 2 ? `Noch allein. Schick den Code <b>${Net.code}</b> an deine Mitspieler oder setz einen Computer auf einen Platz.`
+      : waiting.length ? `Warte auf ${waiting.map(s => `<b>${esc(s.name)}</b>`).join(', ')} …`
+      : `Alle bereit! ${players} Reisende. Los geht's!`);
+  } else {
+    lobbyStatus(mine_?.ready ? 'Du bist bereit. Der Gastgeber startet gleich die Expedition.' : 'Tippe auf <b>Bereit?</b>, wenn du loslegen willst.');
+  }
+}
+let lbStatusT;
+function lobbyStatus(html, flash = false){
+  clearTimeout(lbStatusT);
+  $('#lbStatus').innerHTML = html;
+  if (flash) lbStatusT = setTimeout(renderLobby, 3500);
+}
+$('#lbSlots').addEventListener('click', e => {
+  const k = e.target.closest('[data-kick]');
+  if (k && Net.isHost){
+    const s = Net.lobby.slots[+k.dataset.kick], c = Net.conns.get(s.peer);
+    Net.send(c, {t:'deny', why:'Der Gastgeber hat dich aus der Lobby genommen.'});
+    setTimeout(() => { try { c?.close(); } catch(err){} Net.hostDrop(s.peer); }, 300);
+    return;
+  }
+  const b = e.target.closest('[data-tog]'); if (!b || b.disabled) return;
+  Snd.play('click');
+  const i = +b.dataset.i, s = Net.lobby.slots[i];
+  if (b.dataset.tog === 'kind' && Net.isHost){
+    const next = {open:'ai', ai:'closed', closed:'open'}[s.kind];
+    Net.lobby.slots[i] = next === 'ai' ? {kind:'ai', name:AI_NAMES[i-1], start: i % 2 ? 'tanger' : 'kairo'} : {kind:next};
+    Net.lobbyChanged();
+  } else if (b.dataset.tog === 'start'){
+    const start = s.start === 'kairo' ? 'tanger' : 'kairo';
+    if (s.peer === Net.myId) sendMe({start});
+    else if (Net.isHost && s.kind === 'ai'){ s.start = start; Net.lobbyChanged(); }
+  }
+});
+let nameT;
+$('#lbSlots').addEventListener('input', e => {
+  if (e.target.id !== 'lbMyName') return;
+  clearTimeout(nameT);
+  nameT = setTimeout(() => { const n = cleanName(e.target.value); if (n){ try { localStorage.setItem('sva-name', n); } catch(err){} sendMe({name:n}); } }, 450);
+});
+$('#lbReady').addEventListener('click', () => {
+  Snd.play('click');
+  const s = Net.lobby?.slots.find(x => x.peer === Net.myId);
+  sendMe({ready: !s?.ready});
+});
+$('#lbStart').addEventListener('click', () => { if (Net.isHost) Net.startGame(); });
+$('#lbLeave').addEventListener('click', () => leaveMP());
+$('#lbCopy').addEventListener('click', async () => {
+  Snd.play('click');
+  const url = `${location.origin}${location.pathname}?raum=${Net.code}`;
+  const text = `Komm mit auf Expedition! Stern von Afrika, Spiel-Code ${Net.code}`;
+  try {
+    if (navigator.share && matchMedia('(pointer: coarse)').matches) await navigator.share({title:'Stern von Afrika', text, url});
+    else { await navigator.clipboard.writeText(url); lobbyStatus(`Einladungslink kopiert: <b>${esc(url)}</b>`, true); }
+  } catch(e){ lobbyStatus(`Link zum Teilen: <b>${esc(url)}</b>`, true); }
+});
+function chatLine(line){
+  lobbyChat.push(line); if (lobbyChat.length > 80) lobbyChat.shift();
+  const li = document.createElement('li');
+  if (line.sys){ li.className = 'sys'; li.textContent = line.text; }
+  else { li.style.setProperty('--c', line.color); li.innerHTML = `<b>${esc(line.name)}:</b> ${esc(line.text)}`; }
+  const ol = $('#lbChat'); ol.appendChild(li); ol.scrollTop = ol.scrollHeight;
+  if (!line.sys && !$('#lobby').hidden) Snd.play('click');
+}
+$('#lbChatForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const t = $('#lbMsg').value.trim(); if (!t) return;
+  $('#lbMsg').value = '';
+  if (Net.isHost){ const i = Net.lobby.slots.findIndex(s => s.peer === Net.myId); Net.chat(i, t); }
+  else Net.toHost({t:'chat', text:t});
+});
+
+// Spiel online gestartet bzw. beendet: Videoleiste, Knöpfe im Pult
+function mpGameStarted(){
+  Media.mount($('#vbTiles'));
+  $('#vidbar').hidden = false;
+  setLeaveLabel('Verlassen');
+}
+function mpGameEnded(toLobby = false){
+  $('#vidbar').hidden = true;
+  if (!toLobby || !Net.on) setLeaveLabel(null);
+}
+function setLeaveLabel(txt){
+  [$('#newBtn'), ...document.querySelectorAll('[data-proxy="newBtn"]')].forEach(b => {
+    const full = b.id === 'newBtn';
+    setBtn(b, txt ? 'leave' : 'star', txt || (full ? 'Neues Spiel' : 'Neu'));
+  });
+}
+let leaveT = 0;
+function askLeave(){
+  // zweimal tippen statt Bestätigungsdialog
+  if (leaveT){ clearTimeout(leaveT); leaveT = 0; return leaveMP(); }
+  setLeaveLabel('Wirklich?'); toast('Nochmal tippen, um das Online-Spiel zu verlassen.', 2500);
+  leaveT = setTimeout(() => { leaveT = 0; if (Net.on) setLeaveLabel('Verlassen'); }, 2600);
+}
+function leaveMP(){
+  Net.shutdown();
+  // sauberer Neustart ohne Raum-Code in der Adresse; lokale Spielstände bleiben erhalten
+  location.replace(location.pathname);
+}
+window.addEventListener('pagehide', () => { if (Net.on) Net.shutdown(); });
+
 // ================= Start =================
 let aiPending = false;
 function resume(startAI = true){
@@ -2305,21 +3279,23 @@ function resume(startAI = true){
 }
 // Computer am Zug erst losschicken, wenn das Spiel wirklich sichtbar ist (nicht hinter Vorspann oder Setup)
 function kickAI(){
-  if (!aiPending || state.phase !== 'play') return;
+  if (!aiPending || state.phase !== 'play' || Net.on) return;
   aiPending = false;
   if (cur().ai){ state.turnId++; if (state.step === 'arrived') aiArrived(state.turnId); else aiTurn(state.turnId); }
 }
 
 // ================= Vorspann =================
-const ICO = k => `<svg class="bico" viewBox="0 0 24 24" aria-hidden="true">${BTN_ICONS[k]}</svg>`;
 function showIntro(saved){
   const I = $('#intro');
   $('#introStar').setAttribute('points', starPts(11, 4.6));
   $('#introShine').setAttribute('points', starPts(11, 4.6));
   $('#introFacets').setAttribute('points', starPts(6.2, 2.6));
   $('#inSky').innerHTML = Array.from({length: 46}, () => `<i style="left:${(Math.random()*100).toFixed(1)}%;top:${(Math.random()*100).toFixed(1)}%;--d:${(2+Math.random()*3).toFixed(1)}s;--w:${(Math.random()*3).toFixed(1)}s"></i>`).join('');
-  $('#introPlay').innerHTML = ICO(saved ? 'walk' : 'dice') + `<span>${saved ? 'Neue Expedition' : 'Spielen'}</span>`;
-  $('#introPlay').classList.toggle('primary', !saved);
+  const invite = new URLSearchParams(location.search).get('raum');
+  $('#introPlay').innerHTML = ICO('people') + '<span>Lokales Spiel</span>';
+  $('#introOnline').innerHTML = ICO('globe') + `<span>${invite ? 'Einladung annehmen' : 'Mehrspieler'}</span>`;
+  $('#introPlay').classList.toggle('primary', !saved && !invite);
+  $('#introOnline').classList.toggle('primary', !!invite);
   $('#introResume').hidden = !saved;
   if (saved) $('#introResume').innerHTML = ICO('next') + '<span>Weiterspielen</span>';
   I.classList.remove('out','fast'); I.hidden = false;
@@ -2338,6 +3314,8 @@ function leaveIntro(then){
 }
 $('#intro').addEventListener('click', e => { if (!e.target.closest('button')) $('#intro').classList.add('fast'); });
 $('#introPlay').addEventListener('click', () => leaveIntro(showSetup));
+$('#introOnline').addEventListener('click', () => leaveIntro(() => showMpMenu()));
+$('#setupBack').addEventListener('click', () => { $('#setup').hidden = true; showIntro(!!loadSaved()); });
 $('#introResume').addEventListener('click', () => leaveIntro(() => { clearTimeout(driftT); focusPawn(420); kickAI(); }));
 function boot(data){
   build(); buildCube(); drawDie(null); applyCam();

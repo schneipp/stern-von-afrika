@@ -6,7 +6,7 @@
 
 ### [▶ Jetzt spielen](https://schneipp.github.io/stern-von-afrika/)
 
-2–5 Spieler · am selben Gerät oder gegen den Computer · als App auf iPad, iPhone und Android installierbar
+2–5 Spieler · am selben Gerät, online mit Video oder gegen den Computer · als App auf iPad, iPhone und Android installierbar
 
 <img src="docs/spielbrett.jpg" alt="Spielbrett: Reliefkarte von Nordafrika mit Städten, Wegen, Spielfiguren und Expeditionspult" width="100%">
 
@@ -43,6 +43,9 @@ Wer den Stern findet, muss ihn heim nach Kairo oder Tanger bringen. Sobald er ab
 - 🎶 **Jingle für jeden Ort:** bei jeder Ankunft ein kurzes Motiv im Stil der Region, mit Oud und Darbuka im Norden, Wüstengitarre in der Sahara, Kora und Balafon im Westen, Krar am Horn von Afrika, Mbira und Marimba im Süden und Valiha auf Madagaskar
 - 🏷️ **Namen über den Figuren** und ein **einklappbares Pult**: dann gehört das ganze Bild der Karte, die Reisekasse steht direkt an der Figur
 - 🤖 **Computergegner** für beliebig viele Plätze
+- 🌍 **Mehrspieler übers Internet:** eine Person eröffnet ein Spiel und bekommt einen fünfstelligen Code (oder einen Einladungslink), die anderen treten bei. In der **Lobby** wie bei alten Strategiespielen: Plätze für Menschen, Computer oder geschlossen, Startstadt wählen, „Bereit“ melden, Chat
+- 📹 **Video und Sprache:** alle sehen und hören sich während des Spiels, als Kacheln am Kartenrand, mit grünem Rahmen für den, der gerade spricht, und goldenem für den, der am Zug ist. Mikrofon und Kamera einzeln abschaltbar
+- 🧒 **Bildzeichen auf allen Knöpfen**, damit auch Kinder spielen können, die noch nicht lesen: Mensch oder Roboter, Pyramide für Kairo, Stadttor für Tanger
 - 💾 **Spielstand bleibt erhalten**, auch nach einem Neuladen
 - 📱 **Als App installierbar (PWA)**, läuft danach auch offline, im Vollbild und ohne Browserleiste
 - 👆 **Für Touch gebaut:** große Tippflächen, Pinch-Zoom auf der Karte, eigenes Layout für iPad hoch und quer, Rücksicht auf Notch und Home-Balken, Bildschirm bleibt während des Spiels an
@@ -94,6 +97,15 @@ Die Seite lässt sich auch direkt per Doppelklick auf `index.html` öffnen. Nur 
 | `manifest.webmanifest`, `sw.js`, `icons/` | App-Installation und Offline-Cache |
 | `stern-von-afrika.html` | Version 1 mit gezeichneter Karte, schlicht und schnell |
 | `stern-von-afrika-v2.html` | Weiterleitung für alte Links |
+
+## Mehrspieler: so funktioniert's
+
+Es gibt keinen eigenen Spielserver. Die Geräte verbinden sich direkt per WebRTC; zum gegenseitigen Finden dient der kostenlose öffentliche Vermittlungsdienst von [PeerJS](https://peerjs.com/) (die Bibliothek wird erst geladen, wenn man „Mehrspieler“ wählt). Video und Ton gehen direkt von Gerät zu Gerät.
+
+- Der **Gastgeber** ist die Schiedsstelle: Alle Züge laufen über ihn, er steuert die Computergegner und schickt zu jedem Zugbeginn den Spielstand zum Abgleich.
+- Verliert jemand die Verbindung, übernimmt der Computer dessen Figur. Fällt der Gastgeber weg, spielen die anderen jeweils lokal gegen den Computer weiter.
+- Kamera und Mikrofon brauchen HTTPS (GitHub Pages) oder `localhost`. Ohne Freigabe kann man trotzdem mitspielen.
+- In sehr restriktiven Netzen (manche Firmen- und Mobilfunknetze) kann die direkte Verbindung scheitern; dann hilft meist ein anderes WLAN.
 
 ## Hinweise
 
