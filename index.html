@@ -396,7 +396,18 @@ button:focus-visible,input:focus-visible,select:focus-visible,[tabindex]:focus-v
 .mp-card p{margin:0;color:var(--muted);font-size:13.5px;flex:1}
 .mp-card .btn{width:100%;justify-content:center}
 .mp-big svg{width:64px;height:64px;filter:drop-shadow(0 4px 8px rgba(0,0,0,.4))}
-.mp-code{width:100%;text-align:center;font-family:var(--label);font-weight:700;letter-spacing:.35em;text-transform:uppercase;font-size:22px;padding:8px}
+.mp-sel{display:flex;align-items:center;gap:10px}
+.mp-sel>b{font-size:22px;color:var(--muted)}
+.mp-slot{width:76px;height:76px;border-radius:16px;border:2px dashed rgba(255,255,255,.25);background:rgba(0,0,0,.3);display:grid;place-items:center;align-content:center;gap:0;padding:2px;color:var(--muted)}
+.mp-slot i{font-style:normal;font-size:36px;line-height:1}
+.mp-slot small{font-size:11px;font-weight:700;color:var(--paper);max-width:70px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mp-slot.filled{border-style:solid;border-color:var(--gold);background:rgba(245,187,52,.12)}
+.mp-slot.next{border-color:var(--gold);animation:slotPulse 1.3s ease-in-out infinite}
+@keyframes slotPulse{50%{box-shadow:0 0 0 4px rgba(245,187,52,.25)}}
+.mp-animals{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;width:100%}
+.mp-animals button{aspect-ratio:1;border:1px solid var(--line);border-radius:10px;background:rgba(0,0,0,.25);font-size:clamp(22px,4.2vw,28px);line-height:1;padding:0;display:grid;place-items:center;transition:transform .1s}
+.mp-animals button:active{transform:scale(.9)}
+.mp-animals button[aria-pressed="true"]{background:rgba(245,187,52,.25);border-color:var(--gold);box-shadow:0 0 0 2px var(--gold)}
 .mp-err{margin:0;padding:9px 12px;border-radius:9px;background:rgba(207,59,44,.18);border:1px solid rgba(207,59,44,.5);color:#ffcbc2;text-align:center}
 .mp-busy{opacity:.6;pointer-events:none}
 
@@ -411,8 +422,11 @@ button:focus-visible,input:focus-visible,select:focus-visible,[tabindex]:focus-v
 .lb-title small{font-family:var(--label);text-transform:uppercase;letter-spacing:.2em;font-size:11.5px;color:var(--gold-hi)}
 .lb-title b{font-family:var(--display);font-weight:400;font-size:26px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .lb-code{display:grid;text-align:center;padding:4px 14px;border-radius:9px;background:rgba(0,0,0,.4);border:1px dashed rgba(245,187,52,.6)}
-.lb-code span{font-family:var(--label);text-transform:uppercase;letter-spacing:.16em;font-size:10.5px;color:var(--muted)}
-.lb-code b{font-family:var(--label);font-size:26px;letter-spacing:.3em;margin-right:-.3em;color:var(--gold-hi);font-variant-numeric:tabular-nums;user-select:all;-webkit-user-select:all}
+.lb-code>span{font-family:var(--label);text-transform:uppercase;letter-spacing:.16em;font-size:10.5px;color:var(--muted)}
+.lb-code b{display:flex;align-items:center;justify-content:center;gap:8px;font-family:var(--label);font-size:19px;color:var(--gold-hi);white-space:nowrap}
+.lb-code .anim{display:inline-flex;align-items:center;gap:6px;font-weight:700;font-size:20px;letter-spacing:.02em}
+.lb-code .anim i{font-style:normal;font-size:30px;line-height:1}
+.lb-code em{font-style:normal;color:var(--muted)}
 .lb-panel{position:relative;display:flex;flex-direction:column;min-height:0;padding:12px;border-radius:12px;background:linear-gradient(180deg,rgba(17,40,56,.94),rgba(9,22,32,.94));border:1px solid rgba(255,255,255,.1);box-shadow:0 10px 30px rgba(0,0,0,.4)}
 .lb-panel::before,.lb-panel::after{content:"";position:absolute;width:14px;height:14px;border:2px solid var(--gold);opacity:.7;pointer-events:none}
 .lb-panel::before{left:-1px;top:-1px;border-right:0;border-bottom:0;border-top-left-radius:12px}
@@ -685,19 +699,21 @@ button:focus-visible,input:focus-visible,select:focus-visible,[tabindex]:focus-v
   <div class="sheet" role="dialog" aria-labelledby="mpTitle">
     <div class="sheet-head">
       <h2 class="logo" id="mpTitle" style="font-size:40px">Mehrspieler</h2>
-      <p>Zusammen über das Internet spielen, mit Kamera und Mikrofon. Eine Person eröffnet das Spiel und schickt den anderen den Code.</p>
+      <p>Zusammen über das Internet spielen, mit Kamera und Mikrofon. Eine Person eröffnet das Spiel, die anderen tippen die zwei Tiere an, die das Spiel als Namen bekommt.</p>
     </div>
     <div class="sheet-body">
       <label class="mp-name"><span class="eyebrow">Dein Name</span><input id="mpName" maxlength="16" autocomplete="nickname" placeholder="Wie heißt du?"></label>
       <div class="mp-cards">
         <div class="mp-card">
           <div class="mp-big" aria-hidden="true" data-big="flag"></div>
-          <p>Neues Spiel aufmachen und Freunde einladen</p>
+          <p>Neues Spiel aufmachen und Freunde einladen. Dein Spiel bekommt zwei Tiere als Namen.</p>
           <button class="btn primary" id="mpHost" type="button" data-ico="flag">Spiel eröffnen</button>
         </div>
         <div class="mp-card">
           <div class="mp-big" aria-hidden="true" data-big="join"></div>
-          <input id="mpCode" class="mp-code" maxlength="5" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="CODE" aria-label="Spiel-Code">
+          <p>Tippe die zwei Tiere an, die der Gastgeber hat</p>
+          <div class="mp-sel" aria-live="polite"><button type="button" class="mp-slot" data-slot="0" aria-label="Erstes Tier"></button><b aria-hidden="true">+</b><button type="button" class="mp-slot" data-slot="1" aria-label="Zweites Tier"></button></div>
+          <div class="mp-animals" id="mpAnimals" role="group" aria-label="Tiere"></div>
           <button class="btn" id="mpJoin" type="button" data-ico="join">Beitreten</button>
         </div>
       </div>
@@ -712,7 +728,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,[tabindex]:focus-v
     <header class="lb-head">
       <svg class="brand-star" width="38" height="38" viewBox="-12 -12 24 24" aria-hidden="true"><polygon class="lb-star" fill="#f5bb34" stroke="#7a4a06" stroke-width=".8"/></svg>
       <div class="lb-title"><small>Expeditions-Lobby</small><b id="lbTitle">Stern von Afrika</b></div>
-      <div class="lb-code" title="Diesen Code brauchen die anderen zum Beitreten"><span>Spiel-Code</span><b id="lbCode">·····</b></div>
+      <div class="lb-code" title="Diese zwei Tiere brauchen die anderen zum Beitreten"><span>Unser Spiel heißt</span><b id="lbCode">…</b></div>
       <button class="btn" id="lbCopy" type="button" data-ico="link">Einladen</button>
     </header>
     <section class="lb-panel lb-slots"><h3>Reisende</h3><div id="lbSlots"></div></section>
@@ -2615,7 +2631,18 @@ function setBtn(b, ico, label){ b.innerHTML = ICO(ico) + (label ? `<span>${label
 // ihn, er führt die Computergegner und schickt zu jedem Zugbeginn den Spielstand zum Abgleich.
 const PEERJS_URL = 'https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js';
 const ROOM_PREFIX = 'stern-von-afrika-';
-const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+// Spielname aus zwei afrikanischen Tieren: leicht zu sagen, und Kinder erkennen die Bilder
+const ANIMALS = [
+  ['loewe','Löwe','🦁'], ['giraffe','Giraffe','🦒'], ['zebra','Zebra','🦓'], ['elefant','Elefant','🐘'], ['nashorn','Nashorn','🦏'],
+  ['nilpferd','Nilpferd','🦛'], ['krokodil','Krokodil','🐊'], ['affe','Affe','🐒'], ['gorilla','Gorilla','🦍'], ['leopard','Leopard','🐆'],
+  ['kamel','Kamel','🐫'], ['flamingo','Flamingo','🦩'], ['papagei','Papagei','🦜'], ['schlange','Schlange','🐍'], ['schildkroete','Schildkröte','🐢'],
+  ['bueffel','Büffel','🐃'], ['adler','Adler','🦅'], ['frosch','Frosch','🐸'], ['skorpion','Skorpion','🦂'], ['schmetterling','Schmetterling','🦋'],
+];
+const ANIMAL = Object.fromEntries(ANIMALS.map(a => [a[0], a]));
+function randomCode(){ const i = Math.floor(Math.random()*ANIMALS.length); let j; do { j = Math.floor(Math.random()*ANIMALS.length); } while (j === i); return `${ANIMALS[i][0]}-${ANIMALS[j][0]}`; }
+function parseCode(str){ const p = String(str || '').toLowerCase().split(/[^a-z]+/).filter(Boolean); return p.length === 2 && ANIMAL[p[0]] && ANIMAL[p[1]] && p[0] !== p[1] ? p.join('-') : null; }
+const codeWords = code => code.split('-').map(k => ANIMAL[k][1]).join(' und ');
+const codeHTML = code => code.split('-').map(k => `<span class="anim"><i>${ANIMAL[k][2]}</i>${ANIMAL[k][1]}</span>`).join('<em>+</em>');
 const SLOT_COUNT = 5;
 const AI_NAMES = ['Lotta', 'Emil', 'Ida', 'Paul', 'Mia'];
 let peerLoad = null;
@@ -2647,11 +2674,11 @@ const Net = {
   async host(name){
     await loadPeerJS();
     let peer = null, code;
-    for (let i = 0; i < 5 && !peer; i++){
-      code = Array.from({length:5}, () => CODE_CHARS[Math.floor(Math.random()*CODE_CHARS.length)]).join('');
+    for (let i = 0; i < 8 && !peer; i++){
+      code = randomCode();
       try { peer = await openPeer(ROOM_PREFIX + code); } catch(e){ if (e.type !== 'unavailable-id') throw netErr(e); }
     }
-    if (!peer) throw new Error('Kein freier Spiel-Code gefunden, bitte nochmal versuchen.');
+    if (!peer) throw new Error('Gerade ist kein Tierpaar frei, bitte nochmal versuchen.');
     this.begin(peer, true, code);
     this.lobby = {slots: Array.from({length:SLOT_COUNT}, (_, i) => i === 0
       ? {kind:'human', peer:peer.id, name, start:'kairo', ready:true, cam:Media.camOn && Media.hasCam, mic:Media.micOn && Media.hasMic}
@@ -2663,7 +2690,7 @@ const Net = {
       conn.on('error', () => {});
       this.conns.set(conn.peer, conn);
     });
-    chatLine({sys:true, text:`Spiel eröffnet. Schick den anderen den Code ${code}.`});
+    chatLine({sys:true, text:`Spiel eröffnet. Sag den anderen deine zwei Tiere: ${codeWords(code)}.`});
     this.lobbyChanged();
   },
   async join(code, name){
@@ -2673,9 +2700,9 @@ const Net = {
     this.begin(peer, false, code);
     const conn = peer.connect(ROOM_PREFIX + code, {reliable:true, serialization:'json'});
     await new Promise((res, rej) => {
-      const t = setTimeout(() => rej(new Error('Der Gastgeber antwortet nicht. Stimmt der Code?')), 15000);
+      const t = setTimeout(() => rej(new Error('Der Gastgeber antwortet nicht. Stimmen die Tiere?')), 15000);
       conn.on('open', () => { clearTimeout(t); res(); });
-      peer.on('error', e => { if (e.type === 'peer-unavailable'){ clearTimeout(t); rej(new Error(`Kein Spiel mit dem Code ${code} gefunden.`)); } });
+      peer.on('error', e => { if (e.type === 'peer-unavailable'){ clearTimeout(t); rej(new Error(`Kein Spiel mit ${codeWords(code)} gefunden. Sind es die richtigen Tiere?`)); } });
     }).catch(e => { this.shutdown(); throw e; });
     conn.seen = Date.now();
     this.conns.set(conn.peer, conn);
@@ -3078,7 +3105,8 @@ function myName(){ try { return localStorage.getItem('sva-name') || ''; } catch(
 function showMpMenu(err = ''){
   $('#mpName').value = $('#mpName').value || myName();
   const q = new URLSearchParams(location.search).get('raum');
-  if (q && !$('#mpCode').value) $('#mpCode').value = q.toUpperCase().slice(0, 5);
+  const qc = parseCode(q); if (qc && !mpPick[0] && !mpPick[1]){ mpPick = qc.split('-'); }
+  renderPick();
   $('#mpErr').hidden = !err; $('#mpErr').textContent = err;
   $('#mpMenu .sheet-body').classList.remove('mp-busy');
   $('#mpMenu').hidden = false;
@@ -3107,17 +3135,39 @@ $('#mpHost').addEventListener('click', () => { Snd.init(); Snd.play('click'); co
 $('#mpJoin').addEventListener('click', () => {
   Snd.init(); Snd.play('click');
   const n = mpName(); if (!n) return;
-  const code = $('#mpCode').value.toUpperCase().replace(/[^A-Z0-9]/g, '');
-  if (code.length !== 5){ $('#mpErr').hidden = false; $('#mpErr').textContent = 'Der Code hat fünf Zeichen, zum Beispiel K7QX2.'; $('#mpCode').focus(); return; }
+  const code = parseCode(mpPick.join('-'));
+  if (!code){ $('#mpErr').hidden = false; $('#mpErr').textContent = 'Tippe zuerst die zwei Tiere an, die der Gastgeber hat.'; return; }
   mpGo(() => Net.join(code, n));
 });
-$('#mpCode').addEventListener('input', e => { e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''); });
-$('#mpCode').addEventListener('keydown', e => { if (e.key === 'Enter') $('#mpJoin').click(); });
+// Tierauswahl zum Beitreten: erst das erste, dann das zweite Tier antippen; ein gewähltes Tier antippen entfernt es
+let mpPick = [null, null];
+$('#mpAnimals').innerHTML = ANIMALS.map(([k, n, e]) => `<button type="button" data-anim="${k}" title="${n}" aria-label="${n}">${e}</button>`).join('');
+function renderPick(){
+  document.querySelectorAll('.mp-slot').forEach((b, i) => {
+    const a = mpPick[i] && ANIMAL[mpPick[i]];
+    b.innerHTML = a ? `<i>${a[2]}</i><small>${a[1]}</small>` : `<small>${i + 1}.</small>`;
+    b.classList.toggle('filled', !!a);
+    b.classList.toggle('next', !a && (i === 0 || !!mpPick[0]) && !(i === 1 && !mpPick[0]));
+  });
+  document.querySelectorAll('#mpAnimals button').forEach(b => b.setAttribute('aria-pressed', mpPick.includes(b.dataset.anim)));
+  $('#mpJoin').classList.toggle('primary', !!(mpPick[0] && mpPick[1]));
+}
+$('#mpAnimals').addEventListener('click', e => {
+  const b = e.target.closest('[data-anim]'); if (!b) return;
+  Snd.init(); Snd.play('click');
+  const k = b.dataset.anim, at = mpPick.indexOf(k);
+  if (at >= 0) mpPick[at] = null;
+  else if (!mpPick[0]) mpPick[0] = k;
+  else mpPick[1] = k;
+  $('#mpErr').hidden = true; renderPick();
+});
+document.querySelectorAll('.mp-slot').forEach((b, i) => b.addEventListener('click', () => { Snd.play('click'); mpPick[i] = null; renderPick(); }));
+renderPick();
 $('#mpBack').addEventListener('click', () => { $('#mpMenu').hidden = true; showIntro(!!loadSaved()); });
 
 function showLobby(){
   mpGameEnded(true);
-  $('#lbCode').textContent = Net.code || '·····';
+  $('#lbCode').innerHTML = Net.code ? codeHTML(Net.code) : '…';
   $('.lb-star').setAttribute('points', starPts(11, 4.6));
   Media.mount($('#lbVids'));
   $('#lobby').hidden = false;
@@ -3167,7 +3217,7 @@ function renderLobby(){
   $('#lbReady').setAttribute('aria-pressed', !!mine_?.ready);
   setBtn($('#lbReady'), mine_?.ready ? 'ready' : 'wait', mine_?.ready ? 'Bereit!' : 'Bereit?');
   if (host){
-    lobbyStatus(players < 2 ? `Noch allein. Schick den Code <b>${Net.code}</b> an deine Mitspieler oder setz einen Computer auf einen Platz.`
+    lobbyStatus(players < 2 ? `Noch allein. Sag den anderen deine Tiere <b>${codeWords(Net.code)}</b>, schick ihnen den Einladungslink oder setz einen Computer auf einen Platz.`
       : waiting.length ? `Warte auf ${waiting.map(s => `<b>${esc(s.name)}</b>`).join(', ')} …`
       : `Alle bereit! ${players} Reisende. Los geht's!`);
   } else {
@@ -3217,7 +3267,7 @@ $('#lbLeave').addEventListener('click', () => leaveMP());
 $('#lbCopy').addEventListener('click', async () => {
   Snd.play('click');
   const url = `${location.origin}${location.pathname}?raum=${Net.code}`;
-  const text = `Komm mit auf Expedition! Stern von Afrika, Spiel-Code ${Net.code}`;
+  const text = `Komm mit auf Expedition! Stern von Afrika, unser Spiel heißt ${Net.code.split('-').map(k => ANIMAL[k][2] + ' ' + ANIMAL[k][1]).join(' + ')}`;
   try {
     if (navigator.share && matchMedia('(pointer: coarse)').matches) await navigator.share({title:'Stern von Afrika', text, url});
     else { await navigator.clipboard.writeText(url); lobbyStatus(`Einladungslink kopiert: <b>${esc(url)}</b>`, true); }

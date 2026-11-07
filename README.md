@@ -43,7 +43,7 @@ Wer den Stern findet, muss ihn heim nach Kairo oder Tanger bringen. Sobald er ab
 - 🎶 **Jingle für jeden Ort:** bei jeder Ankunft ein kurzes Motiv im Stil der Region, mit Oud und Darbuka im Norden, Wüstengitarre in der Sahara, Kora und Balafon im Westen, Krar am Horn von Afrika, Mbira und Marimba im Süden und Valiha auf Madagaskar
 - 🏷️ **Namen über den Figuren** und ein **einklappbares Pult**: dann gehört das ganze Bild der Karte, die Reisekasse steht direkt an der Figur
 - 🤖 **Computergegner** für beliebig viele Plätze
-- 🌍 **Mehrspieler übers Internet:** eine Person eröffnet ein Spiel und bekommt einen fünfstelligen Code (oder einen Einladungslink), die anderen treten bei. In der **Lobby** wie bei alten Strategiespielen: Plätze für Menschen, Computer oder geschlossen, Startstadt wählen, „Bereit“ melden, Chat
+- 🌍 **Mehrspieler übers Internet:** eine Person eröffnet ein Spiel, das zwei Tiere als Namen bekommt (zum Beispiel 🦁 Löwe + 🦓 Zebra). Die anderen tippen die beiden Tierbilder an oder öffnen den Einladungslink, lesen muss dafür niemand. In der **Lobby** wie bei alten Strategiespielen: Plätze für Menschen, Computer oder geschlossen, Startstadt wählen, „Bereit“ melden, Chat
 - 📹 **Video und Sprache:** alle sehen und hören sich während des Spiels, als Kacheln am Kartenrand, mit grünem Rahmen für den, der gerade spricht, und goldenem für den, der am Zug ist. Mikrofon und Kamera einzeln abschaltbar
 - 🧒 **Bildzeichen auf allen Knöpfen**, damit auch Kinder spielen können, die noch nicht lesen: Mensch oder Roboter, Pyramide für Kairo, Stadttor für Tanger
 - 💾 **Spielstand bleibt erhalten**, auch nach einem Neuladen
