@@ -308,6 +308,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,[tabindex]:focus-v
 .overlay{padding:calc(16px + var(--sat)) calc(16px + var(--sar)) calc(16px + var(--sab)) calc(16px + var(--sal))}
 .rv-hint{bottom:calc(22px + var(--sab))}
 #map image{pointer-events:none}
+#lyPawns,#lyFx,#lyTrail,#lyLabels,#lyPath{pointer-events:none}   /* Figuren und Schilder fangen keine Tipps auf Ziele ab */
 .install-hint{display:flex;gap:10px;align-items:center;justify-content:center;font-size:13px;color:var(--muted);text-align:left}
 .install-hint svg{flex:none}
 
@@ -483,7 +484,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,[tabindex]:focus-v
 .vtile .vt-wait{position:absolute;top:5px;left:5px;font-size:11px;padding:1px 7px;border-radius:999px;background:rgba(0,0,0,.6);color:var(--muted)}
 
 .vidbar{position:absolute;left:calc(14px + var(--sal));top:calc(14px + var(--sat));z-index:3;display:flex;flex-direction:column;gap:8px;max-height:calc(100% - 200px);pointer-events:none}
-.vb-tiles{display:flex;flex-direction:column;gap:8px;overflow:auto;padding:3px;pointer-events:auto}
+.vb-tiles{display:flex;flex-direction:column;gap:8px;overflow:hidden;padding:3px;pointer-events:none}
 .vidbar .vtile{width:132px;flex:none}
 .vidbar .vtile .vt-av{font-size:30px}
 .vidbar.folded .vb-tiles{display:none}
@@ -534,6 +535,35 @@ button:focus-visible,input:focus-visible,select:focus-visible,[tabindex]:focus-v
 @media (max-width: 760px), (orientation: portrait) and (max-width: 1100px), (orientation: landscape) and (max-height: 540px){
   .vidbar .vtile{width:92px}
 }
+/* Handy: Aktionsleiste fest unten am Kartenrand */
+.mapacts.dock{left:calc(10px + var(--sal));right:calc(10px + var(--sar));top:auto;bottom:calc(10px + var(--sab));max-width:none;transform:none!important;padding:8px;gap:6px;border-width:2px}
+.mapacts.dock::before{display:none}
+.mapacts.dock #actions{width:100%;flex-wrap:nowrap}
+.mapacts.dock #actions .btn{flex:1 1 0;min-width:0;justify-content:center;min-height:52px;font-size:16px;padding:8px 10px}
+.mapacts.dock #actions .btn .bico{width:28px;height:28px}
+.mapacts.dock #actions .btn span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mapacts.dock #actions .btn small{display:block;margin:0;font-size:11.5px;line-height:1.1}
+.mapacts.dock #actions .btn span{display:flex;flex-direction:column;align-items:flex-start;line-height:1.15}
+.mapacts.dock.pop{animation:dockIn .35s cubic-bezier(.2,1.4,.4,1)}
+@keyframes dockIn{from{translate:0 30px;opacity:0}}
+.board.docked .minimap,.board.docked #toast{bottom:calc(var(--dockh,76px) + 20px + var(--sab))}
+.board.docked .minimap{transition:bottom .2s}
+.vb-tiles,.minimap{transition:opacity .25s}
+.board.choosing .vb-tiles,.board.choosing .vb-ctl,.board.choosing .minimap{opacity:.28;pointer-events:none}
+.vb-ctl{transition:opacity .25s}
+@media (max-width: 600px), (max-height: 500px){
+  .vidbar{top:calc(10px + var(--sat));left:calc(10px + var(--sal));gap:6px}
+  .vidbar .vtile{width:66px}
+  .vidbar .vtile .vt-av{font-size:20px}
+  .vidbar .vtile .vt-name{font-size:9.5px;padding:0 5px;left:3px;bottom:3px;max-width:calc(100% - 6px)}
+  .vidbar .vtile .vt-mic{width:16px;height:16px;right:3px;top:3px;bottom:auto}
+  .vb-tiles{gap:6px}
+  .avbtn{width:40px;height:40px}
+  .avbtn .bico{width:22px;height:22px}
+  .hintpill{left:calc(84px + var(--sal));right:calc(64px + var(--sar));font-size:13px;padding:7px 12px}
+}
+@media (max-height: 500px){ .vidbar .vtile{width:58px} .vb-tiles{max-height:calc(100vh - 150px)} }
+
 /* Tablet quer: alles auf eine Bildschirmhöhe bringen */
 @media (orientation: landscape) and (max-height: 900px) and (min-width: 901px){
   .lb-wrap{gap:10px;grid-template-rows:auto minmax(0,auto) minmax(150px,1fr) auto}
@@ -1540,7 +1570,7 @@ function setPanel(show){
 }
 $('#panelBtn').addEventListener('click', () => setPanel(panelHidden));
 $('#app').classList.toggle('nopanel', panelHidden); $('#panelBtn').setAttribute('aria-pressed', !panelHidden);
-$('#minimap').addEventListener('click', e => { const r = e.currentTarget.getBoundingClientRect(); setFollow(false); camSet((e.clientX-r.left)/r.width*MW, (e.clientY-r.top)/r.height*MH, Math.min(cam.t.w, 420), 4); });
+$('#minimap').addEventListener('click', e => { if (Date.now() - actTapAt < 800) return; const r = e.currentTarget.getBoundingClientRect(); setFollow(false); camSet((e.clientX-r.left)/r.width*MW, (e.clientY-r.top)/r.height*MH, Math.min(cam.t.w, 420), 4); });
 window.addEventListener('orientationchange', () => setTimeout(() => window.dispatchEvent(new Event('resize')), 250));
 window.addEventListener('resize', () => { cam.t = clampView({...cam.t}); Object.assign(cam, clampView({cx:cam.cx, cy:cam.cy, w:cam.w})); applyCam(); FX.resize(); });
 
@@ -2104,6 +2134,8 @@ function renderTokens(){
 function renderTargets(){
   const ly = $('#lyTargets'); ly.innerHTML = ''; $('#lyPath').innerHTML = '';
   const p = cur();
+  // beim Zielwählen treten Videos und Minimap zurück, damit kein Ziel verdeckt ist
+  $('#board').classList.toggle('choosing', state.phase === 'play' && mine(p) && ['rolled','fly'].includes(state.step));
   if (state.phase!=='play' || !mine(p) || !['rolled','fly'].includes(state.step)) return;
   state.options.forEach((o,idx) => {
     const n = nodes[o.node];
@@ -2142,6 +2174,7 @@ const BTN_ICONS = {
   next:`<circle cx="12" cy="12" r="10" fill="#3d8bff" stroke="#123a75" stroke-width="1.2"/><path d="M8 7.5l5 4.5-5 4.5z" fill="#fff"/><rect x="14.5" y="7.5" width="2.4" height="9" rx="1" fill="#fff"/>`,
   cancel:`<circle cx="12" cy="12" r="10" fill="#6b7d8a" stroke="#2a3640" stroke-width="1.2"/><path d="M8.5 8.5l7 7m0-7l-7 7" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/>`,
 };
+let actTapAt = 0;
 function renderActions(){
   const p = cur(), box = $('#actions'), msg = $('#msg'), dock = $('#mapActs'), mam = $('#maMsg');
   box.innerHTML = ''; mam.innerHTML = '';
@@ -2186,12 +2219,34 @@ function renderActions(){
     list.push(btn('Zug beenden', () => act('end'), p.money < 100 ? 'primary' : '', false, 'next'));
   }
   list.forEach(b => { const e = document.createElement('button'); e.type='button'; e.className = 'btn ' + b.cls + (b.ico ? ' has-ico' : ''); e.innerHTML = (b.ico ? `<svg class="bico" viewBox="0 0 24 24" aria-hidden="true">${BTN_ICONS[b.ico]}</svg>` : '') + `<span>${b.label}</span>`; e.disabled = b.disabled || busy;
-    e.addEventListener('click', () => { Snd.play('click'); b.fn(); }); box.appendChild(e); });
+    // Finger: beim Loslassen auslösen (auch wenn die Blase kurz mitgewandert ist), Maus/Tastatur: normaler Klick
+    let fired = 0;
+    e.addEventListener('pointerup', ev => { if (ev.pointerType === 'mouse' || e.disabled) return; fired = actTapAt = Date.now(); Snd.play('click'); b.fn(); });
+    // sonst schickt der Browser danach noch einen „Geister-Klick“ an dieselbe Stelle, wo dann schon Karte oder Minimap liegt
+    e.addEventListener('touchend', ev => { if (ev.cancelable) ev.preventDefault(); });
+    e.addEventListener('click', () => { if (Date.now() - fired < 900) return; Snd.play('click'); b.fn(); }); box.appendChild(e); });
   done(true);
 }
 // Sprechblase mit den Aktionen an die aktuelle Figur heften (unter ihr, bei Platzmangel darüber)
+// Handy: Aktionen fest unten am Kartenrand statt als wandernde Blase (zu wenig Platz, Finger trifft sonst daneben)
+const dockMQ = matchMedia('(max-width: 600px), (max-height: 500px)');
+let actsHold = false;
+$('#mapActs').addEventListener('pointerdown', () => { actsHold = true; });
+['pointerup','pointercancel'].forEach(t => window.addEventListener(t, () => { if (actsHold) setTimeout(() => { actsHold = false; placeActs(); }, 60); }));
+dockMQ.addEventListener?.('change', () => placeActs());
 function placeActs(){
-  const d = $('#mapActs');
+  const d = $('#mapActs'), board = $('#board'), dock = dockMQ.matches;
+  d.classList.toggle('dock', dock);
+  if (dock){
+    const on = d.classList.contains('show');
+    d.style.transform = '';
+    // Platz für die Leiste bleibt reserviert, damit Minimap und Meldungen nicht unter dem Finger springen
+    board.classList.add('docked');
+    if (on && d.offsetHeight) board.style.setProperty('--dockh', d.offsetHeight + 'px');
+    return;
+  }
+  board.classList.remove('docked');
+  if (actsHold) return;   // nicht unter dem Finger wegziehen
   if (!d.classList.contains('show') || !state || !pawnPos[state.cur]) return;
   const pp = pawnPos[state.cur], b = $('#board').getBoundingClientRect(), r = svg.getBoundingClientRect(), a = aspect();
   const px = r.left - b.left + (pp.x - (cam.cx - cam.w/2)) / cam.w * r.width;
